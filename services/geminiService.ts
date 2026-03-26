@@ -390,14 +390,11 @@ clean studio environment, no color cast
 Final result: 
 product looks grounded, dimensional, and high-end  
 realistic lighting and shadow like professional studio photography
-
-Additional instructions: ${settings.concept || 'Maintain original product appearance with enhanced lighting.'}
       `;
     } else {
       finalPrompt = `
 Prompt A: 
 Ultra realistic product enhancement from a clean white background product image. Keep the product 100% unchanged: do not alter shape, structure, proportions, or materials do not change color, texture, or surface details preserve all original edges, contours, and fine details Lighting – high-end studio (neutral white balance): strong directional key light (premium EU/US commercial style) neutral white light (around 5500K–6000K), no warm or yellow color cast clean, sharp highlights with full detail retention no blown-out or clipped highlights Shadow – defined and grounded (like reference 2): clearly visible, well-defined contact shadow slightly stronger density for a solid, grounded feel medium edge softness (not too diffused, not harsh) smooth gradient falloff extending naturally consistent direction with light source preserve detail in shadow, no crushed blacks Color & tone control: accurate, true-to-life product color neutral whites, clean background (no yellow/green tint) balanced contrast with preserved midtones Enhance image quality: high clarity, crisp edges, sharp micro-contrast realistic depth and separation no artificial HDR or overprocessing Background: pure white or very subtle neutral grey-white gradient clean studio look, no color contamination Final result: product remains identical to original input strong, grounded shadow like premium commercial shoot neutral, clean white balance (catalog-ready) high-end advertising quality, natural and realistic
-Additional instructions: ${settings.concept || 'Maintain original product appearance with enhanced lighting.'}
       `;
     }
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS") {

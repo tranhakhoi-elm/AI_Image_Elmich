@@ -1110,96 +1110,44 @@ const App: React.FC = () => {
   // 7.5 Làm ảnh nền trắng Website
   const renderWhiteBgWebWorkflow = () => (
     <div className="space-y-6">
-      <StepIndicator current={whiteBgWebStep} total={2} labels={['Dữ liệu', 'Xuất bản']} />
-      
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={whiteBgWebStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-6"
-        >
-          {whiteBgWebStep === 1 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Thông tin cơ bản</label>
-                <div className="flex flex-col gap-3">
-                  <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-                  <input type="text" placeholder="Mã sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất liệu bề mặt</label>
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productMaterial} onChange={e => setSettings({...settings, productMaterial: e.target.value as any})}>
-                   <option value="MATTE" className="bg-[#051610]">Matte (Nhám / Lì)</option>
-                   <option value="GLOSSY" className="bg-[#051610]">Glossy (Bóng)</option>
-                   <option value="GLASS" className="bg-[#051610]">Glass (Trong suốt / Thủy tinh)</option>
-                   <option value="STAINLESS_STEEL" className="bg-[#051610]">Stainless Steel (Inox / Kim loại)</option>
-                </select>
-              </div>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Thông tin cơ bản</label>
+          <div className="flex flex-col gap-3">
+            <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+            <input type="text" placeholder="Mã sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+          </div>
+        </div>
 
-              <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm gốc</label>
-                <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-cyan-400 transition-all">
-                   {settings.referenceImage ? (
-                     <>
-                       <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
-                     </>
-                   ) : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Tải ảnh SP gốc</span>}
-                </div>
-                <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
-              </div>
-              <button disabled={!settings.referenceImage} onClick={() => setWhiteBgWebStep(2)} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
-            </div>
-          )}
+        <div>
+          <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm gốc</label>
+          <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-cyan-400 transition-all">
+             {settings.referenceImage ? (
+               <>
+                 <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
+               </>
+             ) : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Tải ảnh SP gốc</span>}
+          </div>
+          <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
+        </div>
 
-          {whiteBgWebStep === 2 && (
-            <div className="space-y-4">
-              <div>
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Yêu cầu bổ sung (Tùy chọn)</label>
-                 <textarea placeholder="Ví dụ: Làm sạch bụi trên vỏ, tăng độ bóng cho phần inox, làm sáng logo..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 resize-none h-24 custom-scrollbar" value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
-              </div>
+        <div>
+           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất lượng hình ảnh</label>
+           <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.imageSize} onChange={e => setSettings({...settings, imageSize: e.target.value as ImageSize})}>
+              <option value="1K" className="bg-[#051610]">1K Standard</option>
+              <option value="2K" className="bg-[#051610]">2K Pro</option>
+              <option value="4K" className="bg-[#051610]">4K Ultra HD</option>
+           </select>
+        </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                   <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất lượng hình ảnh</label>
-                   <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.imageSize} onChange={e => setSettings({...settings, imageSize: e.target.value as ImageSize})}>
-                      <option value="1K" className="bg-[#051610]">1K Standard</option>
-                      <option value="2K" className="bg-[#051610]">2K Pro</option>
-                      <option value="4K" className="bg-[#051610]">4K Ultra HD</option>
-                   </select>
-                </div>
-                <div>
-                   <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tỷ lệ</label>
-                   <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-                      <option value="1:1" className="bg-[#051610]">1:1 Vuông</option>
-                      <option value="4:3" className="bg-[#051610]">4:3 Catalog</option>
-                      <option value="3:4" className="bg-[#051610]">3:4 Portrait</option>
-                      <option value="16:9" className="bg-[#051610]">16:9 HD</option>
-                      <option value="9:16" className="bg-[#051610]">9:16</option>
-                      <option value="1:4" className="bg-[#051610]">1:4 Siêu dài</option>
-                      <option value="4:1" className="bg-[#051610]">4:1 Siêu rộng</option>
-                   </select>
-                </div>
-              </div>
+        {renderModelSelection()}
 
-              {renderModelSelection()}
-
-              <div className="flex gap-2">
-                <button onClick={() => setWhiteBgWebStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                <div className="flex-1 flex gap-2">
-                  <button onClick={() => startGeneration({ whiteBgWebPromptType: 'A' })} className="flex-1 py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Prompt A</button>
-                  <button onClick={() => startGeneration({ whiteBgWebPromptType: 'B' })} className="flex-1 py-4 bg-blue-500 text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Prompt B</button>
-                </div>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+        <div className="flex gap-2 pt-2">
+          <button disabled={!settings.referenceImage} onClick={() => startGeneration({ whiteBgWebPromptType: 'A' })} className="flex-1 py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Prompt A</button>
+          <button disabled={!settings.referenceImage} onClick={() => startGeneration({ whiteBgWebPromptType: 'B' })} className="flex-1 py-4 bg-blue-500 text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Prompt B</button>
+        </div>
+      </div>
     </div>
   );
 
