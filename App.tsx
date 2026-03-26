@@ -1715,6 +1715,18 @@ const renderTrackSocketWorkflow = () => (
     return `elmich-ai-${image.id}.png`;
   };
 
+  const calculateCost = (image: GeneratedImage) => {
+    let cost = 0;
+    if (image.settings.aiModel === 'gemini-3.1-flash-image-preview') {
+      if (image.settings.imageSize === '4K') cost = 0.151;
+      else if (image.settings.imageSize === '2K') cost = 0.101;
+      else cost = 0.067;
+    } else {
+      cost = 0.03;
+    }
+    return cost;
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative animate-fade-in">
       <header className="px-6 py-4 flex justify-between items-center z-50 sticky top-0 bg-[#051610]/80 backdrop-blur-md border-b border-white/5">
@@ -1740,6 +1752,7 @@ const renderTrackSocketWorkflow = () => (
                 <div className="relative group max-w-full bg-black/20 rounded-[30px] p-2 flex justify-center"><img src={activeImage.url} alt="Masterpiece" className="max-h-[60vh] max-w-full block object-contain rounded-[28px] shadow-2xl" /></div>
                 <div className="flex gap-4">
                   <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-[#caf0f8]">Phiên bản 0{activeImage.variant}</div>
+                  <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-emerald-400">Chi phí: ${calculateCost(activeImage).toFixed(3)}</div>
                   <a href={activeImage.url} download={getDownloadFileName(activeImage)} className="vibrant-button px-8 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-white">Lưu ảnh ✨</a>
                 </div>
                 
