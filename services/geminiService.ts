@@ -384,8 +384,10 @@ sharp, clean, premium commercial clarity
 preserve full detail in both highlights and shadows  
 
 Background: 
-solid light gray background, exactly matching hex color code #ebebec  
-clean studio environment, no color cast  
+100% uniform, flat, solid light gray background (exactly hex color code #ebebec).
+ABSOLUTELY NO gradients, NO textures, NO studio environment variations, NO walls or floors.
+The background MUST be a single flat color everywhere.
+The ONLY things visible on this background should be the product and its cast shadow.
 
 Final result: 
 product looks grounded, dimensional, and high-end  
@@ -394,7 +396,7 @@ realistic lighting and shadow like professional studio photography
     } else {
       finalPrompt = `
 Prompt A: 
-Ultra realistic product enhancement from a clean white background product image. Keep the product 100% unchanged: do not alter shape, structure, proportions, or materials do not change color, texture, or surface details preserve all original edges, contours, and fine details Lighting – high-end studio (neutral white balance): strong directional key light (premium EU/US commercial style) neutral white light (around 5500K–6000K), no warm or yellow color cast clean, sharp highlights with full detail retention no blown-out or clipped highlights Shadow – defined and grounded (like reference 2): clearly visible, well-defined contact shadow slightly stronger density for a solid, grounded feel medium edge softness (not too diffused, not harsh) smooth gradient falloff extending naturally consistent direction with light source preserve detail in shadow, no crushed blacks Color & tone control: accurate, true-to-life product color neutral whites, clean background (no yellow/green tint) balanced contrast with preserved midtones Enhance image quality: high clarity, crisp edges, sharp micro-contrast realistic depth and separation no artificial HDR or overprocessing Background: solid light gray background exactly matching hex color code #ebebec, clean studio look, no color contamination Final result: product remains identical to original input strong, grounded shadow like premium commercial shoot neutral, clean white balance (catalog-ready) high-end advertising quality, natural and realistic
+Ultra realistic product enhancement from a clean white background product image. Keep the product 100% unchanged: do not alter shape, structure, proportions, or materials do not change color, texture, or surface details preserve all original edges, contours, and fine details Lighting – high-end studio (neutral white balance): strong directional key light (premium EU/US commercial style) neutral white light (around 5500K–6000K), no warm or yellow color cast clean, sharp highlights with full detail retention no blown-out or clipped highlights Shadow – defined and grounded (like reference 2): clearly visible, well-defined contact shadow slightly stronger density for a solid, grounded feel medium edge softness (not too diffused, not harsh) smooth gradient falloff extending naturally consistent direction with light source preserve detail in shadow, no crushed blacks Color & tone control: accurate, true-to-life product color neutral whites, clean background (no yellow/green tint) balanced contrast with preserved midtones Enhance image quality: high clarity, crisp edges, sharp micro-contrast realistic depth and separation no artificial HDR or overprocessing Background: 100% uniform, flat, solid light gray background (exactly hex color code #ebebec). ABSOLUTELY NO gradients, NO textures, NO studio environment variations, NO walls or floors. The background MUST be a single flat color everywhere. The ONLY things visible on this background should be the product and its cast shadow. Final result: product remains identical to original input strong, grounded shadow like premium commercial shoot neutral, clean white balance (catalog-ready) high-end advertising quality, natural and realistic
       `;
     }
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS") {
