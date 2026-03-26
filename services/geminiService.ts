@@ -346,6 +346,60 @@ export const generateProductImage = async (settings: GenerationSettings, variant
       Shadows: Include a very subtle, natural contact shadow beneath the product to ground it realistically.
       Output Quality: ${qualityDescriptor}, 8k fidelity.
     `;
+  } else if (settings.visualStyle === "WHITE_BG_WEBSITE") {
+    if (settings.whiteBgWebPromptType === 'B') {
+      finalPrompt = `
+Prompt B:
+Ultra realistic studio enhancement from a clean white background product image. 
+
+Strict preservation (VERY IMPORTANT): 
+keep the product exactly as original  
+do NOT change shape, structure, proportions  
+do NOT change color, material, or texture  
+preserve all original edges and fine details  
+no reinterpretation or redesign  
+
+Lighting (premium look): 
+strong directional key light from LEFT at 45 degrees  
+soft fill light from front to keep product bright and clear  
+subtle rim highlight on edges to enhance depth and volume  
+lighting style: high-end EU/US commercial (like Caraway, Our Place)  
+clean, crisp highlights, no overexposure  
+
+Shadow (key part): 
+realistic cast shadow falling to the RIGHT side  
+shadow direction strictly matches left 45° light source  
+shadow has clear shape (visible silhouette of product)  
+soft edges with smooth gradient fade  
+shadow attached to product (no floating)  
+slightly darker near the base, lighter outward  
+
+Contact shadow: 
+add a tight, soft contact shadow directly under the product  
+enhances grounding and realism  
+
+Image quality: 
+high contrast but balanced  
+sharp, clean, premium commercial clarity  
+preserve full detail in both highlights and shadows  
+
+Background: 
+pure white or very subtle white gradient  
+clean studio environment, no color cast  
+
+Final result: 
+product looks grounded, dimensional, and high-end  
+realistic lighting and shadow like professional studio photography
+
+Additional instructions: ${settings.concept || 'Maintain original product appearance with enhanced lighting.'}
+      `;
+    } else {
+      finalPrompt = `
+Prompt A: 
+Ultra realistic product enhancement from a clean white background product image. Keep the product 100% unchanged: do not alter shape, structure, proportions, or materials do not change color, texture, or surface details preserve all original edges, contours, and fine details Lighting – high-end studio (neutral white balance): strong directional key light (premium EU/US commercial style) neutral white light (around 5500K–6000K), no warm or yellow color cast clean, sharp highlights with full detail retention no blown-out or clipped highlights Shadow – defined and grounded (like reference 2): clearly visible, well-defined contact shadow slightly stronger density for a solid, grounded feel medium edge softness (not too diffused, not harsh) smooth gradient falloff extending naturally consistent direction with light source preserve detail in shadow, no crushed blacks Color & tone control: accurate, true-to-life product color neutral whites, clean background (no yellow/green tint) balanced contrast with preserved midtones Enhance image quality: high clarity, crisp edges, sharp micro-contrast realistic depth and separation no artificial HDR or overprocessing Background: pure white or very subtle neutral grey-white gradient clean studio look, no color contamination Final result: product remains identical to original input strong, grounded shadow like premium commercial shoot neutral, clean white balance (catalog-ready) high-end advertising quality, natural and realistic
+Additional instructions: ${settings.concept || 'Maintain original product appearance with enhanced lighting.'}
+      `;
+    }
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS") {
     const thinkingPrompt = `
       Act as an expert AI image generation prompt engineer and professional product photographer.
@@ -500,7 +554,7 @@ export const generateProductImage = async (settings: GenerationSettings, variant
     });
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     if (settings.packagingDesignType === "FLAT_DESIGN" && settings.packagingFaces.flat) parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
-  } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "CONCEPT")) {
+  } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "WHITE_BG_WEBSITE" || settings.visualStyle === "CONCEPT")) {
     parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
   }
   
