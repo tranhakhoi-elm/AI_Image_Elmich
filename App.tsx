@@ -1125,7 +1125,10 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Thông tin cơ bản</label>
-                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <div className="flex flex-col gap-3">
+                  <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                  <input type="text" placeholder="Mã sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+                </div>
               </div>
               
               <div>
@@ -1755,6 +1758,15 @@ const renderTrackSocketWorkflow = () => (
     );
   }
 
+  const getDownloadFileName = (image: GeneratedImage) => {
+    if (image.settings.visualStyle === 'WHITE_BG_WEBSITE' && image.settings.productCode) {
+      const timePart = parseInt(image.id.split('-')[0] || '0', 10);
+      const randomNum = ((timePart + (image.variant || 0)) % 100) + 1;
+      return `${image.settings.productCode}${randomNum}.png`;
+    }
+    return `elmich-ai-${image.id}.png`;
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative animate-fade-in">
       <header className="px-6 py-4 flex justify-between items-center z-50 sticky top-0 bg-[#051610]/80 backdrop-blur-md border-b border-white/5">
@@ -1780,7 +1792,7 @@ const renderTrackSocketWorkflow = () => (
                 <div className="relative group max-w-full bg-black/20 rounded-[30px] p-2 flex justify-center"><img src={activeImage.url} alt="Masterpiece" className="max-h-[60vh] max-w-full block object-contain rounded-[28px] shadow-2xl" /></div>
                 <div className="flex gap-4">
                   <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-[#caf0f8]">Phiên bản 0{activeImage.variant}</div>
-                  <a href={activeImage.url} download={`elmich-ai-${activeImage.id}.png`} className="vibrant-button px-8 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-white">Lưu ảnh ✨</a>
+                  <a href={activeImage.url} download={getDownloadFileName(activeImage)} className="vibrant-button px-8 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-white">Lưu ảnh ✨</a>
                 </div>
                 
                 {/* Edit AI Image Section */}

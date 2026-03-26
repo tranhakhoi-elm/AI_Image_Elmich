@@ -62,6 +62,7 @@ export interface PropConfig {
 
 export interface GenerationSettings {
   productName: string;
+  productCode?: string;
   productImages: string[];
   referenceImage: string | null; // Hình ảnh gợi ý (Style Ref) hoặc ảnh gốc cho Tech Effect
   visualStyle: VisualStyle;
