@@ -116,11 +116,12 @@ const App: React.FC = () => {
   const socketFileRef = useRef<HTMLInputElement>(null);
   const pendingPackagingFace = useRef<keyof PackagingFaces | "flat">("flat");
 
-  const handleUnlock = () => {
-    if (passwordInput === "180692") {
+  const handlePasswordChange = (val: string) => {
+    setPasswordInput(val);
+    setPasswordError("");
+    if (val === "1111") {
       setIsLocked(false);
-      setPasswordError("");
-    } else {
+    } else if (val.length >= 4) {
       setPasswordError("Mật khẩu không chính xác");
     }
   };
@@ -1697,10 +1698,9 @@ const renderTrackSocketWorkflow = () => (
             <h2 className="text-lg font-bold text-[#caf0f8]">Bảo mật hệ thống</h2>
           </div>
           <div className="space-y-4">
-            <input type="password" placeholder="Mật khẩu..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center text-white tracking-[0.5em] outline-none" value={passwordInput} onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }} onKeyDown={(e) => e.key === 'Enter' && handleUnlock()} />
+            <input type="password" placeholder="Mật khẩu..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center text-white tracking-[0.5em] outline-none" value={passwordInput} onChange={(e) => handlePasswordChange(e.target.value)} autoFocus />
             {passwordError && <p className="text-red-400 text-xs font-bold uppercase">{passwordError}</p>}
           </div>
-          <button onClick={handleUnlock} className="w-full vibrant-button text-white font-bold py-4 rounded-[25px] uppercase text-[12px] shadow-xl">Mở khóa</button>
         </div>
       </div>
     );
