@@ -84,6 +84,7 @@ const App: React.FC = () => {
     sockets: [],
     trackSocketMode: 'CREATIVE',
     concept: '',
+    placement: '',
     location: '',
     camera: { focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false, angle: 0 },
     props: [],
@@ -192,7 +193,7 @@ const App: React.FC = () => {
       const dimStr = `${settings.dimensions.length}x${settings.dimensions.width}x${settings.dimensions.height}mm`;
       const result = await analyzeConceptAndCamera(settings.productName, dimStr, settings.productImages, settings.referenceImage);
       setSuggestions(prev => ({ ...prev, concepts: result.concepts }));
-      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0] }));
+      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0]?.prompt || '' }));
       setConceptStep(2);
     } catch (e: any) { console.error(e); } 
     finally { setAppState(AppState.READY); }
@@ -204,17 +205,17 @@ const App: React.FC = () => {
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ phù hợp cho phối cảnh này...");
     try {
-      const props = await suggestPropsForConcept(settings.productName, finalConcept);
-      setSuggestions(prev => ({ ...prev, props: props }));
-      setSettings(prev => ({ ...prev, props: [] }));
+      const result = await suggestPropsForConcept(settings.productName, finalConcept);
+      setSuggestions(prev => ({ ...prev, props: result.props }));
+      setSettings(prev => ({ ...prev, props: [], placement: result.placement }));
       setConceptStep(3);
     } catch (e) { console.error(e); } 
     finally { setAppState(AppState.READY); }
   };
 
   const addCustomConceptToList = () => {
-    if (customConcept && !suggestions.concepts.includes(customConcept)) {
-      setSuggestions(prev => ({ ...prev, concepts: [customConcept, ...prev.concepts] }));
+    if (customConcept && !suggestions.concepts.some(c => c.prompt === customConcept)) {
+      setSuggestions(prev => ({ ...prev, concepts: [{ title: "Tùy chỉnh", prompt: customConcept }, ...prev.concepts] }));
       setSettings(prev => ({ ...prev, concept: customConcept }));
       setCustomConcept('');
     }
@@ -255,7 +256,7 @@ const App: React.FC = () => {
       const dimStr = `${settings.dimensions.length}x${settings.dimensions.width}x${settings.dimensions.height}mm`;
       const result = await analyzeTechConceptAndCamera(settings.productName, settings.techDescription, dimStr, settings.productImages);
       setSuggestions(prev => ({ ...prev, concepts: result.concepts }));
-      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0] }));
+      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0]?.prompt || '' }));
       setTechStep(3);
     } catch (e: any) { console.error(e); } 
     finally { setAppState(AppState.READY); }
@@ -266,9 +267,9 @@ const App: React.FC = () => {
     setAppState(AppState.ANALYZING);
     setLoadingMessage("Đang tìm hiệu ứng...");
     try {
-      const visuals = await suggestTechVisuals(settings.productName, finalConcept);
-      setSuggestions(prev => ({ ...prev, props: visuals }));
-      setSettings(prev => ({ ...prev, props: [] }));
+      const result = await suggestTechVisuals(settings.productName, finalConcept);
+      setSuggestions(prev => ({ ...prev, props: result.props }));
+      setSettings(prev => ({ ...prev, props: [], placement: result.placement }));
       setTechStep(4);
     } catch (e) { console.error(e); } 
     finally { setAppState(AppState.READY); }
@@ -281,7 +282,7 @@ const App: React.FC = () => {
       try {
           const concepts = await suggestTechConcepts(settings.productName, settings.techTitle);
           setSuggestions(prev => ({ ...prev, concepts }));
-          setSettings(prev => ({ ...prev, selectedTechConcept: concepts[0] }));
+          setSettings(prev => ({ ...prev, selectedTechConcept: concepts[0]?.prompt || '' }));
           setTechEffectStep(3);
       } catch (e) { console.error(e); }
       finally { setAppState(AppState.READY); }
@@ -309,7 +310,7 @@ const App: React.FC = () => {
       const dimStr = `${settings.dimensions.length}x${settings.dimensions.width}x${settings.dimensions.height}mm`;
       const result = await analyzeStudioConcept(settings.productName, dimStr, settings.productImages);
       setSuggestions(prev => ({ ...prev, concepts: result.concepts }));
-      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0] }));
+      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0]?.prompt || '' }));
       setStudioStep(2);
     } catch (e: any) { console.error(e); } 
     finally { setAppState(AppState.READY); }
@@ -321,9 +322,9 @@ const App: React.FC = () => {
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ Studio phù hợp...");
     try {
-      const props = await suggestPropsForConcept(settings.productName, finalConcept);
-      setSuggestions(prev => ({ ...prev, props: props }));
-      setSettings(prev => ({ ...prev, props: [] }));
+      const result = await suggestPropsForConcept(settings.productName, finalConcept);
+      setSuggestions(prev => ({ ...prev, props: result.props }));
+      setSettings(prev => ({ ...prev, props: [], placement: result.placement }));
       setStudioStep(3);
     } catch (e) { console.error(e); } 
     finally { setAppState(AppState.READY); }
@@ -373,7 +374,7 @@ const App: React.FC = () => {
   const resetMode = () => {
     setCurrentStep(1); setConceptStep(1); setTechStep(1); setPackagingStep(1); setTechEffectStep(1); setWhiteBgStep(1); setStagingStep(1); setStudioStep(1); setTrackSocketStep(1);
     setSettings(prev => ({
-      ...prev, productName: '', productImages: [], referenceImage: null, techDescription: '', concept: '', props: [], colorChanges: [], packagingFaces: {}, techTitle: '', selectedTechConcept: '', productMaterial: 'MATTE', emptySpacePosition: [], trackImage: undefined, sockets: []
+      ...prev, productName: '', productImages: [], referenceImage: null, techDescription: '', concept: '', placement: '', props: [], colorChanges: [], packagingFaces: {}, techTitle: '', selectedTechConcept: '', productMaterial: 'MATTE', emptySpacePosition: [], trackImage: undefined, sockets: []
     }));
     setSuggestions({ concepts: [], locations: [], props: [] });
     setCurrentSampleImage(null); setCustomConcept(''); setCustomProp('');
@@ -423,48 +424,6 @@ const App: React.FC = () => {
   );
 
   // --- RENDER FUNCTIONS ---
-
-  const renderSelectedProps = () => {
-    if (settings.props.length === 0) return null;
-    return (
-      <div className="space-y-2 pt-4 border-t border-white/10">
-        <label className="block text-[9px] font-bold text-slate-400 uppercase">Tùy chỉnh đạo cụ đã chọn</label>
-        <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
-          {settings.props.map(p => (
-            <div key={p.name} className="bg-white/5 p-2 rounded-lg border border-white/10 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold text-white">{p.name}</span>
-                <button onClick={() => toggleProp(p.name)} className="text-red-400 text-[10px] hover:underline">Xóa</button>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <select className="bg-black/20 border border-white/10 rounded p-1 text-[9px] text-white outline-none" value={p.size || 'auto'} onChange={e => updateProp(p.name, { size: e.target.value as any })}>
-                  <option value="auto">Kích thước</option>
-                  <option value="small">Nhỏ</option>
-                  <option value="medium">Vừa</option>
-                  <option value="large">Lớn</option>
-                </select>
-                <select className="bg-black/20 border border-white/10 rounded p-1 text-[9px] text-white outline-none" value={p.position || 'auto'} onChange={e => updateProp(p.name, { position: e.target.value as any })}>
-                  <option value="auto">Vị trí</option>
-                  <option value="left">Trái</option>
-                  <option value="right">Phải</option>
-                  <option value="front">Trước</option>
-                  <option value="back">Sau</option>
-                  <option value="background">Nền</option>
-                  <option value="foreground">Tiền cảnh</option>
-                </select>
-                <select className="bg-black/20 border border-white/10 rounded p-1 text-[9px] text-white outline-none" value={p.rotation || 'auto'} onChange={e => updateProp(p.name, { rotation: e.target.value as any })}>
-                  <option value="auto">Góc xoay</option>
-                  <option value="tilted">Nghiêng</option>
-                  <option value="upright">Thẳng đứng</option>
-                  <option value="flat">Nằm ngang</option>
-                </select>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
 
   // 1. Ảnh phối cảnh Workflow (Lifestyle Concept)
   const renderConceptWorkflow = () => (
@@ -524,8 +483,11 @@ const App: React.FC = () => {
             <div className="space-y-4">
                <label className="block text-[9px] font-bold text-slate-400 uppercase">Chọn Phối cảnh</label>
                <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                 {suggestions.concepts.map(c => (
-                   <button key={c} onClick={() => setSettings({...settings, concept: c})} className={`w-full text-left p-4 rounded-xl border text-[10px] leading-relaxed transition-all ${settings.concept === c ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>{c}</button>
+                 {suggestions.concepts.map((c, idx) => (
+                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                     <div className="font-bold text-[11px] mb-1">{c.title}</div>
+                     <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
+                   </button>
                  ))}
                </div>
                
@@ -553,6 +515,16 @@ const App: React.FC = () => {
                  <div className="text-[10px] text-white italic">"{settings.concept}"</div>
               </div>
 
+              <div className="space-y-2">
+                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Vị trí và tỷ lệ sản phẩm</label>
+                 <textarea 
+                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-cyan-400 min-h-[80px] custom-scrollbar"
+                   value={settings.placement}
+                   onChange={e => setSettings(prev => ({ ...prev, placement: e.target.value }))}
+                   placeholder="Nhập vị trí và tỷ lệ sản phẩm..."
+                 />
+              </div>
+
               <div>
                  <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Gợi ý đạo cụ</label>
                  <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar">
@@ -569,8 +541,6 @@ const App: React.FC = () => {
                     <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
                  </div>
               </div>
-
-              {renderSelectedProps()}
 
               <div className="flex gap-2">
                   <button onClick={() => setConceptStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold hover:bg-white/5">Quay lại</button>
@@ -646,7 +616,6 @@ const App: React.FC = () => {
                        <input type="text" placeholder="Thêm vật phẩm khác..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none focus:border-cyan-400" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
                        <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
                     </div>
-                    {renderSelectedProps()}
                     <div className="flex gap-2 mt-4">
                       <button onClick={() => setStagingStep(3)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
                       <button onClick={() => setStagingStep(5)} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
@@ -714,8 +683,11 @@ const App: React.FC = () => {
             <div className="space-y-4">
                <label className="block text-[9px] font-bold text-slate-400 uppercase">Chọn Tech Concept</label>
                <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
-                 {suggestions.concepts.map(c => (
-                   <button key={c} onClick={() => setSettings({...settings, concept: c})} className={`w-full text-left p-3 rounded-xl border text-[10px] font-medium transition-all ${settings.concept === c ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>{c}</button>
+                 {suggestions.concepts.map((c, idx) => (
+                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-3 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                     <div className="font-bold text-[11px] mb-1">{c.title}</div>
+                     <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
+                   </button>
                  ))}
                </div>
                <div className="pt-4 border-t border-white/10 space-y-2">
@@ -731,6 +703,16 @@ const App: React.FC = () => {
 
           {techStep === 4 && (
             <div className="space-y-4">
+              <div className="space-y-2">
+                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Vị trí và tỷ lệ sản phẩm</label>
+                 <textarea 
+                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-cyan-400 min-h-[80px] custom-scrollbar"
+                   value={settings.placement}
+                   onChange={e => setSettings(prev => ({ ...prev, placement: e.target.value }))}
+                   placeholder="Nhập vị trí và tỷ lệ sản phẩm..."
+                 />
+              </div>
+
               <label className="block text-[9px] font-bold text-slate-400 uppercase">Visual Elements</label>
               <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                 {suggestions.props.map(p => (
@@ -743,7 +725,6 @@ const App: React.FC = () => {
                     <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
                  </div>
               </div>
-              {renderSelectedProps()}
               <div className="flex gap-2">
                 <button onClick={() => setTechStep(3)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
                 <button onClick={() => setTechStep(5)} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
@@ -1002,8 +983,11 @@ const App: React.FC = () => {
             <div className="space-y-4">
                <label className="block text-[10px] font-bold text-slate-400 uppercase">Chọn Concept</label>
                <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
-                 {suggestions.concepts.map(c => (
-                   <button key={c} onClick={() => setSettings({...settings, selectedTechConcept: c})} className={`w-full text-left p-3 rounded-xl border text-[10px] transition-all ${settings.selectedTechConcept === c ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>{c}</button>
+                 {suggestions.concepts.map((c, idx) => (
+                   <button key={idx} onClick={() => setSettings({...settings, selectedTechConcept: c.prompt})} className={`w-full text-left p-3 rounded-xl border transition-all ${settings.selectedTechConcept === c.prompt ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                     <div className="font-bold text-[11px] mb-1">{c.title}</div>
+                     <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
+                   </button>
                  ))}
                </div>
                {renderModelSelection()}
@@ -1034,11 +1018,6 @@ const App: React.FC = () => {
         >
           {whiteBgStep === 1 && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Thông tin cơ bản</label>
-                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-              </div>
-              
               <div>
                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất liệu bề mặt</label>
                 <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productMaterial} onChange={e => setSettings({...settings, productMaterial: e.target.value as any})}>
@@ -1072,27 +1051,17 @@ const App: React.FC = () => {
                  <textarea placeholder="Ví dụ: Làm sạch bụi trên vỏ, tăng độ bóng cho phần inox, làm sáng logo..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 resize-none h-24 custom-scrollbar" value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                   <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Kích thước ảnh</label>
-                   <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.imageSize} onChange={e => setSettings({...settings, imageSize: e.target.value as ImageSize})}>
-                      <option value="1K" className="bg-[#051610]">1K Standard</option>
-                      <option value="2K" className="bg-[#051610]">2K Pro</option>
-                      <option value="4K" className="bg-[#051610]">4K Ultra HD</option>
-                   </select>
-                </div>
-                <div>
-                   <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tỷ lệ</label>
-                   <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-                      <option value="1:1" className="bg-[#051610]">1:1 Vuông</option>
-                      <option value="4:3" className="bg-[#051610]">4:3 Catalog</option>
-                      <option value="3:4" className="bg-[#051610]">3:4 Portrait</option>
-                      <option value="16:9" className="bg-[#051610]">16:9 HD</option>
-                      <option value="9:16" className="bg-[#051610]">9:16</option>
-                      <option value="1:4" className="bg-[#051610]">1:4 Siêu dài</option>
-                      <option value="4:1" className="bg-[#051610]">4:1 Siêu rộng</option>
-                   </select>
-                </div>
+              <div>
+                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tỷ lệ</label>
+                 <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+                    <option value="1:1" className="bg-[#051610]">1:1 Vuông</option>
+                    <option value="4:3" className="bg-[#051610]">4:3 Catalog</option>
+                    <option value="3:4" className="bg-[#051610]">3:4 Portrait</option>
+                    <option value="16:9" className="bg-[#051610]">16:9 HD</option>
+                    <option value="9:16" className="bg-[#051610]">9:16</option>
+                    <option value="1:4" className="bg-[#051610]">1:4 Siêu dài</option>
+                    <option value="4:1" className="bg-[#051610]">4:1 Siêu rộng</option>
+                 </select>
               </div>
 
               {renderModelSelection()}
@@ -1112,14 +1081,6 @@ const App: React.FC = () => {
   const renderWhiteBgWebWorkflow = () => (
     <div className="space-y-6">
       <div className="space-y-4">
-        <div>
-          <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Thông tin cơ bản</label>
-          <div className="flex flex-col gap-3">
-            <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-            <input type="text" placeholder="Mã sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
-          </div>
-        </div>
-
         <div>
           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm gốc</label>
           <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-cyan-400 transition-all">
@@ -1202,8 +1163,11 @@ const App: React.FC = () => {
             <div className="space-y-4">
                <label className="block text-[9px] font-bold text-slate-400 uppercase">Chọn Concept Studio</label>
                <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                 {suggestions.concepts.map(c => (
-                   <button key={c} onClick={() => setSettings({...settings, concept: c})} className={`w-full text-left p-4 rounded-xl border text-[10px] leading-relaxed transition-all ${settings.concept === c ? 'bg-emerald-400 text-[#051610] border-emerald-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>{c}</button>
+                 {suggestions.concepts.map((c, idx) => (
+                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-emerald-400 text-[#051610] border-emerald-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                     <div className="font-bold text-[11px] mb-1">{c.title}</div>
+                     <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
+                   </button>
                  ))}
                </div>
                
@@ -1229,6 +1193,16 @@ const App: React.FC = () => {
               <div className="bg-emerald-400/10 p-3 rounded-xl border border-emerald-400/20">
                  <div className="text-[8px] font-bold text-emerald-400 uppercase mb-1">Concept Studio đã chọn:</div>
                  <div className="text-[10px] text-white italic">"{settings.concept}"</div>
+              </div>
+
+              <div className="space-y-2">
+                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Vị trí và tỷ lệ sản phẩm</label>
+                 <textarea 
+                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-emerald-400 min-h-[80px] custom-scrollbar"
+                   value={settings.placement}
+                   onChange={e => setSettings(prev => ({ ...prev, placement: e.target.value }))}
+                   placeholder="Nhập vị trí và tỷ lệ sản phẩm..."
+                 />
               </div>
 
               <div>
@@ -1279,8 +1253,6 @@ const App: React.FC = () => {
                 <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
              </div>
           </div>
-
-          {renderSelectedProps()}
 
           <div className="flex gap-2">
               <button onClick={() => setStudioStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
@@ -1717,13 +1689,20 @@ const renderTrackSocketWorkflow = () => (
 
   const calculateCost = (image: GeneratedImage) => {
     let cost = 0;
+    // Image generation cost
     if (image.settings.aiModel === 'gemini-3.1-flash-image-preview') {
       if (image.settings.imageSize === '4K') cost = 0.151;
       else if (image.settings.imageSize === '2K') cost = 0.101;
       else cost = 0.067;
     } else {
-      cost = 0.03;
+      cost = 0.039; // Updated to 0.039 for gemini-2.5-flash-image
     }
+    
+    // Prompt generation cost (Step 1)
+    if (image.settings.visualStyle === 'CONCEPT' || image.settings.visualStyle === 'STUDIO') {
+      cost += 0.002; // Cost for gemini-3.1-flash-lite-preview
+    }
+    
     return cost;
   };
 

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig } from "../types";
+import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig, ConceptSuggestion } from "../types";
 
 // --- CÁC HÀM CHO CÁC MODE CŨ ---
 export const getAiSuggestions = async (settings: { productName: string, visualStyle: string, techDescription?: string }): Promise<AISuggestions> => {
@@ -32,15 +32,21 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const prompt = `
-      Bạn là một giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp.
+      Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm.
       Sản phẩm: "${productName}". Kích thước: ${dimensions}.
       ${refImage ? "Tôi có gửi kèm một ảnh mẫu phong cách (Style Reference). Hãy dựa vào style của ảnh này để đề xuất." : ""}
       
       YÊU CẦU:
-      1. Đề xuất 5 Ý tưởng (Concept) phối cảnh chụp ảnh Lifestyle. Các concept cần hướng tới sự rõ ràng (clear), gọn gàng, gần gũi với đời thường (như trong bếp, văn phòng, phòng khách...) và phải ĐÚNG với mục đích sử dụng thực tế của sản phẩm.
-      2. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất.
+      1. Đề xuất 5 Ý tưởng (Concept) phối cảnh chụp ảnh Lifestyle. Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
+      2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+         - [Mô tả phong cách]
+         - [Mô tả không gian, bối cảnh]
+         - [Mô tả cách đánh sáng]
+         - [Mô tả cảm giác, màu sắc chủ đạo]
+         (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
+      3. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất.
 
-      Trả về JSON.
+      Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
     `;
 
     const parts: any[] = [{ text: prompt }];
@@ -50,14 +56,24 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview", 
+      model: "gemini-3.1-flash-lite-preview", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            concepts: { type: Type.ARRAY, items: { type: Type.STRING } },
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
             suggestedCamera: {
               type: Type.OBJECT,
               properties: {
@@ -86,19 +102,35 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
 export const analyzeTechConceptAndCamera = async (productName: string, techDesc: string, dimensions: string, images: string[]): Promise<AIConceptAnalysis> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const prompt = `Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}. Trả về JSON 5 concept và camera.`;
+    const prompt = `Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}. 
+    Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
+    YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+    - [Mô tả phong cách]
+    - [Mô tả không gian, bối cảnh]
+    - [Mô tả cách đánh sáng]
+    - [Mô tả cảm giác, màu sắc chủ đạo]`;
     const parts: any[] = [{ text: prompt }];
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3.1-flash-lite-preview",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            concepts: { type: Type.ARRAY, items: { type: Type.STRING } },
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
             suggestedCamera: {
               type: Type.OBJECT,
               properties: {
@@ -116,55 +148,86 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
 };
 
 // 3. Gợi ý Props cho Concept Lifestyle
-export const suggestPropsForConcept = async (productName: string, concept: string): Promise<string[]> => {
+export const suggestPropsForConcept = async (productName: string, concept: string): Promise<{props: string[], placement: string}> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Sản phẩm: ${productName}. Concept: "${concept}". Liệt kê 10 đạo cụ (props) trang trí phù hợp nhất. JSON array string.`,
+      contents: `Sản phẩm: ${productName}. Concept: "${concept}". 
+      YÊU CẦU:
+      1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
+      2. Liệt kê 10 đạo cụ (props) trang trí đi kèm phù hợp nhất.
+      Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
-          properties: { props: { type: Type.ARRAY, items: { type: Type.STRING } } }
+          properties: { 
+            placement: { type: Type.STRING },
+            props: { type: Type.ARRAY, items: { type: Type.STRING } } 
+          }
         }
       }
     });
-    return JSON.parse(response.text || "{}").props || [];
-  } catch (error) { return []; }
+    return JSON.parse(response.text || "{}");
+  } catch (error) { return { props: [], placement: "" }; }
 };
 
 // 4. Gợi ý Visual Elements cho Tech USP
-export const suggestTechVisuals = async (productName: string, concept: string): Promise<string[]> => {
+export const suggestTechVisuals = async (productName: string, concept: string): Promise<{props: string[], placement: string}> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". Liệt kê 10 hiệu ứng đồ họa/visual elements. JSON array string.`,
+      contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
+      YÊU CẦU:
+      1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
+      2. Liệt kê 10 hiệu ứng đồ họa/visual elements đi kèm phù hợp nhất.
+      Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
-          properties: { props: { type: Type.ARRAY, items: { type: Type.STRING } } }
+          properties: { 
+            placement: { type: Type.STRING },
+            props: { type: Type.ARRAY, items: { type: Type.STRING } } 
+          }
         }
       }
     });
-    return JSON.parse(response.text || "{}").props || [];
-  } catch (error) { return []; }
+    return JSON.parse(response.text || "{}");
+  } catch (error) { return { props: [], placement: "" }; }
 };
 
 // 5. Gợi ý Tech Concepts cho Hiệu ứng mặt biển
-export const suggestTechConcepts = async (productName: string, title: string): Promise<string[]> => {
+export const suggestTechConcepts = async (productName: string, title: string): Promise<ConceptSuggestion[]> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm (văn xuôi, chi tiết). JSON array.`,
+      contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm. JSON array với 'title' (tiếng Việt) và 'prompt'.
+      YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+      - [Mô tả phong cách]
+      - [Mô tả nền mặt biển]
+      - [Mô tả cách đánh sáng]
+      - [Mô tả cảm giác, màu sắc chủ đạo]`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
-          properties: { concepts: { type: Type.ARRAY, items: { type: Type.STRING } } }
+          properties: { 
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            } 
+          }
         }
       }
     });
@@ -183,7 +246,7 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
       { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
     ];
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3.1-flash-lite-preview",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -202,12 +265,17 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const prompt = `
-      Bạn là một giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp.
+      Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm.
       Sản phẩm: "${productName}". Kích thước: ${dimensions}.
       
       YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT:
-      1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú và đa dạng (ví dụ: tối giản, hiện đại, hình học, ánh sáng kịch tính, v.v.).
-      2. MÔ TẢ MẠCH LẠC, DỄ HÌNH DUNG: Mỗi concept cần được mô tả rõ ràng, súc tích. Tập trung miêu tả cụ thể về tông màu chủ đạo, cách đánh sáng (lighting) và cảm giác/không khí (vibe) mang lại. Không cần quá dài dòng nhưng phải mạch lạc để người đọc dễ dàng tưởng tượng ra bức ảnh.
+      1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
+      2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+         - [Mô tả phong cách]
+         - [Màu sắc, chất liệu nền giấy]
+         - [Cách đánh sáng, tạo bóng]
+         - [Mô tả cảm giác, màu sắc chủ đạo]
+         (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
       3. RÀNG BUỘC BẮT BUỘC:
          - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
          - Màu nền là màu Pastel tinh tế, HÀI HÒA hoặc ĐỒNG ĐIỆU với sản phẩm.
@@ -215,21 +283,31 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
          - Chừa khoảng trống trên nền để chèn chữ (Text).
       4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio.
 
-      Trả về JSON với 5 concepts và suggestedCamera.
+      Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
     `;
 
     const parts: any[] = [{ text: prompt }];
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview", 
+      model: "gemini-3.1-flash-lite-preview", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            concepts: { type: Type.ARRAY, items: { type: Type.STRING } },
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
             suggestedCamera: {
               type: Type.OBJECT,
               properties: {
@@ -333,19 +411,15 @@ export const generateProductImage = async (settings: GenerationSettings, variant
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     finalPrompt = `3D Packaging Mockup for ${settings.productName}. ${settings.packagingOutputStyle === 'WHITE_BG_ROTATED' ? 'White background studio' : 'Contextual lifestyle'}. Camera: ${formatCameraSettings(settings.camera)}. 8k resolution.`;
   } else if (settings.visualStyle === "WHITE_BG_RETOUCH") {
-    const qualityDescriptor = settings.imageSize === '4K' ? 'Ultra-High 4K Resolution, Hyper-detailed textures' : settings.imageSize === '2K' ? 'High Quality 2K Resolution, Sharp details' : 'Standard 1K Resolution, Clean finish';
-    finalPrompt = `
-      Professional e-commerce digital photography of '${settings.productName}'. 
-      Visual Style: Digital high-end DSLR/Mirrorless camera capture aesthetic.
-      Camera & Lighting Setup: ${formatCameraSettings(settings.camera)}.
-      Background: Recreate the image with the product isolated on a flawless, perfectly pure white background (#FFFFFF).
-      Material characteristics: ${settings.productMaterial}.
-      Retouching task: Professional studio retouching. Clean reflections, remove imperfections, enhance surface texture realism.
-      Additional instructions: ${settings.concept || 'Maintain original product appearance with enhanced lighting.'}.
-      Lighting: Professional studio lighting setup with accurate color reproduction.
-      Shadows: Include a very subtle, natural contact shadow beneath the product to ground it realistically.
-      Output Quality: ${qualityDescriptor}, 8k fidelity.
-    `;
+    finalPrompt = `A premium commercial studio product photograph featuring the main product on a clean, textureless white background. The composition is clean and focused, presenting the item as a high-value advertisement. The entire scene is illuminated by a single, soft directional key light positioned from the upper-left at a 45-degree angle, casting consistent and flattering light. This lighting creates smooth, controlled highlights on the polished surfaces and curved contours of the product. Subtle, defined reflections are carefully placed, avoiding any harsh glare or overexposure, giving the materials a rich, refined feel.
+
+The shadow work is precise and adds significant depth and realism to the composition. The product casts a soft, subtle contact shadow directly beneath its base, grounding it firmly on the surface. There are absolutely no long, elongated, or trailing shadows extending outward. The shadow structure is strictly limited to a soft, diffused elliptical shadow immediately under the product, creating a natural and clean grounding effect without any directional cast shadows. Where parts are positioned close to one another, their individual contact shadows overlap naturally, creating realistic interaction that defines the physical space between them without merging into unnatural masses. A darker contact shadow is present exactly under each base, diffusing smoothly and quickly outward over a very short distance.
+
+All shadows have soft edges with a smooth gradient fade, completely avoiding floating shadows, unnatural merged 'blobs', or any long trailing effects. The shadows precisely respect the spacing and depth, creating a realistic sense of layered composition and three-dimensional form while maintaining a perfectly clean surrounding white space. The background is a clean, pure white without any visible texture or color contamination. The overall image quality is characterized by high clarity, balanced contrast, and a realistic depth of field, presenting the product with a premium commercial aesthetic. All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
+
+Additional Instructions: ${settings.concept || 'None'}
+Camera & Lighting Setup: ${formatCameraSettings(settings.camera)}
+Material Characteristics: ${settings.productMaterial}`;
   } else if (settings.visualStyle === "WHITE_BG_WEBSITE") {
     if (settings.whiteBgWebPromptType === 'B') {
       finalPrompt = `
@@ -367,16 +441,16 @@ lighting style: high-end EU/US commercial (like Caraway, Our Place)
 clean, crisp highlights, no overexposure  
 
 Shadow (key part): 
-realistic cast shadow falling to the RIGHT side  
-shadow direction strictly matches left 45° light source  
-shadow has clear shape (visible silhouette of product)  
+strictly limited to a soft contact shadow directly beneath the product base  
+NO long, elongated, or trailing cast shadows  
+shadow must NOT extend far from the product  
 soft edges with smooth gradient fade  
 shadow attached to product (no floating)  
-slightly darker near the base, lighter outward  
+slightly darker near the base, diffusing quickly outward  
 
 Contact shadow: 
 add a tight, soft contact shadow directly under the product  
-enhances grounding and realism  
+enhances grounding and realism without adding directional length  
 
 Image quality: 
 high contrast but balanced  
@@ -384,10 +458,8 @@ sharp, clean, premium commercial clarity
 preserve full detail in both highlights and shadows  
 
 Background: 
-100% uniform, flat, solid light gray background (exactly hex color code #ebebec).
-ABSOLUTELY NO gradients, NO textures, NO studio environment variations, NO walls or floors.
-The background MUST be a single flat color everywhere.
-The ONLY things visible on this background should be the product and its cast shadow.
+pure white or very subtle white gradient  
+clean studio environment, no color cast  
 
 Final result: 
 product looks grounded, dimensional, and high-end  
@@ -396,7 +468,7 @@ realistic lighting and shadow like professional studio photography
     } else {
       finalPrompt = `
 Prompt A: 
-Ultra realistic product enhancement from a clean white background product image. Keep the product 100% unchanged: do not alter shape, structure, proportions, or materials do not change color, texture, or surface details preserve all original edges, contours, and fine details Lighting – high-end studio (neutral white balance): strong directional key light (premium EU/US commercial style) neutral white light (around 5500K–6000K), no warm or yellow color cast clean, sharp highlights with full detail retention no blown-out or clipped highlights Shadow – defined and grounded (like reference 2): clearly visible, well-defined contact shadow slightly stronger density for a solid, grounded feel medium edge softness (not too diffused, not harsh) smooth gradient falloff extending naturally consistent direction with light source preserve detail in shadow, no crushed blacks Color & tone control: accurate, true-to-life product color neutral whites, clean background (no yellow/green tint) balanced contrast with preserved midtones Enhance image quality: high clarity, crisp edges, sharp micro-contrast realistic depth and separation no artificial HDR or overprocessing Background: 100% uniform, flat, solid light gray background (exactly hex color code #ebebec). ABSOLUTELY NO gradients, NO textures, NO studio environment variations, NO walls or floors. The background MUST be a single flat color everywhere. The ONLY things visible on this background should be the product and its cast shadow. Final result: product remains identical to original input strong, grounded shadow like premium commercial shoot neutral, clean white balance (catalog-ready) high-end advertising quality, natural and realistic
+Ultra realistic product enhancement from a clean white background product image. Keep the product 100% unchanged: do not alter shape, structure, proportions, or materials do not change color, texture, or surface details preserve all original edges, contours, and fine details Lighting – high-end studio (neutral white balance): strong directional key light (premium EU/US commercial style) neutral white light (around 5500K–6000K), no warm or yellow color cast clean, sharp highlights with full detail retention no blown-out or clipped highlights Shadow – defined and grounded: strictly limited to a soft contact shadow directly beneath the product base, NO long or trailing cast shadows, clearly visible well-defined contact shadow, slightly stronger density for a solid grounded feel, smooth gradient falloff diffusing quickly outward, preserve detail in shadow, no crushed blacks Color & tone control: accurate, true-to-life product color neutral whites, clean background (no yellow/green tint) balanced contrast with preserved midtones Enhance image quality: high clarity, crisp edges, sharp micro-contrast realistic depth and separation no artificial HDR or overprocessing Background: pure white or very subtle neutral grey-white gradient clean studio look, no color contamination Final result: product remains identical to original input strong, grounded contact shadow like premium commercial shoot neutral, clean white balance (catalog-ready) high-end advertising quality, natural and realistic
       `;
     }
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS") {
@@ -406,6 +478,7 @@ Ultra realistic product enhancement from a clean white background product image.
       
       Product: ${settings.productName}
       Creative Concept/Theme: ${settings.concept}
+      Placement and Proportion: ${settings.placement}
       Props to include: ${formatProps(settings.props)}
       Camera & Lighting Setup: ${formatCameraSettings(settings.camera)}
       
@@ -416,9 +489,8 @@ Ultra realistic product enhancement from a clean white background product image.
       - ONLY output the final prompt text, no explanations.
     `;
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: thinkingPrompt,
-      config: { thinkingConfig: { thinkingBudget: 1024 } }
+      model: "gemini-3.1-flash-lite-preview",
+      contents: thinkingPrompt
     });
     finalPrompt = thinkingResponse.text || "";
   } else if (settings.visualStyle === "COLOR_CHANGE") {
@@ -461,6 +533,7 @@ Ultra realistic product enhancement from a clean white background product image.
       
       Product: ${settings.productName}
       Creative Concept: ${settings.concept}
+      Placement and Proportion: ${settings.placement}
       Props to include: ${formatProps(settings.props)}
       Background: Plain paper background in a soft pastel color that matches the product's primary color.
       Empty Space Requirement: ${spaceInstruction}
@@ -475,9 +548,8 @@ Ultra realistic product enhancement from a clean white background product image.
     `;
     
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: thinkingPrompt,
-      config: { thinkingConfig: { thinkingBudget: 1024 } }
+      model: "gemini-3.1-flash-lite-preview",
+      contents: thinkingPrompt
     });
     finalPrompt = thinkingResponse.text || "";
   } else if (settings.visualStyle === "TRACK_SOCKET_STAGING") {

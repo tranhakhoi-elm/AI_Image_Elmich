@@ -94,6 +94,7 @@ export interface GenerationSettings {
   trackSocketMode?: 'CREATIVE' | 'REFERENCE';
 
   concept: string; // Ý tưởng đã chốt
+  placement: string; // Vị trí và tỷ lệ sản phẩm
   location: string; // (Vẫn giữ cho các mode khác, nhưng Concept sẽ dùng logic riêng)
   camera: CameraSettings;
   props: PropConfig[]; // Đạo cụ đã chọn
@@ -104,13 +105,18 @@ export interface GenerationSettings {
   numImages: number;
 }
 
+export interface ConceptSuggestion {
+  title: string;
+  prompt: string;
+}
+
 export interface AIConceptAnalysis {
-  concepts: string[]; // 5 ý tưởng
+  concepts: ConceptSuggestion[]; // 5 ý tưởng
   suggestedCamera: CameraSettings; // Gợi ý camera dựa trên sản phẩm
 }
 
 export interface AISuggestions {
-  concepts: string[];
+  concepts: ConceptSuggestion[];
   locations: string[];
   props: string[];
 }
