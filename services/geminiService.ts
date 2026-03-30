@@ -411,9 +411,29 @@ export const generateProductImage = async (settings: GenerationSettings, variant
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     finalPrompt = `3D Packaging Mockup for ${settings.productName}. ${settings.packagingOutputStyle === 'WHITE_BG_ROTATED' ? 'White background studio' : 'Contextual lifestyle'}. Camera: ${formatCameraSettings(settings.camera)}. 8k resolution.`;
   } else if (settings.visualStyle === "WHITE_BG_RETOUCH") {
-    finalPrompt = `A premium commercial studio product photograph featuring the main product on a clean, textureless white background. The composition is clean and focused, presenting the item as a high-value advertisement. The entire scene is illuminated by a single, soft directional key light positioned from the upper-left at a 45-degree angle, casting consistent and flattering light. This lighting creates smooth, controlled highlights on the polished surfaces and curved contours of the product. Subtle, defined reflections are carefully placed, avoiding any harsh glare or overexposure, giving the materials a rich, refined feel.
+    let stylePrompt = "";
+    switch (settings.whiteBgRetouchStyle) {
+      case 'DRAMATIC':
+        stylePrompt = `A bold, high-contrast commercial studio product photograph on a pure white background. Illuminated by a strong, focused hard light from the side, creating striking, dramatic highlights and deep, sharply defined shadows. The lighting emphasizes texture and geometric forms. The shadows are bold and directional, grounding the product with authority. High clarity, intense contrast, modern and edgy aesthetic.`;
+        break;
+      case 'SOFT':
+        stylePrompt = `A delicate, light and airy commercial studio product photograph on a pure white background. Illuminated by massive, ultra-soft diffused lighting from multiple angles, creating a nearly shadowless, ethereal environment. Highlights are incredibly smooth and gentle. Shadows are minimal, restricted to very faint, soft contact shadows just enough to ground the product without adding weight. High key exposure, pristine clarity, soft and inviting aesthetic.`;
+        break;
+      case 'CINEMATIC':
+        stylePrompt = `A luxurious, cinematic studio product photograph on a pure white background. Featuring sophisticated lighting with a subtle overall exposure, accented by sharp, brilliant rim lights outlining the product's silhouette. Rich, deep contact shadows ground the item, while the edge lighting creates a glowing, premium three-dimensional effect. High clarity, rich micro-contrast, high-end luxury aesthetic.`;
+        break;
+      case 'TECHNICAL':
+        stylePrompt = `An ultra-crisp, technical commercial studio product photograph on a pure white background. Illuminated by perfectly even, flat lighting from all directions to eliminate all directional shadows and reveal every micro-detail of the product. Only the tightest, darkest contact shadows are present to ground the item. Maximum sharpness, perfect color accuracy, clinical and informative aesthetic.`;
+        break;
+      case 'CLASSIC':
+      default:
+        stylePrompt = `A premium commercial studio product photograph featuring the main product on a clean, textureless white background. The composition is clean and focused, presenting the item as a high-value advertisement. The entire scene is illuminated by a single, soft directional key light positioned from the upper-left at a 45-degree angle, casting consistent and flattering light. This lighting creates smooth, controlled highlights on the polished surfaces and curved contours of the product. Subtle, defined reflections are carefully placed, avoiding any harsh glare or overexposure, giving the materials a rich, refined feel.
 
-The shadow work is precise and adds significant depth and realism to the composition. The product casts a soft, subtle contact shadow directly beneath its base, grounding it firmly on the surface. There are absolutely no long, elongated, or trailing shadows extending outward. The shadow structure is strictly limited to a soft, diffused elliptical shadow immediately under the product, creating a natural and clean grounding effect without any directional cast shadows. Where parts are positioned close to one another, their individual contact shadows overlap naturally, creating realistic interaction that defines the physical space between them without merging into unnatural masses. A darker contact shadow is present exactly under each base, diffusing smoothly and quickly outward over a very short distance.
+The shadow work is precise and adds significant depth and realism to the composition. The product casts a soft, subtle contact shadow directly beneath its base, grounding it firmly on the surface. There are absolutely no long, elongated, or trailing shadows extending outward. The shadow structure is strictly limited to a soft, diffused elliptical shadow immediately under the product, creating a natural and clean grounding effect without any directional cast shadows. Where parts are positioned close to one another, their individual contact shadows overlap naturally, creating realistic interaction that defines the physical space between them without merging into unnatural masses. A darker contact shadow is present exactly under each base, diffusing smoothly and quickly outward over a very short distance.`;
+        break;
+    }
+
+    finalPrompt = `${stylePrompt}
 
 All shadows have soft edges with a smooth gradient fade, completely avoiding floating shadows, unnatural merged 'blobs', or any long trailing effects. The shadows precisely respect the spacing and depth, creating a realistic sense of layered composition and three-dimensional form while maintaining a perfectly clean surrounding white space. The background is a clean, pure white without any visible texture or color contamination. The overall image quality is characterized by high clarity, balanced contrast, and a realistic depth of field, presenting the product with a premium commercial aesthetic. All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 

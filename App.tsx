@@ -1066,9 +1066,31 @@ const App: React.FC = () => {
 
               {renderModelSelection()}
 
-              <div className="flex gap-2">
-                <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                <button onClick={startGeneration} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Tạo ảnh</button>
+              <div className="flex gap-2 mb-4">
+                <button onClick={() => setWhiteBgStep(1)} className="w-full py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chọn phong cách & Tạo ảnh</label>
+                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'CLASSIC' })} className="w-full py-3 px-4 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold rounded-xl text-xs text-left hover:bg-cyan-500/20 transition-all flex flex-col gap-1">
+                  <span>Classic Premium</span>
+                  <span className="text-[9px] font-normal text-slate-400">Ánh sáng mềm, bóng đổ tự nhiên, cân bằng</span>
+                </button>
+                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'DRAMATIC' })} className="w-full py-3 px-4 bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold rounded-xl text-xs text-left hover:bg-purple-500/20 transition-all flex flex-col gap-1">
+                  <span>Dramatic Contrast</span>
+                  <span className="text-[9px] font-normal text-slate-400">Tương phản cao, bóng đổ sắc nét, ấn tượng</span>
+                </button>
+                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'SOFT' })} className="w-full py-3 px-4 bg-pink-500/10 border border-pink-500/30 text-pink-400 font-bold rounded-xl text-xs text-left hover:bg-pink-500/20 transition-all flex flex-col gap-1">
+                  <span>Soft & Airy</span>
+                  <span className="text-[9px] font-normal text-slate-400">Sáng dịu, bóng mờ ảo, nhẹ nhàng tinh tế</span>
+                </button>
+                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'CINEMATIC' })} className="w-full py-3 px-4 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold rounded-xl text-xs text-left hover:bg-amber-500/20 transition-all flex flex-col gap-1">
+                  <span>Cinematic Edge</span>
+                  <span className="text-[9px] font-normal text-slate-400">Đánh sáng viền, bóng sâu, sang trọng điện ảnh</span>
+                </button>
+                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'TECHNICAL' })} className="w-full py-3 px-4 bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold rounded-xl text-xs text-left hover:bg-blue-500/20 transition-all flex flex-col gap-1">
+                  <span>Crisp Technical</span>
+                  <span className="text-[9px] font-normal text-slate-400">Sáng đều, không bóng đổ hướng, chi tiết tối đa</span>
+                </button>
               </div>
             </div>
           )}
