@@ -1533,7 +1533,7 @@ const renderTrackSocketWorkflow = () => (
         { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'from-white/10 to-white/5', hover: 'hover:border-white/50' },
         { id: 'WHITE_BG_WEBSITE', icon: <ImageIcon size={20} />, title: 'Tạo hình ảnh nền trắng website', desc: 'Tạo ảnh sản phẩm nền trắng cho website.', color: 'from-blue-500/20 to-blue-500/5', hover: 'hover:border-blue-400' },
         { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'from-[#caf0f8]/20 to-[#caf0f8]/5', hover: 'hover:border-[#caf0f8]' },
-        { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền pastel tối giản.', color: 'from-emerald-500/20 to-emerald-500/5', hover: 'hover:border-emerald-400' },
+        { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'from-emerald-500/20 to-emerald-500/5', hover: 'hover:border-emerald-400' },
         { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'from-orange-500/20 to-orange-500/5', hover: 'hover:border-orange-400' },
       ];
 

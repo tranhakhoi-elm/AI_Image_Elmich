@@ -278,7 +278,7 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
          (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
       3. RÀNG BUỘC BẮT BUỘC:
          - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
-         - Màu nền là màu Pastel tinh tế, HÀI HÒA hoặc ĐỒNG ĐIỆU với sản phẩm.
+         - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
          - Sản phẩm và đạo cụ nằm gọn trong khung hình.
          - Chừa khoảng trống trên nền để chèn chữ (Text).
       4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio.
@@ -556,7 +556,7 @@ Ultra realistic product enhancement from a clean white background product image.
       Creative Concept: ${settings.concept}
       Placement and Proportion: ${settings.placement}
       Props to include: ${formatProps(settings.props)}
-      Background: Plain paper background in a soft pastel color that matches the product's primary color.
+      Background: Plain paper background that is EXACTLY the same color as the product's primary color (tone-on-tone monochromatic look).
       Empty Space Requirement: ${spaceInstruction}
       Composition: The product and props must be neatly arranged and fit entirely within the frame.
       Camera & Lighting Setup: ${formatCameraSettings(settings.camera)}
