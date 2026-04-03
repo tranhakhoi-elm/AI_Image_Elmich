@@ -492,6 +492,20 @@ Prompt A:
 Ultra realistic product enhancement from a clean white background product image. Keep the product 100% unchanged: absolutely do not alter the camera angle, perspective, shape, structure, proportions, or materials do not change color, texture, or surface details preserve all original edges, contours, and fine details Lighting – high-end studio (neutral white balance): strong directional key light (premium EU/US commercial style) neutral white light (around 5500K–6000K), no warm or yellow color cast clean, sharp highlights with full detail retention no blown-out or clipped highlights Shadow – defined and grounded: strictly limited to a soft contact shadow directly beneath the product base, NO long or trailing cast shadows, clearly visible well-defined contact shadow, slightly stronger density for a solid grounded feel, smooth gradient falloff diffusing quickly outward, preserve detail in shadow, no crushed blacks Color & tone control: accurate, true-to-life product color neutral whites, clean background (no yellow/green tint) balanced contrast with preserved midtones Enhance image quality: high clarity, crisp edges, sharp micro-contrast realistic depth and separation no artificial HDR or overprocessing Background: pure white or very subtle neutral grey-white gradient clean studio look, no color contamination Final result: product remains identical to original input strong, grounded contact shadow like premium commercial shoot neutral, clean white balance (catalog-ready) high-end advertising quality, natural and realistic
       `;
     }
+  } else if (settings.visualStyle === "LINE_ART") {
+    finalPrompt = `
+A minimalist, clean line art illustration of the product. Pure white background, solid black outlines. Simple netline style, architectural drawing, blueprint style but black on white. 
+
+Strict preservation (VERY IMPORTANT): 
+keep the product's exact shape, proportions, and perspective exactly as original.
+do NOT change the camera angle or perspective.
+do NOT change shape, structure, proportions.
+
+Style constraints:
+No shading, no shadows, no gradients, no colors, no 3D realistic effects, no textures. 
+Only crisp, continuous, and precise black lines defining the outer shape and essential inner contours of the product. 
+Flat 2D vector style. High clarity, simple schematic outline.
+    `;
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS") {
     const thinkingPrompt = `
       Act as an expert AI image generation prompt engineer and professional product photographer.
@@ -646,7 +660,7 @@ Ultra realistic product enhancement from a clean white background product image.
     });
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     if (settings.packagingDesignType === "FLAT_DESIGN" && settings.packagingFaces.flat) parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
-  } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "WHITE_BG_WEBSITE" || settings.visualStyle === "CONCEPT")) {
+  } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "WHITE_BG_WEBSITE" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
     parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
   }
   

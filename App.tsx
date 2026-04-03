@@ -18,7 +18,8 @@ import {
   Settings,
   ArrowLeft,
   Wand2,
-  Loader2
+  Loader2,
+  PenTool
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig } from './types';
 import { 
@@ -1135,6 +1136,45 @@ const App: React.FC = () => {
     </div>
   );
 
+  // 7.6 Chuyển thành Line Art
+  const renderLineArtWorkflow = () => (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div>
+          <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm gốc (Nền trắng)</label>
+          <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-cyan-400 transition-all">
+             {settings.referenceImage ? (
+               <>
+                 <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
+               </>
+             ) : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Tải ảnh SP gốc</span>}
+          </div>
+          <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
+        </div>
+
+        <div>
+           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tỷ lệ</label>
+           <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+              <option value="1:1" className="bg-[#051610]">1:1 Vuông</option>
+              <option value="4:3" className="bg-[#051610]">4:3 Catalog</option>
+              <option value="3:4" className="bg-[#051610]">3:4 Portrait</option>
+              <option value="16:9" className="bg-[#051610]">16:9 HD</option>
+              <option value="9:16" className="bg-[#051610]">9:16</option>
+              <option value="1:4" className="bg-[#051610]">1:4 Siêu dài</option>
+              <option value="4:1" className="bg-[#051610]">4:1 Siêu rộng</option>
+           </select>
+        </div>
+
+        {renderModelSelection()}
+
+        <div className="flex gap-2 pt-2">
+          <button disabled={!settings.referenceImage} onClick={() => startGeneration()} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Tạo ảnh Line Art</button>
+        </div>
+      </div>
+    </div>
+  );
+
   // 8. Tạo hình ảnh chụp trong studio Workflow
   const renderStudioWorkflow = () => (
     <div className="space-y-6">
@@ -1442,6 +1482,22 @@ const renderTrackSocketWorkflow = () => (
           "Nhấn 'Tạo ảnh' để nhận kết quả nền trắng chuyên nghiệp."
         ];
         break;
+      case 'WHITE_BG_WEBSITE':
+        title = "Hướng dẫn: Tạo hình ảnh nền trắng website";
+        steps = [
+          "Tải lên hình ảnh sản phẩm.",
+          "Chọn chất lượng và tỷ lệ hình ảnh.",
+          "Chọn Prompt A hoặc Prompt B để tạo ảnh nền trắng tối ưu cho website."
+        ];
+        break;
+      case 'LINE_ART':
+        title = "Hướng dẫn: Chuyển thành Line Art";
+        steps = [
+          "Tải lên hình ảnh sản phẩm trên nền trắng.",
+          "Chọn tỷ lệ hình ảnh mong muốn.",
+          "Nhấn 'Tạo ảnh Line Art' để chuyển đổi sang dạng nét vẽ (netline) đơn giản."
+        ];
+        break;
       case 'STUDIO':
         title = "Hướng dẫn: Làm ảnh trong studio";
         steps = [
@@ -1532,6 +1588,7 @@ const renderTrackSocketWorkflow = () => (
         { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'from-purple-500/20 to-purple-500/5', hover: 'hover:border-purple-400' },
         { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'from-white/10 to-white/5', hover: 'hover:border-white/50' },
         { id: 'WHITE_BG_WEBSITE', icon: <ImageIcon size={20} />, title: 'Tạo hình ảnh nền trắng website', desc: 'Tạo ảnh sản phẩm nền trắng cho website.', color: 'from-blue-500/20 to-blue-500/5', hover: 'hover:border-blue-400' },
+        { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ (netline).', color: 'from-gray-500/20 to-gray-500/5', hover: 'hover:border-gray-400' },
         { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'from-[#caf0f8]/20 to-[#caf0f8]/5', hover: 'hover:border-[#caf0f8]' },
         { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'from-emerald-500/20 to-emerald-500/5', hover: 'hover:border-emerald-400' },
         { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'from-orange-500/20 to-orange-500/5', hover: 'hover:border-orange-400' },
@@ -1605,6 +1662,7 @@ const renderTrackSocketWorkflow = () => (
                {settings.visualStyle === 'TECH_EFFECTS' && renderTechEffectsWorkflow()}
                {settings.visualStyle === 'WHITE_BG_RETOUCH' && renderWhiteBgRetouchWorkflow()}
                {settings.visualStyle === 'WHITE_BG_WEBSITE' && renderWhiteBgWebWorkflow()}
+               {settings.visualStyle === 'LINE_ART' && renderLineArtWorkflow()}
                {settings.visualStyle === 'STUDIO' && renderStudioWorkflow()}
                {settings.visualStyle === 'TRACK_SOCKET_STAGING' && renderTrackSocketWorkflow()}
              </motion.div>
