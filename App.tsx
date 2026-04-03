@@ -1166,6 +1166,15 @@ const App: React.FC = () => {
            </select>
         </div>
 
+        <div>
+           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất lượng hình ảnh</label>
+           <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.imageSize} onChange={e => setSettings({...settings, imageSize: e.target.value as ImageSize})}>
+              <option value="1K" className="bg-[#051610]">1K Standard</option>
+              <option value="2K" className="bg-[#051610]">2K Pro</option>
+              <option value="4K" className="bg-[#051610]">4K Ultra HD</option>
+           </select>
+        </div>
+
         {renderModelSelection()}
 
         <div className="flex gap-2 pt-2">
