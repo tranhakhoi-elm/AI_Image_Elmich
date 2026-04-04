@@ -21,7 +21,11 @@ import {
   Loader2,
   PenTool,
   Undo2,
-  Redo2
+  Redo2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig } from './types';
 import { 
@@ -143,6 +147,8 @@ const App: React.FC = () => {
   
   const [appState, setAppState] = useState<AppState>(AppState.READY);
   const [loadingMessage, setLoadingMessage] = useState<string>("");
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isImagePanelVisible, setIsImagePanelVisible] = useState(true);
   
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [conceptStep, setConceptStep] = useState<number>(1);
@@ -1836,15 +1842,36 @@ const renderTrackSocketWorkflow = () => (
     <div className="min-h-screen flex flex-col relative animate-fade-in">
       <header className="px-6 py-4 flex justify-between items-center z-50 sticky top-0 bg-[#051610]/80 backdrop-blur-md border-b border-white/5">
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsSidebarVisible(!isSidebarVisible)}
+            className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+            title={isSidebarVisible ? "Ẩn thanh thao tác" : "Hiện thanh thao tác"}
+          >
+            {isSidebarVisible ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+          </button>
           <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20"><span className="text-white font-bold text-lg">AE</span></div>
           <div><h1 className="text-xl font-bold tracking-tighter text-white">Ai Image Elmich</h1><p className="text-[8px] font-bold text-[#caf0f8] tracking-[0.3em] uppercase">Creative Studio 2026</p></div>
         </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsImagePanelVisible(!isImagePanelVisible)}
+            className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+            title={isImagePanelVisible ? "Ẩn khu vực ảnh" : "Hiện khu vực ảnh"}
+          >
+            {isImagePanelVisible ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
+          </button>
+        </div>
       </header>
       <main className="flex-1 flex flex-col lg:flex-row gap-6 p-6 max-w-[1600px] mx-auto w-full relative">
-        <aside className="w-full lg:w-[420px] glass-card rounded-[35px] overflow-hidden lg:h-[calc(100vh-120px)] lg:sticky lg:top-24 z-10 bg-gradient-to-b from-white/[0.04] to-transparent"><div className="p-6 h-full overflow-y-auto custom-scrollbar">{renderSidebar()}</div></aside>
-        <section className="flex-1 flex flex-col gap-6 relative z-10">
-          {/* Subtle gradient background for depth */}
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-teal-500/10 rounded-[40px] pointer-events-none blur-3xl -z-10"></div>
+        {isSidebarVisible && (
+          <aside className={`w-full ${isImagePanelVisible ? 'lg:w-[420px] shrink-0' : 'flex-1'} glass-card rounded-[35px] overflow-hidden lg:h-[calc(100vh-120px)] lg:sticky lg:top-24 z-10 bg-gradient-to-b from-white/[0.04] to-transparent animate-fade-in transition-all duration-300`}>
+            <div className="p-6 h-full overflow-y-auto custom-scrollbar">{renderSidebar()}</div>
+          </aside>
+        )}
+        {isImagePanelVisible && (
+          <section className="flex-1 flex flex-col gap-6 relative z-10 min-w-0 animate-fade-in transition-all duration-300">
+            {/* Subtle gradient background for depth */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-teal-500/10 rounded-[40px] pointer-events-none blur-3xl -z-10"></div>
           
           <div className="flex-1 glass-card rounded-[40px] p-8 flex items-center justify-center relative min-h-[400px] bg-gradient-to-br from-white/[0.03] to-transparent">
             {appState === AppState.GENERATING || appState === AppState.ANALYZING ? (
@@ -1917,6 +1944,7 @@ const renderTrackSocketWorkflow = () => (
             </div>
           </div>
         </section>
+        )}
       </main>
     </div>
   );
