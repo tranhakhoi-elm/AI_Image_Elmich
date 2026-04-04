@@ -19,7 +19,9 @@ import {
   ArrowLeft,
   Wand2,
   Loader2,
-  PenTool
+  PenTool,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig } from './types';
 import { 
@@ -39,6 +41,100 @@ import {
   analyzeStagingScene,
   analyzeStudioConcept
 } from './services/geminiService';
+
+const initialSettings: GenerationSettings = {
+  productName: '',
+  productImages: [],
+  referenceImage: null,
+  visualStyle: 'CONCEPT',
+  techDescription: '',
+  colorChanges: [],
+  dimensions: { length: '', width: '', height: '' },
+  packagingMaterial: 'COLOR_BOX',
+  packagingDesignType: 'FLAT_DESIGN',
+  packagingOutputStyle: 'WHITE_BG_ROTATED',
+  packagingFaces: {},
+  techEffectType: 'REMOVE_SIGNATURE',
+  techTitle: '',
+  selectedTechConcept: '',
+  productMaterial: 'MATTE',
+  emptySpacePosition: [],
+  sockets: [],
+  trackSocketMode: 'CREATIVE',
+  concept: '',
+  placement: '',
+  location: '',
+  camera: { focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false, angle: 0 },
+  props: [],
+  tone: TONE_STYLES[0],
+  aspectRatio: '1:1',
+  imageSize: '1K',
+  aiModel: 'gemini-2.5-flash-image',
+  numImages: 1 
+};
+
+function useSettingsHistory(initialState: GenerationSettings) {
+  const [state, setState] = useState<{
+    past: GenerationSettings[];
+    present: GenerationSettings;
+    future: GenerationSettings[];
+  }>({
+    past: [],
+    present: initialState,
+    future: []
+  });
+
+  const setSettings = React.useCallback((newSettings: GenerationSettings | ((prev: GenerationSettings) => GenerationSettings)) => {
+    setState(prevState => {
+      const nextSettings = typeof newSettings === 'function' ? newSettings(prevState.present) : newSettings;
+      if (JSON.stringify(nextSettings) === JSON.stringify(prevState.present)) {
+        return prevState;
+      }
+      const newPast = [...prevState.past, prevState.present];
+      if (newPast.length > 50) newPast.shift();
+      return {
+        past: newPast,
+        present: nextSettings,
+        future: []
+      };
+    });
+  }, []);
+
+  const undoSettings = React.useCallback(() => {
+    setState(prevState => {
+      if (prevState.past.length === 0) return prevState;
+      const previous = prevState.past[prevState.past.length - 1];
+      const newPast = prevState.past.slice(0, prevState.past.length - 1);
+      return {
+        past: newPast,
+        present: previous,
+        future: [prevState.present, ...prevState.future]
+      };
+    });
+  }, []);
+
+  const redoSettings = React.useCallback(() => {
+    setState(prevState => {
+      if (prevState.future.length === 0) return prevState;
+      const next = prevState.future[0];
+      const newFuture = prevState.future.slice(1);
+      return {
+        past: [...prevState.past, prevState.present],
+        present: next,
+        future: newFuture
+      };
+    });
+  }, []);
+
+  return {
+    settings: state.present,
+    setSettings,
+    undoSettings,
+    redoSettings,
+    canUndo: state.past.length > 0,
+    canRedo: state.future.length > 0
+  };
+}
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(true); 
@@ -65,36 +161,7 @@ const App: React.FC = () => {
     props: []
   });
 
-  const [settings, setSettings] = useState<GenerationSettings>({
-    productName: '',
-    productImages: [],
-    referenceImage: null,
-    visualStyle: 'CONCEPT',
-    techDescription: '',
-    colorChanges: [],
-    dimensions: { length: '', width: '', height: '' },
-    packagingMaterial: 'COLOR_BOX',
-    packagingDesignType: 'FLAT_DESIGN',
-    packagingOutputStyle: 'WHITE_BG_ROTATED',
-    packagingFaces: {},
-    techEffectType: 'REMOVE_SIGNATURE',
-    techTitle: '',
-    selectedTechConcept: '',
-    productMaterial: 'MATTE',
-    emptySpacePosition: [],
-    sockets: [],
-    trackSocketMode: 'CREATIVE',
-    concept: '',
-    placement: '',
-    location: '',
-    camera: { focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false, angle: 0 },
-    props: [],
-    tone: TONE_STYLES[0],
-    aspectRatio: '1:1',
-    imageSize: '1K',
-    aiModel: 'gemini-2.5-flash-image',
-    numImages: 1 
-  });
+  const { settings, setSettings, undoSettings, redoSettings, canUndo, canRedo } = useSettingsHistory(initialSettings);
   
   const [customConcept, setCustomConcept] = useState('');
   const [customProp, setCustomProp] = useState('');
@@ -1100,42 +1167,6 @@ const App: React.FC = () => {
     </div>
   );
 
-  // 7.5 Làm ảnh nền trắng Website
-  const renderWhiteBgWebWorkflow = () => (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm gốc</label>
-          <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-cyan-400 transition-all">
-             {settings.referenceImage ? (
-               <>
-                 <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
-               </>
-             ) : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Tải ảnh SP gốc</span>}
-          </div>
-          <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
-        </div>
-
-        <div>
-           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất lượng hình ảnh</label>
-           <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.imageSize} onChange={e => setSettings({...settings, imageSize: e.target.value as ImageSize})}>
-              <option value="1K" className="bg-[#051610]">1K Standard</option>
-              <option value="2K" className="bg-[#051610]">2K Pro</option>
-              <option value="4K" className="bg-[#051610]">4K Ultra HD</option>
-           </select>
-        </div>
-
-        {renderModelSelection()}
-
-        <div className="flex gap-2 pt-2">
-          <button disabled={!settings.referenceImage} onClick={() => startGeneration({ whiteBgWebPromptType: 'A' })} className="flex-1 py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Prompt A</button>
-          <button disabled={!settings.referenceImage} onClick={() => startGeneration({ whiteBgWebPromptType: 'B' })} className="flex-1 py-4 bg-blue-500 text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Prompt B</button>
-        </div>
-      </div>
-    </div>
-  );
-
   // 7.6 Chuyển thành Line Art
   const renderLineArtWorkflow = () => (
     <div className="space-y-6">
@@ -1491,14 +1522,6 @@ const renderTrackSocketWorkflow = () => (
           "Nhấn 'Tạo ảnh' để nhận kết quả nền trắng chuyên nghiệp."
         ];
         break;
-      case 'WHITE_BG_WEBSITE':
-        title = "Hướng dẫn: Tạo hình ảnh nền trắng website";
-        steps = [
-          "Tải lên hình ảnh sản phẩm.",
-          "Chọn chất lượng và tỷ lệ hình ảnh.",
-          "Chọn Prompt A hoặc Prompt B để tạo ảnh nền trắng tối ưu cho website."
-        ];
-        break;
       case 'LINE_ART':
         title = "Hướng dẫn: Chuyển thành Line Art";
         steps = [
@@ -1596,7 +1619,6 @@ const renderTrackSocketWorkflow = () => (
       const modes = [
         { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'from-purple-500/20 to-purple-500/5', hover: 'hover:border-purple-400' },
         { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'from-white/10 to-white/5', hover: 'hover:border-white/50' },
-        { id: 'WHITE_BG_WEBSITE', icon: <ImageIcon size={20} />, title: 'Tạo hình ảnh nền trắng website', desc: 'Tạo ảnh sản phẩm nền trắng cho website.', color: 'from-blue-500/20 to-blue-500/5', hover: 'hover:border-blue-400' },
         { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ (netline).', color: 'from-gray-500/20 to-gray-500/5', hover: 'hover:border-gray-400' },
         { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'from-[#caf0f8]/20 to-[#caf0f8]/5', hover: 'hover:border-[#caf0f8]' },
         { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'from-emerald-500/20 to-emerald-500/5', hover: 'hover:border-emerald-400' },
@@ -1646,13 +1668,34 @@ const renderTrackSocketWorkflow = () => (
     
     return (
       <div className="animate-fade-in h-full flex flex-col">
-         <button 
-           onClick={resetMode} 
-           className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400 hover:text-cyan-400 transition-colors group"
-         >
-           <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
-           Quay lại Menu chính
-         </button>
+         <div className="mb-8 flex items-center justify-between">
+           <button 
+             onClick={resetMode} 
+             className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400 hover:text-cyan-400 transition-colors group"
+           >
+             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
+             Quay lại Menu chính
+           </button>
+           
+           <div className="flex items-center gap-2">
+             <button 
+               onClick={undoSettings} 
+               disabled={!canUndo}
+               className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+               title="Hoàn tác (Undo)"
+             >
+               <Undo2 size={14} />
+             </button>
+             <button 
+               onClick={redoSettings} 
+               disabled={!canRedo}
+               className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+               title="Làm lại (Redo)"
+             >
+               <Redo2 size={14} />
+             </button>
+           </div>
+         </div>
          
          <div className="flex-1">
            <AnimatePresence mode="wait">
@@ -1670,7 +1713,6 @@ const renderTrackSocketWorkflow = () => (
                {settings.visualStyle === 'PACKAGING_MOCKUP' && renderPackagingWorkflow()}
                {settings.visualStyle === 'TECH_EFFECTS' && renderTechEffectsWorkflow()}
                {settings.visualStyle === 'WHITE_BG_RETOUCH' && renderWhiteBgRetouchWorkflow()}
-               {settings.visualStyle === 'WHITE_BG_WEBSITE' && renderWhiteBgWebWorkflow()}
                {settings.visualStyle === 'LINE_ART' && renderLineArtWorkflow()}
                {settings.visualStyle === 'STUDIO' && renderStudioWorkflow()}
                {settings.visualStyle === 'TRACK_SOCKET_STAGING' && renderTrackSocketWorkflow()}
@@ -1768,11 +1810,6 @@ const renderTrackSocketWorkflow = () => (
   }
 
   const getDownloadFileName = (image: GeneratedImage) => {
-    if (image.settings.visualStyle === 'WHITE_BG_WEBSITE' && image.settings.productCode) {
-      const timePart = parseInt(image.id.split('-')[0] || '0', 10);
-      const randomNum = ((timePart + (image.variant || 0)) % 100) + 1;
-      return `${image.settings.productCode}${randomNum}.png`;
-    }
     return `elmich-ai-${image.id}.png`;
   };
 
