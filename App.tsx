@@ -910,15 +910,7 @@ const App: React.FC = () => {
 
           {whiteBgStep === 3 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase">Chất lượng ảnh</label>
-                  <div className="grid grid-cols-3 gap-1">
-                    {(['1K', '2K', '4K'] as ImageSize[]).map(size => (
-                      <button key={size} onClick={() => setSettings({...settings, imageSize: size})} className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.imageSize === size ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>{size}</button>
-                    ))}
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase">Tỉ lệ khung hình</label>
                   <select className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
@@ -1200,15 +1192,6 @@ const App: React.FC = () => {
               <option value="9:16" className="bg-[#051610]">9:16</option>
               <option value="1:4" className="bg-[#051610]">1:4 Siêu dài</option>
               <option value="4:1" className="bg-[#051610]">4:1 Siêu rộng</option>
-           </select>
-        </div>
-
-        <div>
-           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất lượng hình ảnh</label>
-           <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.imageSize} onChange={e => setSettings({...settings, imageSize: e.target.value as ImageSize})}>
-              <option value="1K" className="bg-[#051610]">1K Standard</option>
-              <option value="2K" className="bg-[#051610]">2K Pro</option>
-              <option value="4K" className="bg-[#051610]">4K Ultra HD</option>
            </select>
         </div>
 
@@ -1730,21 +1713,37 @@ const renderTrackSocketWorkflow = () => (
   };
 
   const renderModelSelection = () => (
-    <div className="space-y-2">
-      <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Chọn Model AI (Tối ưu chi phí)</label>
-      <div className="grid grid-cols-2 gap-2">
-        <button 
-          onClick={() => setSettings({...settings, aiModel: 'gemini-2.5-flash-image'})} 
-          className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-2.5-flash-image' ? 'bg-[#caf0f8] text-black border-[#caf0f8]' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
-        >
-          Standard (Tiết kiệm)
-        </button>
-        <button 
-          onClick={() => setSettings({...settings, aiModel: 'gemini-3.1-flash-image-preview'})} 
-          className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-3.1-flash-image-preview' ? 'bg-[#caf0f8] text-black border-[#caf0f8]' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
-        >
-          High Quality (Tối ưu)
-        </button>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Chất lượng hình ảnh</label>
+        <div className="grid grid-cols-3 gap-2">
+          {(['1K', '2K', '4K'] as ImageSize[]).map(size => (
+            <button 
+              key={size} 
+              onClick={() => setSettings({...settings, imageSize: size})} 
+              className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.imageSize === size ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+            >
+              {size === '1K' ? '1K Standard' : size === '2K' ? '2K Pro' : '4K Ultra HD'}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Chọn Model AI (Tối ưu chi phí)</label>
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={() => setSettings({...settings, aiModel: 'gemini-2.5-flash-image'})} 
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-2.5-flash-image' ? 'bg-[#caf0f8] text-black border-[#caf0f8]' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+          >
+            Standard (Tiết kiệm)
+          </button>
+          <button 
+            onClick={() => setSettings({...settings, aiModel: 'gemini-3.1-flash-image-preview'})} 
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-3.1-flash-image-preview' ? 'bg-[#caf0f8] text-black border-[#caf0f8]' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+          >
+            High Quality (Tối ưu)
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1775,17 +1774,11 @@ const renderTrackSocketWorkflow = () => (
            </div>
          </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <div>
            <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tỷ lệ</label>
            <select className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
               <option value="1:1" className="bg-[#051610]">1:1 Vuông</option><option value="16:9" className="bg-[#051610]">16:9 HD</option><option value="9:16" className="bg-[#051610]">9:16</option><option value="4:3" className="bg-[#051610]">4:3</option><option value="3:4" className="bg-[#051610]">3:4</option><option value="1:4" className="bg-[#051610]">1:4</option><option value="4:1" className="bg-[#051610]">4:1</option>
-           </select>
-        </div>
-        <div>
-           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Chất lượng</label>
-           <select className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none" value={settings.imageSize} onChange={e => setSettings({...settings, imageSize: e.target.value as ImageSize})}>
-              <option value="1K" className="bg-[#051610]">1K Standard</option><option value="2K" className="bg-[#051610]">2K Pro</option><option value="4K" className="bg-[#051610]">4K Ultra</option>
            </select>
         </div>
       </div>
