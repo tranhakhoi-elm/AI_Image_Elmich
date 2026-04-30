@@ -62,6 +62,11 @@ const initialSettings: GenerationSettings = {
   techTitle: '',
   selectedTechConcept: '',
   productMaterial: 'MATTE',
+  whiteBGCategory: 'METAL',
+  whiteBGMetalConfig: { type: 'Brushed Stainless Steel', highlight: 'sharp longitudinal highlights', shape: 'cylindrical' },
+  whiteBGPlasticConfig: { type: 'Matte', color: 'White', lighting: 'Softbox' },
+  whiteBGGlassConfig: { type: 'Borosilicate Glass', lighting: 'Rim lighting', content: '' },
+  whiteBGCeramicConfig: { surface: 'Ceramic finish', lighting: '45-degree side lighting' },
   emptySpacePosition: [],
   sockets: [],
   trackSocketMode: 'CREATIVE',
@@ -1071,7 +1076,7 @@ const App: React.FC = () => {
   // 7. Làm ảnh nền trắng Workflow (White BG Retouch)
   const renderWhiteBgRetouchWorkflow = () => (
     <div className="space-y-6">
-      <StepIndicator current={whiteBgStep} total={2} labels={['Dữ liệu', 'Xuất bản']} />
+      <StepIndicator current={whiteBgStep} total={2} labels={['Dữ liệu', 'Biến số vật liệu']} />
       
       <AnimatePresence mode="wait">
         <motion.div
@@ -1085,12 +1090,16 @@ const App: React.FC = () => {
           {whiteBgStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chất liệu bề mặt</label>
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productMaterial} onChange={e => setSettings({...settings, productMaterial: e.target.value as any})}>
-                   <option value="MATTE" className="bg-[#051610]">Matte (Nhám / Lì)</option>
-                   <option value="GLOSSY" className="bg-[#051610]">Glossy (Bóng)</option>
-                   <option value="GLASS" className="bg-[#051610]">Glass (Trong suốt / Thủy tinh)</option>
-                   <option value="STAINLESS_STEEL" className="bg-[#051610]">Stainless Steel (Inox / Kim loại)</option>
+                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tên sản phẩm</label>
+                <input type="text" placeholder="Ví dụ: Ấm siêu tốc, Máy xay sinh tố..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Nhóm vật liệu chính</label>
+                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.whiteBGCategory} onChange={e => setSettings({...settings, whiteBGCategory: e.target.value as any})}>
+                   <option value="METAL" className="bg-[#051610]">Nhóm Kim Loại (Inox/Thép)</option>
+                   <option value="PLASTIC" className="bg-[#051610]">Nhóm Nhựa & Polymer</option>
+                   <option value="GLASS" className="bg-[#051610]">Nhóm Thủy Tinh & Trong Suốt</option>
+                   <option value="CERAMIC" className="bg-[#051610]">Nhóm Gốm Sứ & Chống Dính (Vân đá)</option>
                 </select>
               </div>
 
@@ -1106,16 +1115,77 @@ const App: React.FC = () => {
                 </div>
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
-              <button disabled={!settings.referenceImage} onClick={() => setWhiteBgStep(2)} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
+              <button disabled={!settings.referenceImage || !settings.productName} onClick={() => setWhiteBgStep(2)} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs disabled:opacity-50 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]">Tiếp tục cài đặt chất liệu</button>
             </div>
           )}
 
           {whiteBgStep === 2 && (
             <div className="space-y-4">
-              <div>
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Yêu cầu bổ sung (Tùy chọn)</label>
-                 <textarea placeholder="Ví dụ: Làm sạch bụi trên vỏ, tăng độ bóng cho phần inox, làm sáng logo..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 resize-none h-24 custom-scrollbar" value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
-              </div>
+              {settings.whiteBGCategory === 'METAL' && (
+                <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Kim Loại</label>
+                    <input type="text" placeholder="Brushed Stainless Steel, Polished Chrome..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGMetalConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, type: e.target.value}})} />
+                    <p className="text-[8px] text-slate-500 mt-1">VD: Inox xước (Brushed), Inox bóng (Polished)</p>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Vệt Sáng (Highlight)</label>
+                    <input type="text" placeholder="sharp longitudinal highlights, sleek rim lighting..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGMetalConfig?.highlight || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, highlight: e.target.value}})} />
+                    <p className="text-[8px] text-slate-500 mt-1">Sharp cho inox bóng, Soft cho inox xước</p>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Hình Dáng (Form)</label>
+                    <input type="text" placeholder="cylindrical, rectangular..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGMetalConfig?.shape || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, shape: e.target.value}})} />
+                  </div>
+                </div>
+              )}
+              {settings.whiteBGCategory === 'PLASTIC' && (
+                <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Nhựa</label>
+                    <input type="text" placeholder="Matte, High-gloss..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGPlasticConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, type: e.target.value}})} />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Màu Sắc</label>
+                    <input type="text" placeholder="Pastel Pink, Emerald Green, Minimalist White..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGPlasticConfig?.color || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, color: e.target.value}})} />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Đèn</label>
+                    <input type="text" placeholder="Softbox, Octabox..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGPlasticConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, lighting: e.target.value}})} />
+                  </div>
+                </div>
+              )}
+              {settings.whiteBGCategory === 'GLASS' && (
+                <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Thủy Tinh</label>
+                    <input type="text" placeholder="Borosilicate Glass, Crystal Clear Glass..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGGlassConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, type: e.target.value}})} />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Kỹ thuật đèn</label>
+                    <input type="text" placeholder="Rim lighting, Dark-field lighting..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGGlassConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, lighting: e.target.value}})} />
+                    <p className="text-[8px] text-slate-500 mt-1">Rim lighting (Sáng viền) rất quan trọng để không bị lẫn vào nền trắng.</p>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nội dung bên trong</label>
+                    <input type="text" placeholder="water bubbles, internal mechanism, empty..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGGlassConfig?.content || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, content: e.target.value}})} />
+                  </div>
+                </div>
+              )}
+              {settings.whiteBGCategory === 'CERAMIC' && (
+                <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại bề mặt</label>
+                    <input type="text" placeholder="Granite speckled coating, Ceramic finish..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGCeramicConfig?.surface || ''} onChange={e => setSettings({...settings, whiteBGCeramicConfig: {...settings.whiteBGCeramicConfig!, surface: e.target.value}})} />
+                    <p className="text-[8px] text-slate-500 mt-1">VD: Vân đá (Granite), Gốm (Ceramic)</p>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Hướng đèn</label>
+                    <input type="text" placeholder="45-degree side lighting..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGCeramicConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGCeramicConfig: {...settings.whiteBGCeramicConfig!, lighting: e.target.value}})} />
+                    <p className="text-[8px] text-slate-500 mt-1">Side lighting tạt ngang làm rõ vân đá/bề mặt.</p>
+                  </div>
+                </div>
+              )}
 
               <div>
                  <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tỷ lệ</label>
@@ -1133,30 +1203,8 @@ const App: React.FC = () => {
               {renderModelSelection()}
 
               <div className="flex gap-2 mb-4">
-                <button onClick={() => setWhiteBgStep(1)} className="w-full py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Chọn phong cách & Tạo ảnh</label>
-                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'CLASSIC' })} className="w-full py-3 px-4 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold rounded-xl text-xs text-left hover:bg-cyan-500/20 transition-all flex flex-col gap-1">
-                  <span>Classic Premium</span>
-                  <span className="text-[9px] font-normal text-slate-400">Ánh sáng mềm, bóng đổ tự nhiên, cân bằng</span>
-                </button>
-                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'DRAMATIC' })} className="w-full py-3 px-4 bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold rounded-xl text-xs text-left hover:bg-purple-500/20 transition-all flex flex-col gap-1">
-                  <span>Dramatic Contrast</span>
-                  <span className="text-[9px] font-normal text-slate-400">Tương phản cao, bóng đổ sắc nét, ấn tượng</span>
-                </button>
-                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'SOFT' })} className="w-full py-3 px-4 bg-pink-500/10 border border-pink-500/30 text-pink-400 font-bold rounded-xl text-xs text-left hover:bg-pink-500/20 transition-all flex flex-col gap-1">
-                  <span>Soft & Airy</span>
-                  <span className="text-[9px] font-normal text-slate-400">Sáng dịu, bóng mờ ảo, nhẹ nhàng tinh tế</span>
-                </button>
-                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'CINEMATIC' })} className="w-full py-3 px-4 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold rounded-xl text-xs text-left hover:bg-amber-500/20 transition-all flex flex-col gap-1">
-                  <span>Cinematic Edge</span>
-                  <span className="text-[9px] font-normal text-slate-400">Đánh sáng viền, bóng sâu, sang trọng điện ảnh</span>
-                </button>
-                <button onClick={() => startGeneration({ whiteBgRetouchStyle: 'TECHNICAL' })} className="w-full py-3 px-4 bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold rounded-xl text-xs text-left hover:bg-blue-500/20 transition-all flex flex-col gap-1">
-                  <span>Crisp Technical</span>
-                  <span className="text-[9px] font-normal text-slate-400">Sáng đều, không bóng đổ hướng, chi tiết tối đa</span>
-                </button>
+                <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
+                <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
               </div>
             </div>
           )}

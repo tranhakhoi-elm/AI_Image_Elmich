@@ -82,8 +82,13 @@ export interface GenerationSettings {
   selectedTechConcept: string; // Concept công nghệ đã chọn
 
   // White BG Retouch specific fields
+  whiteBGCategory?: 'METAL' | 'PLASTIC' | 'GLASS' | 'CERAMIC';
+  whiteBGMetalConfig?: { type: string, highlight: string, shape: string };
+  whiteBGPlasticConfig?: { type: string, color: string, lighting: string };
+  whiteBGGlassConfig?: { type: string, lighting: string, content: string };
+  whiteBGCeramicConfig?: { surface: string, lighting: string };
+  
   productMaterial: ProductMaterial;
-  whiteBgRetouchStyle?: 'CLASSIC' | 'DRAMATIC' | 'SOFT' | 'CINEMATIC' | 'TECHNICAL';
 
   // Studio specific fields
   emptySpacePosition: EmptySpacePosition[];
