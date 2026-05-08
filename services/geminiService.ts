@@ -374,9 +374,14 @@ export const editProductImage = async (base64Image: string, prompt: string, mode
 };
 
 // Bước cuối: Tạo Prompt và Tạo Ảnh
-export const generateProductImage = async (settings: GenerationSettings, variantSeed: number): Promise<string> => {
+export const generateProductImage = async (settings: GenerationSettings, variantSeed: number, history?: import('../types').SuccessfulPrompt[]): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   let finalPrompt = "";
+  
+  // Optional: Use history to optimize the generation
+  const optimizedHistoryNote = history && history.length > 0 
+    ? `\nNote: Please align with the style of these previously successful concepts: ${history.map(h => h.imageSettings.concept || h.imageSettings.visualStyle).slice(-3).join(', ')}`
+    : "";
   
   const formatProps = (props: PropConfig[]) => {
     return props.map(p => {
@@ -584,6 +589,10 @@ Flat 2D vector style. High clarity, simple schematic outline.
     }
   }
 
+  if (optimizedHistoryNote) {
+    finalPrompt += optimizedHistoryNote;
+  }
+
   const parts: any[] = [{ text: finalPrompt }];
   
   if (settings.visualStyle === "SCENE_STAGING") {
@@ -631,4 +640,59 @@ Flat 2D vector style. High clarity, simple schematic outline.
     }
     throw new Error("Không có ảnh.");
   } catch (error: any) { throw error; }
+};
+
+export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image-preview', aspectRatio: string = "1:1"): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const response = await ai.models.generateImages({
+      model: modelName,
+      prompt: prompt,
+      config: {
+        numberOfImages: 1,
+        outputMimeType: "image/jpeg",
+        aspectRatio: aspectRatio
+      }
+    });
+
+    const base64Image = response.generatedImages?.[0]?.image?.imageBytes;
+    if (base64Image) {
+      return `data:image/jpeg;base64,${base64Image}`;
+    }
+    throw new Error("Không có ảnh.");
+  } catch (error: any) { throw error; }
+};
+
+export const chatWithAI = async (messages: import('../types').ChatMessage[], modelName: string = 'gemini-3.1-pro-preview'): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const contents = messages.map(msg => {
+    const parts: any[] = [{ text: msg.text }];
+    if (msg.uploadedImageUrl) {
+      // Extract base64 and mime type from data URI
+      const match = msg.uploadedImageUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+      if (match) {
+        parts.push({
+          inlineData: {
+            mimeType: match[1],
+            data: match[2]
+          }
+        });
+      }
+    }
+    return {
+      role: msg.role,
+      parts
+    };
+  });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: contents,
+    });
+    return response.text || "No response generated.";
+  } catch (error) {
+    console.error("Chat generation failed:", error);
+    throw error;
+  }
 };

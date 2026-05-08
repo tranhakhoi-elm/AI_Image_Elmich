@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
+  Eye,
+  Download,
   Camera, 
   Palette, 
   Box, 
   Zap, 
   Image as ImageIcon, 
-  Home, 
   Eraser, 
   Sparkles, 
   Plug, 
@@ -25,9 +26,14 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
-  PanelRightOpen
+  PanelRightOpen,
+  MessageCircle,
+  Send,
+  X,
+  ChevronDown,
+  Trash2
 } from 'lucide-react';
-import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig } from './types';
+import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
 import { 
   CAMERA_APERTURES, 
   CAMERA_ISO, 
@@ -43,7 +49,9 @@ import {
   suggestTechVisuals,
   suggestTechConcepts,
   analyzeStagingScene,
-  analyzeStudioConcept
+  analyzeStudioConcept,
+  chatWithAI,
+  generateImageForChat
 } from './services/geminiService';
 
 const initialSettings: GenerationSettings = {
@@ -145,6 +153,35 @@ function useSettingsHistory(initialState: GenerationSettings) {
   };
 }
 
+const TypingEffect = ({ text }: { text: string }) => {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    let i = 0;
+    setDisplayedText("");
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        setDisplayedText(prev => prev + text.charAt(i));
+        i++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 15);
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return (
+    <span>
+      {displayedText.split('\n').map((line, i) => (
+        <React.Fragment key={i}>
+          {line}
+          {i !== displayedText.split('\n').length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+};
+
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(true); 
   const [passwordInput, setPasswordInput] = useState(""); 
@@ -181,12 +218,154 @@ const App: React.FC = () => {
   const [currentColorDescription, setCurrentColorDescription] = useState('');
   const [currentSampleImage, setCurrentSampleImage] = useState<string | null>(null); 
   
-  const [gallery, setGallery] = useState<GeneratedImage[]>([]);
+  const [gallery, setGallery] = useState<GeneratedImage[]>(() => {
+    try {
+      const saved = localStorage.getItem('elmich_ai_gallery');
+      if (saved) {
+        const parsed = JSON.parse(saved) as GeneratedImage[];
+        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        return parsed.filter(img => img.timestamp > oneWeekAgo);
+      }
+    } catch (e) {
+      console.error('Failed to parse gallery', e);
+    }
+    return [];
+  });
+  
+  const [askFeedbackImage, setAskFeedbackImage] = useState<GeneratedImage | null>(null);
+  const [successfulPrompts, setSuccessfulPrompts] = useState<SuccessfulPrompt[]>(() => {
+    try {
+      const saved = localStorage.getItem('elmich_ai_successful_prompts');
+      if (saved) {
+        return JSON.parse(saved) as SuccessfulPrompt[];
+      }
+    } catch (e) {
+      console.error('Failed to parse successful prompts', e);
+    }
+    return [];
+  });
   const [activeImage, setActiveImage] = useState<GeneratedImage | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('elmich_ai_successful_prompts', JSON.stringify(successfulPrompts));
+  }, [successfulPrompts]);
+
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [editModel, setEditModel] = useState('gemini-3.1-flash-image-preview');
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
+  
+  const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
+  
+  const [chatSessions, setChatSessions] = useState<import('./types').ChatSession[]>(() => {
+    try {
+      const saved = localStorage.getItem('elmich_ai_chat_sessions');
+      if (saved) {
+        const parsed = JSON.parse(saved) as import('./types').ChatSession[];
+        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        return parsed.filter(s => s.timestamp > oneWeekAgo);
+      }
+    } catch (e) {
+      console.error('Failed to parse chat sessions', e);
+    }
+    return [];
+  });
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(() => {
+    try {
+       const saved = localStorage.getItem('elmich_ai_chat_sessions');
+       if (saved) {
+         const parsed = JSON.parse(saved) as import('./types').ChatSession[];
+         if (parsed.length > 0) return parsed[0].id;
+       }
+    } catch {}
+    return null;
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('elmich_ai_chat_sessions', JSON.stringify(chatSessions));
+  }, [chatSessions]);
+
+  const currentSession = chatSessions.find(s => s.id === activeSessionId);
+  const chatMessages = currentSession?.messages || [];
+  
+  const [chatInput, setChatInput] = useState('');
+  const [chatInputImageBase64, setChatInputImageBase64] = useState<string | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatModel, setChatModel] = useState('gemini-2.5-flash');
+  const [chatImageAspectRatio, setChatImageAspectRatio] = useState('1:1');
+  const [chatImageQuality, setChatImageQuality] = useState('1K');
+  const [showSessionsList, setShowSessionsList] = useState(false);
+  
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (viewMode === 'chat') {
+      scrollToBottom();
+    }
+  }, [chatMessages, viewMode]);
+
+  const handleSendMessage = async () => {
+    if ((!chatInput.trim() && !chatInputImageBase64) || isChatLoading) return;
+    
+    const newUserMsg: ChatMessage = { id: Date.now().toString(), role: 'user', text: chatInput, uploadedImageUrl: chatInputImageBase64 || undefined };
+    
+    let targetSessionId = activeSessionId;
+    if (!targetSessionId) {
+      targetSessionId = Date.now().toString();
+      setActiveSessionId(targetSessionId);
+      setChatSessions(prev => [{ id: targetSessionId!, title: chatInput.trim().slice(0, 30) || 'New Chat', messages: [newUserMsg], timestamp: Date.now() }, ...prev]);
+    } else {
+      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newUserMsg], timestamp: Date.now() } : s));
+    }
+
+    setChatInput('');
+    setChatInputImageBase64(null);
+    setIsChatLoading(true);
+
+    try {
+      let newModelMsg: ChatMessage;
+      if (chatModel.includes('flash-image')) {
+        const fullPrompt = `${chatInput}. Produce the image in high definition ${chatImageQuality} resolution.`;
+        const imageUrl = await generateImageForChat(fullPrompt, chatModel, chatImageAspectRatio);
+        newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: 'Đây là hình ảnh của bạn:', imageUrl };
+      } else {
+        const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
+        const messagesToSend = [...currentMsgs, newUserMsg];
+        const replyText = await chatWithAI(messagesToSend, chatModel);
+        newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: replyText };
+      }
+      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newModelMsg], timestamp: Date.now() } : s));
+    } catch (e: any) {
+      const errorMsg: ChatMessage = { id: Date.now().toString() + 'e', role: 'model', text: `⚠️ Error: ${e.message || 'Something went wrong.'}` };
+      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, errorMsg], timestamp: Date.now() } : s));
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const handleImageUploadToChat = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setChatInputImageBase64(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleNewChat = () => {
+    setActiveSessionId(null);
+    setShowSessionsList(false);
+  };
+
+  useEffect(() => {
+    localStorage.setItem('elmich_ai_gallery', JSON.stringify(gallery));
+  }, [gallery]);
 
   const productFilesRef = useRef<HTMLInputElement>(null);
   const refFileRef = useRef<HTMLInputElement>(null);
@@ -414,7 +593,7 @@ const App: React.FC = () => {
     setLoadingMessage("Gemini Thinking đang chuẩn bị kiệt tác...");
     try {
       const finalSettings = { ...settings, ...overrideSettings };
-      const urls = await Promise.all(Array.from({ length: finalSettings.numImages }, (_, i) => generateProductImage(finalSettings, i + 1)));
+      const urls = await Promise.all(Array.from({ length: finalSettings.numImages }, (_, i) => generateProductImage(finalSettings, i + 1, successfulPrompts)));
       const time = Date.now();
       const newImages: GeneratedImage[] = urls.map((url, i) => ({ id: `${time}-${i}`, url, prompt: finalSettings.concept, timestamp: time, settings: { ...finalSettings }, variant: i + 1 }));
       setGallery(prev => [...newImages, ...prev]);
@@ -1879,114 +2058,453 @@ const renderTrackSocketWorkflow = () => (
     return cost;
   };
 
+  const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setChatSessions(prev => prev.filter(s => s.id !== sessionId));
+    if (activeSessionId === sessionId) {
+      setActiveSessionId(null);
+    }
+  };
+
+  const renderChatView = () => (
+    <main className="flex-1 flex max-w-[1920px] mx-auto w-full relative bg-white">
+      {/* Session Sidebar */}
+      <aside className="w-[300px] border-r border-[#CED0D4] bg-white flex flex-col h-full hidden md:flex shrink-0">
+        <div className="p-4 border-b border-[#CED0D4] flex items-center justify-between">
+          <h2 className="font-bold text-[#050505] text-lg">Lịch sử chat</h2>
+          <button onClick={handleNewChat} className="p-2 rounded-full hover:bg-[#F0F2F5] text-[#1877F2]">
+            <Zap size={20} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-1">
+          {chatSessions.map(s => (
+            <div
+              key={s.id}
+              onClick={() => setActiveSessionId(s.id)}
+              className={`w-full text-left p-3 rounded-xl transition-colors cursor-pointer group flex items-start justify-between ${activeSessionId === s.id ? 'bg-[#E4E6EB] font-semibold text-[#050505]' : 'text-[#65676B] hover:bg-[#F0F2F5]'}`}
+            >
+              <div className="flex-1 overflow-hidden pr-2">
+                <div className="text-[15px] truncate">{s.title}</div>
+                <div className="text-[11px] text-[#65676B] mt-1">{new Date(s.timestamp).toLocaleDateString('vi-VN')}</div>
+              </div>
+              <button 
+                onClick={(e) => handleDeleteSession(s.id, e)}
+                className={`p-1.5 rounded-full hover:bg-black/10 transition-colors ${activeSessionId === s.id ? 'opacity-100 text-red-500' : 'opacity-0 text-red-400 group-hover:opacity-100'}`}
+                title="Xóa đoạn chat này"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </aside>
+      
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col h-[calc(100vh-56px)] bg-white text-[#050505]">
+        <div className="px-6 py-3 border-b border-[#CED0D4] flex items-center justify-between bg-white z-10 shrink-0 shadow-sm">
+          <div>
+            <h2 className="font-bold text-xl">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#65676B] font-semibold">Mô hình:</span>
+                <select 
+                  value={chatModel}
+                  onChange={e => setChatModel(e.target.value)}
+                  className="bg-[#F0F2F5] border-none rounded-md px-3 py-1.5 text-sm outline-none text-[#050505] font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
+                >
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Chat)</option>
+                  <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Chat)</option>
+                  <option value="gemini-3.1-flash-preview">Gemini 3.1 Flash (Chat)</option>
+                  <option value="gemini-2.5-flash-image">Gemini 2.5 Image</option>
+                  <option value="gemini-3.1-flash-image-preview">Gemini 3.1 Image</option>
+                </select>
+              </div>
+              
+              {chatModel.includes('image') && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[#65676B] font-semibold">Tỷ lệ:</span>
+                    <select 
+                      value={chatImageAspectRatio}
+                      onChange={e => setChatImageAspectRatio(e.target.value)}
+                      className="bg-[#F0F2F5] border-none rounded-md px-3 py-1.5 text-sm outline-none text-[#050505] font-medium focus:ring-1 focus:ring-[#1877F2]"
+                    >
+                      <option value="1:1">1:1 (Vuông)</option>
+                      <option value="16:9">16:9 (Ngang)</option>
+                      <option value="9:16">9:16 (Dọc)</option>
+                      <option value="4:3">4:3</option>
+                      <option value="3:4">3:4</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[#65676B] font-semibold">Chất lượng:</span>
+                    <select 
+                      value={chatImageQuality}
+                      onChange={e => setChatImageQuality(e.target.value)}
+                      className="bg-[#F0F2F5] border-none rounded-md px-3 py-1.5 text-sm outline-none text-[#050505] font-medium focus:ring-1 focus:ring-[#1877F2]"
+                    >
+                      <option value="1K">1K</option>
+                      <option value="2K">2K</option>
+                      <option value="4K">4K</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:px-24 xl:px-48 flex flex-col gap-6 custom-scrollbar text-[15px]">
+            {chatMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-[#65676B] space-y-4 opacity-50">
+                <Wand2 size={48} />
+                <p className="text-xl font-medium">Bắt đầu trò chuyện với Trợ lý AI</p>
+                <p className="text-sm text-center max-w-sm">Tải lên hình ảnh sản phẩm để được tư vấn thiết kế, hoặc chia sẻ ý tưởng quảng cáo của bạn.</p>
+              </div>
+            )}
+            {chatMessages.map((msg, index) => (
+              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group max-w-full`}>
+                {msg.role === 'model' && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1877F2] to-cyan-500 text-white flex-shrink-0 flex items-center justify-center font-bold text-[11px] mr-3 font-sans shadow-md border-2 border-white">
+                    AI
+                  </div>
+                )}
+                <div className={`px-4 py-3 rounded-2xl max-w-[85%] break-words flex flex-col gap-3 shadow-sm ${msg.role === 'user' ? 'bg-[#1877F2] text-white rounded-br-sm' : 'bg-[#F0F2F5] text-[#050505] rounded-bl-sm border border-[#E4E6EB]'}`}>
+                  <span className="leading-relaxed whitespace-pre-wrap">
+                    {msg.role === 'model' && index === chatMessages.length - 1 ? (
+                      <TypingEffect text={msg.text} />
+                    ) : (
+                      msg.text
+                    )}
+                  </span>
+                  {msg.uploadedImageUrl && (
+                    <img src={msg.uploadedImageUrl} alt="User Upload" className="max-w-[400px] w-full rounded-lg border border-black/10 mx-auto" />
+                  )}
+                  {msg.imageUrl && (
+                    <img src={msg.imageUrl} alt="AI Generated" className="max-w-2xl w-full rounded-xl border border-black/10 mx-auto bg-white" />
+                  )}
+                </div>
+              </div>
+            ))}
+            {isChatLoading && (
+              <div className="flex justify-start items-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1877F2] to-cyan-500 text-white flex-shrink-0 flex items-center justify-center font-bold text-[11px] mr-3 font-sans shadow-md border-2 border-white">
+                  AI
+                </div>
+                <div className="px-5 py-4 bg-[#F0F2F5] rounded-2xl rounded-bl-sm flex gap-1.5 border border-[#E4E6EB]">
+                  <div className="w-2 h-2 bg-[#65676B] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="w-2 h-2 bg-[#65676B] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="w-2 h-2 bg-[#65676B] rounded-full animate-bounce"></div>
+                </div>
+              </div>
+            )}
+            <div ref={chatMessagesEndRef} />
+        </div>
+
+        <div className="p-4 md:p-6 lg:px-24 xl:px-48 border-t border-[#CED0D4] bg-white shrink-0">
+          <div className="flex flex-col gap-3 bg-[#F0F2F5] p-3 rounded-2xl border border-[#CED0D4] focus-within:border-[#1877F2] focus-within:ring-1 focus-within:ring-[#1877F2] transition-colors shadow-sm">
+            {chatInputImageBase64 && (
+              <div className="relative inline-block w-20 h-20 bg-white rounded-lg border border-[#CED0D4] p-1 shadow-sm">
+                <img src={chatInputImageBase64} alt="Upload preview" className="w-full h-full object-contain rounded-md" />
+                <button 
+                  onClick={() => setChatInputImageBase64(null)}
+                  className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center bg-[#050505] text-white rounded-full shadow-md hover:bg-red-500 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            <div className="flex items-end gap-2">
+              <label className="p-2.5 text-[#65676B] hover:text-[#1877F2] hover:bg-[#E4E6EB] rounded-full cursor-pointer transition-colors" title="Đính kèm ảnh">
+                <ImageIcon size={24} />
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageUploadToChat} />
+              </label>
+              <textarea 
+                placeholder="Hỏi AI về thiết kế sản phẩm, hoặc tải lên một hình ảnh..." 
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                disabled={isChatLoading}
+                className="flex-1 bg-transparent px-2 py-3 text-[16px] outline-none text-[#050505] placeholder-[#65676B] resize-none h-[50px] min-h-[50px] max-h-[200px]"
+                rows={1}
+              />
+              <button 
+                onClick={handleSendMessage}
+                disabled={(!chatInput.trim() && !chatInputImageBase64) || isChatLoading}
+                className="p-3 text-[#1877F2] hover:bg-[#E4E6EB] rounded-full transition-colors disabled:opacity-50 disabled:bg-transparent"
+              >
+                <Send size={24} className={(chatInput.trim() || chatInputImageBase64) ? "fill-[#1877F2]" : ""} />
+              </button>
+            </div>
+          </div>
+          <div className="text-center mt-3 text-xs text-[#65676B]">Gemini AI có thể mắc lỗi. Vui lòng kiểm tra lại những thông tin quan trọng.</div>
+        </div>
+      </div>
+    </main>
+  );
+
   return (
-    <div className="min-h-screen flex flex-col relative animate-fade-in">
-      <header className="px-6 py-4 flex justify-between items-center z-50 sticky top-0 bg-[#051610]/80 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#F0F2F5] text-[#050505] font-sans flex flex-col relative animate-fade-in">
+      <header className="h-[56px] w-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center justify-between px-4 sticky top-0 z-50">
+        <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsSidebarVisible(!isSidebarVisible)}
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-            title={isSidebarVisible ? "Ẩn thanh thao tác" : "Hiện thanh thao tác"}
+            className="p-2 rounded-full bg-[#F0F2F5] text-[#050505] hover:bg-[#E4E6EB] transition-colors lg:hidden"
           >
             {isSidebarVisible ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
           </button>
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20"><span className="text-white font-bold text-lg">AE</span></div>
-          <div><h1 className="text-xl font-bold tracking-tighter text-white">Ai Image Elmich</h1><p className="text-[8px] font-bold text-[#caf0f8] tracking-[0.3em] uppercase">Creative Studio 2026</p></div>
+          <div className="w-10 h-10 bg-[#1877F2] rounded-full flex items-center justify-center shadow-sm">
+            <span className="text-white font-bold text-lg">AE</span>
+          </div>
+          <div className="hidden md:block ml-2">
+            <h1 className="text-[#050505] font-bold text-lg">Ai Image Elmich</h1>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsImagePanelVisible(!isImagePanelVisible)}
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-            title={isImagePanelVisible ? "Ẩn khu vực ảnh" : "Hiện khu vực ảnh"}
-          >
-            {isImagePanelVisible ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
-          </button>
+
+        {/* View Mode Navigation */}
+        <div className="flex-1 flex justify-center max-w-md mx-auto hidden md:flex">
+          <div className="flex gap-2 p-1 bg-[#F0F2F5] rounded-lg">
+            <button
+              onClick={() => setViewMode('studio')}
+              className={`px-6 py-1.5 rounded-md text-[15px] font-semibold transition-all ${viewMode === 'studio' ? 'bg-white shadow-sm text-[#050505]' : 'text-[#65676B] hover:bg-[#E4E6EB]'}`}
+            >
+              Tạo ảnh
+            </button>
+            <button
+              onClick={() => setViewMode('chat')}
+              className={`px-6 py-1.5 rounded-md text-[15px] font-semibold transition-all flex items-center gap-2 ${viewMode === 'chat' ? 'bg-white shadow-sm text-[#050505]' : 'text-[#65676B] hover:bg-[#E4E6EB]'}`}
+            >
+              <MessageCircle size={18} /> Chat AI
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 relative z-10 whitespace-nowrap">
+          <button className="p-2 rounded-full bg-[#E4E6EB] text-[#050505] hover:bg-[#D8DADF] transition-colors" title="Hoàn tác" onClick={undoSettings} disabled={!canUndo}><Undo2 size={20} /></button>
+          <button className="p-2 rounded-full bg-[#E4E6EB] text-[#050505] hover:bg-[#D8DADF] transition-colors" title="Làm lại" onClick={redoSettings} disabled={!canRedo}><Redo2 size={20} /></button>
         </div>
       </header>
-      <main className="flex-1 flex flex-col lg:flex-row gap-6 p-6 max-w-[1600px] mx-auto w-full relative">
+
+      {viewMode === 'studio' ? (
+      <main className="flex-1 flex max-w-[1920px] mx-auto w-full relative pt-4">
+        {/* Left Sidebar Layout */}
         {isSidebarVisible && (
-          <aside className={`w-full ${isImagePanelVisible ? 'lg:w-[420px] shrink-0' : 'flex-1'} glass-card rounded-[35px] overflow-hidden lg:h-[calc(100vh-120px)] lg:sticky lg:top-24 z-10 bg-gradient-to-b from-white/[0.04] to-transparent animate-fade-in transition-all duration-300`}>
-            <div className="p-6 h-full overflow-y-auto custom-scrollbar">{renderSidebar()}</div>
+          <aside className="hidden lg:block w-[360px] shrink-0 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto custom-scrollbar px-2">
+            <div className="space-y-1">
+               <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#E4E6EB] text-left transition-colors" onClick={() => setCurrentStep(1)}>
+                  <div className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
+                  <span className="font-semibold text-[15px] text-[#050505]">Ai Image Elmich</span>
+               </button>
+            </div>
+            <div className="mt-4 border-t border-[#CED0D4] pt-4 px-2">
+              <h3 className="text-[#65676B] font-semibold text-[17px] mb-2 px-2">Công cụ</h3>
+              {renderSidebar()}
+            </div>
           </aside>
         )}
-        {isImagePanelVisible && (
-          <section className="flex-1 flex flex-col gap-6 relative z-10 min-w-0 animate-fade-in transition-all duration-300">
-            {/* Subtle gradient background for depth */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-teal-500/10 rounded-[40px] pointer-events-none blur-3xl -z-10"></div>
+
+        {/* Center Feed Layout */}
+        <section className="flex-1 max-w-[680px] w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0">
           
-          <div className="flex-1 glass-card rounded-[40px] p-8 flex items-center justify-center relative min-h-[400px] bg-gradient-to-br from-white/[0.03] to-transparent">
-            {appState === AppState.GENERATING || appState === AppState.ANALYZING ? (
-              <div className="text-center z-10 space-y-6 animate-pulse">
-                <div className="relative w-32 h-32 mx-auto"><div className="absolute inset-0 border-[4px] border-[#caf0f8] border-t-transparent rounded-full animate-spin" /></div>
-                <h3 className="text-xl font-bold text-white uppercase tracking-tighter">{loadingMessage}</h3>
-              </div>
-            ) : activeImage ? (
-              <div className="relative z-10 flex flex-col items-center gap-6 animate-fade-in w-full">
-                <div className="relative group max-w-full bg-black/20 rounded-[30px] p-2 flex justify-center"><img src={activeImage.url} alt="Masterpiece" className="max-h-[60vh] max-w-full block object-contain rounded-[28px] shadow-2xl" /></div>
-                <div className="flex gap-4">
-                  <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-[#caf0f8]">Phiên bản 0{activeImage.variant}</div>
-                  <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-emerald-400">Chi phí: ${calculateCost(activeImage).toFixed(3)}</div>
-                  <a href={activeImage.url} download={getDownloadFileName(activeImage)} className="vibrant-button px-8 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-white">Lưu ảnh ✨</a>
-                </div>
-                
-                {/* Edit AI Image Section */}
-                <div className="w-full max-w-2xl mt-2 bg-white/5 border border-white/10 rounded-[24px] p-4 flex flex-col gap-3">
-                  <label className="text-[10px] font-bold text-[#caf0f8] uppercase flex items-center gap-2">
-                    <Wand2 size={14} /> Chỉnh sửa ảnh bằng AI
-                  </label>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <select 
-                        value={editModel}
-                        onChange={e => setEditModel(e.target.value)}
-                        disabled={isEditingImage}
-                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[#caf0f8] transition-all"
-                      >
-                        <option value="gemini-3.1-flash-image-preview">Gemini 3.1 Flash Image</option>
-                        <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</option>
-                      </select>
-                      <select 
-                        value={editQuality}
-                        onChange={e => setEditQuality(e.target.value as ImageSize)}
-                        disabled={isEditingImage}
-                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[#caf0f8] transition-all"
-                      >
-                        <option value="1K">1K (Nhanh)</option>
-                        <option value="2K">2K (Sắc nét)</option>
-                        <option value="4K">4K (Siêu nét)</option>
-                      </select>
+          <div className="bg-white rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+             <div className="border-b border-[#CED0D4] p-4 font-semibold text-[17px] text-[#050505] flex justify-between items-center">
+                 Trạng thái làm việc
+             </div>
+             {/* Feed / Main Image section */}
+             {appState === AppState.GENERATING || appState === AppState.ANALYZING ? (
+               <div className="w-full min-h-[400px] bg-white p-8 flex flex-col items-center justify-center">
+                 <div className="w-10 h-10 border-[3px] border-[#F0F2F5] border-t-[#1877F2] rounded-full animate-spin"></div>
+                 <p className="mt-4 text-[#65676B] font-semibold block">{loadingMessage}</p>
+                 <div className="h-6 w-1/3 bg-[#F0F2F5] rounded mt-4 animate-pulse"></div>
+                 <div className="h-4 w-1/4 bg-[#F0F2F5] rounded mt-2 animate-pulse"></div>
+               </div>
+             ) : activeImage ? (
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between p-4 px-4">
+                     <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
+                        <div>
+                          <p className="font-semibold text-[15px] text-[#050505]">Ai Image Elmich <span className="font-normal text-[#65676B] text-[13px]">đã tạo ảnh mới.</span></p>
+                          <p className="text-[13px] text-[#65676B]">Phiên bản 0{activeImage.variant} • Chi phí ${calculateCost(activeImage).toFixed(3)}</p>
+                        </div>
+                     </div>
+                  </div>
+                  <div className="p-4 pt-0">
+                     <p className="text-[15px] text-[#050505]">{activeImage.settings.concept ? `Yêu cầu: ${activeImage.settings.concept}` : `Chế độ: ${activeImage.settings.visualStyle}`}</p>
+                  </div>
+                  <div className="bg-[#E4E6EB] w-full relative">
+                     <img src={activeImage.url} alt="Generated" className="w-full max-h-[70vh] object-contain block mx-auto" />
+                  </div>
+                  <div className="px-4 py-3 flex items-center justify-between border-b border-[#CED0D4]">
+                     <div className="flex items-center gap-1 text-[#65676B] text-[15px]">
+                       <div className="w-5 h-5 rounded-full bg-[#1877F2] flex items-center justify-center shadow-sm">
+                          <Check size={12} className="text-white" />
+                       </div>
+                       Tạo thành công
+                     </div>
+                  </div>
+                  <div className="flex px-2 py-1 border-b border-[#CED0D4]">
+                     <a href={activeImage.url} download={getDownloadFileName(activeImage)} onClick={() => setAskFeedbackImage(activeImage)} className="flex-1 flex gap-2 items-center justify-center py-2 text-[#65676B] font-semibold text-[15px] hover:bg-[#F0F2F5] rounded-md mx-1 transition-colors">
+                        <Download size={20} /> Tải xuống
+                     </a>
+                  </div>
+                  
+                  {/* Edit AI Image Section inside the post (comments area) */}
+                  <div className="p-4 bg-[#F0F2F5] rounded-b-lg flex flex-col gap-3">
+                    <p className="font-semibold text-[13px] text-[#65676B]">Chỉnh sửa ảnh với AI</p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                       <select 
+                         value={editModel}
+                         onChange={e => setEditModel(e.target.value)}
+                         disabled={isEditingImage}
+                         className="flex-1 bg-white border border-[#CED0D4] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
+                       >
+                         <option value="gemini-3.1-flash-image-preview">Gemini 3.1</option>
+                         <option value="gemini-2.5-flash-image">Gemini 2.5</option>
+                       </select>
+                       <select 
+                         value={editQuality}
+                         onChange={e => setEditQuality(e.target.value as ImageSize)}
+                         disabled={isEditingImage}
+                         className="flex-1 bg-white border border-[#CED0D4] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
+                       >
+                         <option value="1K">1K Standard</option>
+                         <option value="2K">2K Pro</option>
+                         <option value="4K">4K Ultra</option>
+                       </select>
                     </div>
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="Nhập yêu cầu chỉnh sửa (VD: Thêm ánh nắng, đổi màu nền...)" 
-                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#caf0f8] transition-all"
-                        value={editPrompt}
-                        onChange={e => setEditPrompt(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleEditImage()}
-                        disabled={isEditingImage}
-                      />
-                      <button 
-                        onClick={handleEditImage}
-                        disabled={isEditingImage || !editPrompt.trim()}
-                        className="px-6 bg-[#caf0f8] text-[#051610] font-bold rounded-xl text-xs disabled:opacity-50 flex items-center justify-center min-w-[120px] transition-all hover:brightness-110"
-                      >
-                        {isEditingImage ? <Loader2 size={16} className="animate-spin" /> : 'Thực hiện'}
-                      </button>
-                    </div>
+                    <textarea value={editPrompt} onChange={e => setEditPrompt(e.target.value)} disabled={isEditingImage} placeholder="Viết yêu cầu chỉnh sửa..." className="w-full bg-white border border-[#CED0D4] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2] resize-none h-16" />
+                    <button onClick={handleEditImage} disabled={!editPrompt.trim() || isEditingImage} className="w-full py-2 bg-[#1877F2] text-white font-semibold rounded-lg hover:bg-[#166FE5] disabled:opacity-50">
+                       {isEditingImage ? 'Đang xử lý...' : 'Chỉnh sửa'}
+                    </button>
                   </div>
                 </div>
-              </div>
-            ) : renderInstructions()}
+             ) : (
+                <div className="p-8 text-center text-[#65676B] font-semibold">
+                   {renderInstructions()}
+                </div>
+             )}
           </div>
-          <div className="flex gap-4 h-32 items-stretch relative z-10">
-            <div className="flex-1 glass-card rounded-[35px] p-4 flex gap-4 overflow-x-auto custom-scrollbar items-center bg-gradient-to-tr from-white/[0.02] to-transparent">
-                {gallery.length === 0 ? <div className="flex-1 flex items-center justify-center border-2 border-dashed border-white/5 rounded-[25px] opacity-20 h-full"><span className="text-[9px] font-bold uppercase tracking-[0.4em]">Bộ sưu tập</span></div> : gallery.map(img => <button key={img.id} onClick={() => setActiveImage(img)} className={`flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all ${activeImage?.id === img.id ? 'border-[#caf0f8]' : 'border-transparent opacity-40 hover:opacity-100'}`}><img src={img.url} className="w-full h-full object-cover" /></button>)}
-            </div>
-          </div>
+
+          {/* Render past gallery as separate posts */}
+          {gallery.filter(img => img.id !== activeImage?.id).map(img => (
+             <div key={img.id} className="bg-white rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] flex flex-col">
+                  <div className="flex items-center justify-between p-4 px-4">
+                     <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
+                        <div>
+                          <p className="font-semibold text-[15px] text-[#050505]">Ai Image Elmich</p>
+                          <p className="text-[13px] text-[#65676B]">Phiên bản 0{img.variant} • {new Date(img.timestamp).toLocaleTimeString()}</p>
+                        </div>
+                     </div>
+                     <button className="w-8 h-8 rounded-full hover:bg-[#F0F2F5] flex items-center justify-center text-[#65676B]" onClick={() => setActiveImage(img)}>
+                       <Eye size={20} title="Xem chi tiết" />
+                     </button>
+                  </div>
+                  <div className="px-4 pb-2">
+                     <p className="text-[15px] text-[#050505]">{img.settings.concept ? `${img.settings.concept}` : `Bộ lọc: ${img.settings.visualStyle}`}</p>
+                  </div>
+                  <div className="bg-[#E4E6EB] w-full relative cursor-pointer" onClick={() => setActiveImage(img)}>
+                     <img src={img.url} className="w-full max-h-[50vh] object-contain block mx-auto" />
+                  </div>
+                  <div className="flex px-2 py-1 border-t border-[#CED0D4]">
+                     <a href={img.url} download={getDownloadFileName(img)} onClick={() => setAskFeedbackImage(img)} className="flex-1 flex gap-2 items-center justify-center py-2 text-[#65676B] font-semibold text-[15px] hover:bg-[#F0F2F5] rounded-md mx-1 transition-colors">
+                        <Download size={20} /> Tải xuống
+                     </a>
+                  </div>
+             </div>
+          ))}
+
         </section>
-        )}
+
+        {/* Right Sidebar */}
+        <aside className="hidden xl:block w-[360px] shrink-0 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto px-2">
+           <div className="p-4 flex items-center justify-between">
+             <span className="font-semibold text-[#65676B] text-[17px]">Bộ sưu tập</span>
+             <button title="Làm mới bộ sưu tập" className="text-[#1877F2] text-[13px] hover:underline" onClick={() => {
+                 setGallery([]);
+                 setActiveImage(null);
+             }}>Xóa tất cả</button>
+           </div>
+           <div className="px-4 pb-4 text-[13px] text-[#65676B] border-b border-[#CED0D4] mb-4">
+             Ảnh sẽ tự động hết hạn và bị xóa sau 7 ngày. Bạn nhớ lưu ảnh về máy nhé.
+           </div>
+           
+           <div className="grid grid-cols-2 gap-2 px-2 pb-20">
+             {gallery.map(img => (
+                <div key={img.id} className="relative aspect-square bg-[#E4E6EB] rounded-lg overflow-hidden group cursor-pointer" onClick={() => setActiveImage(img)}>
+                   <img src={img.url} className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 object-center ${activeImage?.id === img.id ? 'opacity-50' : ''}`} />
+                   {activeImage?.id === img.id && (
+                     <div className="absolute inset-0 flex items-center justify-center bg-[#1877F2]/20">
+                        <Check size={24} className="text-white drop-shadow-md" />
+                     </div>
+                   )}
+                </div>
+             ))}
+             {gallery.length === 0 && (
+                <div className="col-span-2 py-8 text-center text-[#65676B] text-[14px]">
+                  Chưa có ảnh nào được tạo.
+                </div>
+             )}
+           </div>
+        </aside>
       </main>
+      ) : renderChatView()}
+
+      {/* Feedback Modal */}
+      <AnimatePresence>
+        {askFeedbackImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-black/60 flex items-center justify-center p-4"
+            onClick={() => setAskFeedbackImage(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden"
+            >
+              <div className="p-4 border-b border-[#CED0D4]">
+                <h3 className="font-bold text-lg text-center">Ảnh này có đạt yêu cầu không?</h3>
+              </div>
+              <div className="p-4 text-center text-[#65676B]">
+                <p>Phản hồi của bạn giúp AI học hỏi và tạo ra kết quả tốt hơn trong những lần sau.</p>
+              </div>
+              <div className="flex border-t border-[#CED0D4]">
+                <button 
+                  className="flex-1 py-3 font-semibold text-[#65676B] hover:bg-[#F0F2F5] transition-colors border-r border-[#CED0D4]"
+                  onClick={() => setAskFeedbackImage(null)}
+                >
+                  Không hẳn
+                </button>
+                <button 
+                  className="flex-1 py-3 font-bold text-[#1877F2] hover:bg-[#F0F2F5] transition-colors"
+                  onClick={() => {
+                    const newPrompt: SuccessfulPrompt = {
+                      id: Date.now().toString(),
+                      imageSettings: askFeedbackImage.settings,
+                      timestamp: Date.now()
+                    };
+                    setSuccessfulPrompts(prev => [...prev, newPrompt]);
+                    setAskFeedbackImage(null);
+                  }}
+                >
+                  Rất tốt!
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -3,6 +3,21 @@ export type AspectRatio = "1:1" | "3:4" | "4:3" | "9:16" | "16:9" | "1:4" | "4:1
 export type ImageSize = "1K" | "2K" | "4K";
 export type VisualStyle = "CONCEPT" | "TECH_PS" | "COLOR_CHANGE" | "PACKAGING_MOCKUP" | "TECH_EFFECTS" | "WHITE_BG_RETOUCH" | "SCENE_STAGING" | "STUDIO" | "TRACK_SOCKET_STAGING" | "LINE_ART";
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  imageUrl?: string;
+  uploadedImageUrl?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  timestamp: number;
+}
+
 export interface CameraSettings {
   angle: number; // -15 to 90
   focalLength: number; // 12 to 200
@@ -58,6 +73,12 @@ export interface PropConfig {
   size?: 'small' | 'medium' | 'large' | 'auto';
   position?: 'left' | 'right' | 'front' | 'back' | 'background' | 'foreground' | 'auto';
   rotation?: 'tilted' | 'upright' | 'flat' | 'auto';
+}
+
+export interface SuccessfulPrompt {
+  id: string;
+  imageSettings: GenerationSettings;
+  timestamp: number;
 }
 
 export interface GenerationSettings {
