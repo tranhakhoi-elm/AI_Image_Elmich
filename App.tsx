@@ -887,7 +887,7 @@ const App: React.FC = () => {
                        <p className="text-[10px] text-[#65676B]">Concept: {settings.concept.substring(0, 30)}... | Props: {settings.props.length}</p>
                    </div>
                    {renderModelSelection()}
-                   <button onClick={startGeneration} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-xl">Tạo ảnh</button>
+                   <button onClick={() => startGeneration()} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-xl">Tạo ảnh</button>
                 </div>
             )}
           </motion.div>
@@ -1107,7 +1107,7 @@ const App: React.FC = () => {
 
               <div className="flex gap-2">
                 <button onClick={() => setWhiteBgStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
-                <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
+                <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
               </div>
             </div>
           )}
@@ -1168,7 +1168,7 @@ const App: React.FC = () => {
                {renderModelSelection()}
                <div className="flex gap-2">
                  <button onClick={() => setPackagingStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
-                 <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
+                 <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
                </div>
             </div>
           )}
@@ -1213,7 +1213,7 @@ const App: React.FC = () => {
                    {renderModelSelection()}
                    <div className="flex gap-2">
                      <button onClick={() => setTechEffectStep(0)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
-                     <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
+                     <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
                    </div>
                 </div>
               ) : (
@@ -1243,7 +1243,7 @@ const App: React.FC = () => {
                {renderModelSelection()}
                <div className="flex gap-2">
                  <button onClick={() => setTechEffectStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
-                 <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
+                 <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
                </div>
             </div>
           )}
@@ -1835,7 +1835,7 @@ const renderTrackSocketWorkflow = () => (
       const modes = [
         { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'bg-purple-50 text-purple-600', hover: 'hover:bg-purple-100' },
         { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'bg-blue-50 text-blue-600', hover: 'hover:bg-blue-100' },
-        { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ (netline).', color: 'bg-gray-100 text-gray-700', hover: 'hover:bg-gray-200' },
+        { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ.', color: 'bg-gray-100 text-gray-700', hover: 'hover:bg-gray-200' },
         { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'bg-cyan-50 text-cyan-600', hover: 'hover:bg-cyan-100' },
         { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'bg-emerald-50 text-emerald-600', hover: 'hover:bg-emerald-100' },
         { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'bg-orange-50 text-orange-600', hover: 'hover:bg-orange-100' },
@@ -2002,7 +2002,7 @@ const renderTrackSocketWorkflow = () => (
       {renderModelSelection()}
       <div className="flex gap-2">
         <button onClick={onBack} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
-        <button onClick={startGeneration} className="flex-[2] bg-[#1877F2] text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl">Tạo ảnh</button>
+        <button onClick={() => startGeneration()} className="flex-[2] bg-[#1877F2] text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl">Tạo ảnh</button>
       </div>
     </div>
   );
@@ -2270,9 +2270,9 @@ const renderTrackSocketWorkflow = () => (
       </header>
 
       {viewMode === 'studio' ? (
-      <main className="flex-1 flex flex-col lg:flex-row max-w-[1920px] mx-auto w-full relative pt-4">
+      <main className="flex-1 flex flex-col xl:flex-row max-w-[1920px] mx-auto w-full relative xl:h-[calc(100vh-56px)] xl:overflow-hidden bg-[#F0F2F5] xl:bg-white xl:py-0">
         {/* Left Sidebar Layout */}
-        <aside className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-[72px] lg:h-[calc(100vh-72px)] lg:overflow-y-auto custom-scrollbar px-2 mb-8 lg:mb-0">
+        <aside className="w-full xl:w-[360px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mb-8 xl:mb-0 xl:pt-4 xl:border-r xl:border-[#CED0D4] bg-white xl:bg-transparent">
           <div className="space-y-1">
              <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#E4E6EB] text-left transition-colors" onClick={() => setCurrentStep(1)}>
                 <div className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
@@ -2286,9 +2286,9 @@ const renderTrackSocketWorkflow = () => (
         </aside>
 
         {/* Center Feed Layout */}
-        <section className="flex-1 max-w-[680px] w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0">
+        <section className="flex-1 max-w-[680px] w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0 xl:h-full xl:overflow-y-auto custom-scrollbar xl:pt-4 bg-[#F0F2F5] xl:bg-transparent">
           
-          <div className="bg-white rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+          <div className="bg-white rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#CED0D4]">
              <div className="border-b border-[#CED0D4] p-4 font-semibold text-[17px] text-[#050505] flex justify-between items-center">
                  Trạng thái làm việc
              </div>
@@ -2400,7 +2400,7 @@ const renderTrackSocketWorkflow = () => (
         </section>
 
         {/* Right Sidebar */}
-        <aside className="w-full xl:w-[360px] shrink-0 xl:sticky xl:top-[72px] xl:h-[calc(100vh-72px)] overflow-y-auto px-2 mt-8 xl:mt-0 pb-10">
+        <aside className="w-full xl:w-[360px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mt-8 xl:mt-0 pb-10 xl:pt-4 xl:border-l xl:border-[#CED0D4] bg-white xl:bg-transparent">
            <div className="p-4 flex items-center justify-between">
              <span className="font-semibold text-[#65676B] text-[17px]">Bộ sưu tập</span>
              <button title="Làm mới bộ sưu tập" className="text-[#1877F2] text-[13px] hover:underline" onClick={() => {
