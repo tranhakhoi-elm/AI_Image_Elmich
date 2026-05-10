@@ -344,7 +344,7 @@ const App: React.FC = () => {
       let newModelMsg: ChatMessage;
       if (chatModel.includes('flash-image')) {
         const fullPrompt = `${chatInput}. Produce the image in high definition ${chatImageQuality} resolution.`;
-        const imageUrl = await generateImageForChat(fullPrompt, chatModel, chatImageAspectRatio);
+        const imageUrl = await generateImageForChat(fullPrompt, chatModel, chatImageAspectRatio, chatInputImageBase64 || undefined);
         newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: 'Đây là hình ảnh của bạn:', imageUrl };
       } else {
         const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
@@ -2058,7 +2058,7 @@ const renderTrackSocketWorkflow = () => (
     
     // Prompt generation cost (Step 1)
     if (image.settings.visualStyle === 'CONCEPT' || image.settings.visualStyle === 'STUDIO') {
-      cost += 0.002; // Cost for gemini-3.1-flash-lite
+      cost += 0.002; // Cost for gemini-2.5-flash
     }
     
     return cost;
@@ -2119,8 +2119,8 @@ const renderTrackSocketWorkflow = () => (
                   className="bg-[#F0F2F5] border-none rounded-md px-3 py-1.5 text-sm outline-none text-[#050505] font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
                 >
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash (Chat)</option>
-                  <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Chat)</option>
-                  <option value="gemini-3.0-flash">Gemini 3.1 Flash (Chat)</option>
+                  <option value="gemini-2.5-pro">Gemini 3.1 Pro (Chat)</option>
+                  <option value="gemini-2.5-flash">Gemini 3.1 Flash (Chat)</option>
                   <option value="gemini-2.5-flash-image">Gemini 2.5 Image</option>
                   <option value="gemini-3.1-flash-image-preview">Gemini 3.1 Image</option>
                 </select>
@@ -2165,7 +2165,10 @@ const renderTrackSocketWorkflow = () => (
               <div className="flex flex-col items-center justify-center h-full text-[#65676B] space-y-4 opacity-50">
                 <Wand2 size={48} />
                 <p className="text-xl font-medium">Bắt đầu trò chuyện với Trợ lý AI</p>
-                <p className="text-sm text-center max-w-sm">Tải lên hình ảnh sản phẩm để được tư vấn thiết kế, hoặc chia sẻ ý tưởng quảng cáo của bạn.</p>
+                <p className="text-sm text-center max-w-lg">
+                  Tải lên hình để AI tư vấn thiết kế bằng chữ (chọn model Chat).<br/>
+                  Để tạo/sửa ảnh, tải hình lên, viết yêu cầu, và bắt buộc chọn model Image (Gemini 2.5 Image/3.1 Image).
+                </p>
               </div>
             )}
             {chatMessages.map((msg, index) => (
@@ -2274,9 +2277,9 @@ const renderTrackSocketWorkflow = () => (
           </div>
         </div>
 
-        {/* View Mode Navigation */}
+        {/* View Mode Navigation (Tạm ẩn) */}
         <div className="flex-1 flex justify-center max-w-md mx-auto">
-          <div className="flex gap-2 p-1 bg-[#F0F2F5] rounded-lg">
+          {/* <div className="flex gap-2 p-1 bg-[#F0F2F5] rounded-lg">
             <button
               onClick={() => setViewMode('studio')}
               className={`px-6 py-1.5 rounded-md text-[15px] font-semibold transition-all ${viewMode === 'studio' ? 'bg-white ' : 'text-[#65676B] hover:bg-[#E4E6EB]'}`}
@@ -2289,7 +2292,7 @@ const renderTrackSocketWorkflow = () => (
             >
               <MessageCircle size={18} /> Chat AI
             </button>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center gap-2 relative z-10 whitespace-nowrap">
@@ -2341,8 +2344,12 @@ const renderTrackSocketWorkflow = () => (
                      </div>
                   </div>
                   <div className="p-4 pt-0">
-                     <p className="text-[15px] text-[#050505]">{activeImage.settings.conceptTitle || activeImage.settings.techTitle || (activeImage.settings.concept ? `Yêu cầu: ${activeImage.settings.concept.substring(0, 100)}...` : `Chế độ: ${activeImage.settings.visualStyle}`)}</p>
-                  </div>
+     <p className="font-semibold text-[15px] text-[#050505] mb-2">{activeImage.settings.conceptTitle || activeImage.settings.techTitle || (activeImage.settings.concept ? `Yêu cầu: ${activeImage.settings.concept.substring(0, 100)}...` : `Chế độ: ${activeImage.settings.visualStyle}`)}</p>
+     <div className="bg-[#F0F2F5] p-3 rounded-lg border border-[#CED0D4]">
+       <p className="text-[11px] font-bold text-[#65676B] uppercase mb-1">Prompt đã gửi cho AI:</p>
+       <p className="text-[13px] text-[#050505] whitespace-pre-wrap font-mono leading-relaxed">{activeImage.prompt}</p>
+     </div>
+  </div>
                   <div className="bg-[#E4E6EB] w-full relative">
                      <img src={activeImage.url} alt="Generated" className="w-full max-h-[70vh] object-contain block mx-auto" />
                   </div>
@@ -2413,8 +2420,12 @@ const renderTrackSocketWorkflow = () => (
                      </button>
                   </div>
                   <div className="px-4 pb-2">
-                     <p className="text-[15px] text-[#050505]">{img.settings.conceptTitle || img.settings.techTitle || (img.settings.concept ? `${img.settings.concept.substring(0, 100)}...` : `Bộ lọc: ${img.settings.visualStyle}`)}</p>
-                  </div>
+     <p className="font-semibold text-[15px] text-[#050505] mb-2">{img.settings.conceptTitle || img.settings.techTitle || (img.settings.concept ? `${img.settings.concept.substring(0, 100)}...` : `Bộ lọc: ${img.settings.visualStyle}`)}</p>
+     <div className="bg-[#F0F2F5] p-3 rounded-lg border border-[#CED0D4] mt-2 mb-2">
+       <p className="text-[11px] font-bold text-[#65676B] uppercase mb-1">Prompt đã gửi cho AI:</p>
+       <p className="text-[13px] text-[#050505] whitespace-pre-wrap font-mono leading-relaxed">{img.prompt}</p>
+     </div>
+  </div>
                   <div className="bg-[#E4E6EB] w-full relative cursor-pointer" onClick={() => setActiveImage(img)}>
                      <img src={img.url} className="w-full max-h-[50vh] object-contain block mx-auto" />
                   </div>

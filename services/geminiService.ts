@@ -8,7 +8,7 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
   
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-latest",
+      model: "gemini-2.5-flash",
       contents: `Gợi ý cho: "${settings.productName}". ${styleContext}`,
       config: {
         responseMimeType: "application/json",
@@ -71,7 +71,7 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite", 
+      model: "gemini-2.5-flash", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -128,7 +128,7 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-2.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -171,7 +171,7 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.0-flash",
+      model: "gemini-2.5-flash",
       contents: `Sản phẩm: ${productName}. Concept: "${concept}". 
       YÊU CẦU:
       1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
@@ -197,7 +197,7 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-latest",
+      model: "gemini-2.5-flash",
       contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
       YÊU CẦU:
       1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
@@ -227,7 +227,7 @@ export const suggestTechConcepts = async (productName: string, title: string): P
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-latest",
+      model: "gemini-2.5-flash",
       contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm. JSON array với 'title' (tiếng Việt) và 'prompt'.
       YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
       - [Mô tả phong cách]
@@ -270,7 +270,7 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
       { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
     ];
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-2.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -315,7 +315,7 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite", 
+      model: "gemini-2.5-flash", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -497,7 +497,7 @@ Flat 2D vector style. High clarity, simple schematic outline.
       - ONLY output the final prompt text, no explanations.
     `;
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-2.5-flash",
       contents: thinkingPrompt
     });
     finalPrompt = thinkingResponse.text || "";
@@ -556,7 +556,7 @@ Flat 2D vector style. High clarity, simple schematic outline.
     `;
     
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-2.5-flash",
       contents: thinkingPrompt
     });
     finalPrompt = thinkingResponse.text || "";
@@ -667,12 +667,25 @@ Flat 2D vector style. High clarity, simple schematic outline.
   } catch (error: any) { throw error; }
 };
 
-export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image-preview', aspectRatio: string = "1:1"): Promise<string> => {
+export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image-preview', aspectRatio: string = "1:1", imageBase64?: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
+    const parts: any[] = [{ text: prompt }];
+    if (imageBase64 && typeof imageBase64 === 'string') {
+      const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+      if (match) {
+        parts.push({
+          inlineData: {
+            mimeType: match[1],
+            data: match[2]
+          }
+        });
+      }
+    }
+
     const response = await ai.models.generateContent({
       model: modelName,
-      contents: { parts: [{ text: prompt }] },
+      contents: { parts },
       config: {
         imageConfig: {
           aspectRatio: aspectRatio as any
@@ -680,9 +693,9 @@ export const generateImageForChat = async (prompt: string, modelName: string = '
       }
     });
 
-    const parts = response.candidates?.[0]?.content?.parts;
-    if (parts) {
-      for (const part of parts) {
+    const resParts = response.candidates?.[0]?.content?.parts;
+    if (resParts) {
+      for (const part of resParts) {
         if (part.inlineData) {
           return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
@@ -692,7 +705,7 @@ export const generateImageForChat = async (prompt: string, modelName: string = '
   } catch (error: any) { throw error; }
 };
 
-export const chatWithAI = async (messages: import('../types').ChatMessage[], modelName: string = 'gemini-3.1-pro-preview'): Promise<string> => {
+export const chatWithAI = async (messages: import('../types').ChatMessage[], modelName: string = 'gemini-2.5-pro'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const contents = messages.map(msg => {
     const parts: any[] = [{ text: msg.text }];
