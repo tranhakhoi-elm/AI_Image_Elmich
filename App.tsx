@@ -188,6 +188,7 @@ const App: React.FC = () => {
   const [passwordError, setPasswordError] = useState(""); 
   
   const [appState, setAppState] = useState<AppState>(AppState.READY);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [loadingMessage, setLoadingMessage] = useState<string>("");
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isImagePanelVisible, setIsImagePanelVisible] = useState(true);
@@ -438,13 +439,13 @@ const App: React.FC = () => {
           sockets: [...(prev.sockets || []), { id: Date.now().toString(), image: base64, quantity: 1, applianceNote: '' }] 
         }));
       }
-    } catch (error) { alert("Lỗi khi tải ảnh."); }
+    } catch (error) { setAlertMessage("Lỗi khi tải ảnh."); }
     e.target.value = '';
   };
 
   // --- LOGIC CONCEPT WORKFLOW (STRICT 4 STEPS) ---
   const handleConceptAnalysis = async () => {
-    if (!settings.productName || settings.productImages.length === 0) return alert("Vui lòng nhập tên và tải ít nhất 1 ảnh sản phẩm.");
+    if (!settings.productName || settings.productImages.length === 0) return setAlertMessage("Vui lòng nhập tên và tải ít nhất 1 ảnh sản phẩm.");
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang phân tích dữ liệu và đề xuất phối cảnh...");
     try {
@@ -459,7 +460,7 @@ const App: React.FC = () => {
 
   const handlePropSuggestion = async () => {
     const finalConcept = settings.concept;
-    if (!finalConcept) return alert("Vui lòng chọn hoặc nhập 1 phối cảnh.");
+    if (!finalConcept) return setAlertMessage("Vui lòng chọn hoặc nhập 1 phối cảnh.");
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ phù hợp cho phối cảnh này...");
     try {
@@ -507,7 +508,7 @@ const App: React.FC = () => {
 
   // --- LOGIC TECH WORKFLOW ---
   const handleTechAnalysis = async () => {
-    if (!settings.productName || !settings.techDescription || settings.productImages.length === 0) return alert("Thiếu thông tin");
+    if (!settings.productName || !settings.techDescription || settings.productImages.length === 0) return setAlertMessage("Thiếu thông tin");
     setAppState(AppState.ANALYZING);
     setLoadingMessage("Gemini đang thiết kế ý tưởng kỹ thuật...");
     try {
@@ -534,7 +535,7 @@ const App: React.FC = () => {
   };
 
   const handleSeaConceptSuggestion = async () => {
-      if (!settings.productName || !settings.techTitle) return alert("Thiếu tên SP/Tiêu đề");
+      if (!settings.productName || !settings.techTitle) return setAlertMessage("Thiếu tên SP/Tiêu đề");
       setAppState(AppState.ANALYZING);
       setLoadingMessage("Đang gợi ý concept biển...");
       try {
@@ -547,7 +548,7 @@ const App: React.FC = () => {
   };
 
   const handleStagingAnalysis = async () => {
-      if (!settings.concept || !settings.productImages[0] || !settings.referenceImage) return alert("Vui lòng điền đủ thông tin & up ảnh.");
+      if (!settings.concept || !settings.productImages[0] || !settings.referenceImage) return setAlertMessage("Vui lòng điền đủ thông tin & up ảnh.");
       setAppState(AppState.ANALYZING);
       setLoadingMessage("AI đang phân tích phối cảnh...");
       try {
@@ -561,7 +562,7 @@ const App: React.FC = () => {
 
   // --- LOGIC STUDIO WORKFLOW ---
   const handleStudioAnalysis = async () => {
-    if (!settings.productName || settings.productImages.length === 0) return alert("Vui lòng nhập tên và tải ít nhất 1 ảnh sản phẩm.");
+    if (!settings.productName || settings.productImages.length === 0) return setAlertMessage("Vui lòng nhập tên và tải ít nhất 1 ảnh sản phẩm.");
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang phân tích và đề xuất Studio Concept...");
     try {
@@ -576,7 +577,7 @@ const App: React.FC = () => {
 
   const handleStudioPropSuggestion = async () => {
     const finalConcept = settings.concept;
-    if (!finalConcept) return alert("Vui lòng chọn hoặc nhập 1 concept.");
+    if (!finalConcept) return setAlertMessage("Vui lòng chọn hoặc nhập 1 concept.");
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ Studio phù hợp...");
     try {
@@ -600,7 +601,7 @@ const App: React.FC = () => {
       setActiveImage(newImages[0]);
     } catch (error: any) {
       console.error(error);
-      alert("Lỗi tạo ảnh.");
+      setAlertMessage("Lỗi tạo ảnh.");
     } finally { setAppState(AppState.READY); }
   };
 
@@ -623,7 +624,7 @@ const App: React.FC = () => {
       setEditPrompt("");
     } catch (error: any) {
       console.error(error);
-      alert("Lỗi chỉnh sửa ảnh.");
+      setAlertMessage("Lỗi chỉnh sửa ảnh.");
     } finally {
       setIsEditingImage(false);
     }
@@ -833,7 +834,7 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                     <label className="block text-[9px] font-bold text-[#65676B] uppercase">Mô tả ý tưởng trang trí</label>
                     <textarea className="w-full h-32 bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] focus:border-[#1877F2] outline-none resize-none transition-colors custom-scrollbar" placeholder="VD: Phòng khách hiện đại với sofa xám, ánh sáng nắng chiều len lỏi qua cửa sổ..." value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
-                    <button onClick={() => settings.concept ? setStagingStep(2) : alert("Thiếu mô tả!")} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.2)]">Tiếp tục</button>
+                    <button onClick={() => settings.concept ? setStagingStep(2) : setAlertMessage("Thiếu mô tả!")} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.2)]">Tiếp tục</button>
                 </div>
             )}
             {stagingStep === 2 && (
@@ -845,7 +846,7 @@ const App: React.FC = () => {
                     <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
                     <div className="flex gap-2">
                       <button onClick={() => setStagingStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
-                      <button onClick={() => settings.productImages[0] ? setStagingStep(3) : alert("Thiếu ảnh!")} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                      <button onClick={() => settings.productImages[0] ? setStagingStep(3) : setAlertMessage("Thiếu ảnh!")} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                     </div>
                 </div>
             )}
@@ -918,7 +919,7 @@ const App: React.FC = () => {
                 {settings.productImages.length > 0 ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Ảnh SP</span>}
               </div>
               <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
-              <button onClick={() => (settings.productName && settings.techDescription) ? setTechStep(2) : alert("Thiếu thông tin")} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+              <button onClick={() => (settings.productName && settings.techDescription) ? setTechStep(2) : setAlertMessage("Thiếu thông tin")} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
             </div>
           )}
 
@@ -1671,8 +1672,8 @@ const renderTrackSocketWorkflow = () => (
           <input type="text" placeholder="Tên sản phẩm (VD: Thanh ray Chargee V2...)" className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-blue-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
 
           <button onClick={() => { 
-            if(!settings.trackImage || !settings.sockets?.length) return alert("Vui lòng tải đủ ảnh thanh ray và ít nhất 1 ổ cắm."); 
-            if(settings.trackSocketMode === 'REFERENCE' && !settings.referenceImage) return alert("Vui lòng tải ảnh mẫu.");
+            if(!settings.trackImage || !settings.sockets?.length) return setAlertMessage("Vui lòng tải đủ ảnh thanh ray và ít nhất 1 ổ cắm."); 
+            if(settings.trackSocketMode === 'REFERENCE' && !settings.referenceImage) return setAlertMessage("Vui lòng tải ảnh mẫu.");
             if(settings.trackSocketMode === 'REFERENCE') setTrackSocketStep(3);
             else setTrackSocketStep(2); 
           }} className="w-full py-4 bg-blue-500 text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">
@@ -1693,7 +1694,7 @@ const renderTrackSocketWorkflow = () => (
           
           <div className="flex gap-2">
             <button onClick={() => setTrackSocketStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
-            <button onClick={() => { if(!settings.location) return alert("Vui lòng chọn bối cảnh."); setTrackSocketStep(3); }} className="flex-[2] bg-blue-500 text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+            <button onClick={() => { if(!settings.location) return setAlertMessage("Vui lòng chọn bối cảnh."); setTrackSocketStep(3); }} className="flex-[2] bg-blue-500 text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
           </div>
         </div>
       )}
@@ -2235,6 +2236,14 @@ const renderTrackSocketWorkflow = () => (
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] text-[#050505] font-sans flex flex-col relative animate-fade-in">
+      <AnimatePresence>
+        {alertMessage && (
+          <motion.div initial={{ opacity: 0, y: -20, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: -20, x: '-50%' }} className="fixed top-16 left-1/2 z-[100] bg-gray-900 border border-gray-700 text-white font-semibold px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 min-w-[300px] justify-between">
+             <span className="text-[14px] leading-snug">{alertMessage}</span>
+             <button onClick={() => setAlertMessage(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-800 transition-colors shrink-0 text-gray-400 hover:text-white"><X size={16} /></button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <header className="h-[56px] w-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center justify-between px-4 sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-[#1877F2] rounded-full flex items-center justify-center shadow-sm">

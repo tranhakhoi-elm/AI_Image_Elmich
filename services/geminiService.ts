@@ -472,7 +472,7 @@ Flat 2D vector style. High clarity, simple schematic outline.
       - ONLY output the final prompt text, no explanations.
     `;
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-3.1-flash-lite",
       contents: thinkingPrompt
     });
     finalPrompt = thinkingResponse.text || "";
@@ -531,7 +531,7 @@ Flat 2D vector style. High clarity, simple schematic outline.
     `;
     
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-3.1-flash-lite",
       contents: thinkingPrompt
     });
     finalPrompt = thinkingResponse.text || "";
