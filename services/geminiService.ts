@@ -8,14 +8,24 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
   
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-flash-latest",
       contents: `Gợi ý cho: "${settings.productName}". ${styleContext}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            concepts: { type: Type.ARRAY, items: { type: Type.STRING } },
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
             locations: { type: Type.ARRAY, items: { type: Type.STRING } },
             props: { type: Type.ARRAY, items: { type: Type.STRING } }
           },
@@ -23,7 +33,12 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
         }
       }
     });
-    return JSON.parse(response.text || "{}") as AISuggestions;
+    const result = JSON.parse(response.text || "{}");
+    return {
+      concepts: result.concepts || [],
+      locations: result.locations || [],
+      props: result.props || []
+    };
   } catch (e) { return { concepts: [], locations: [], props: [] }; }
 };
 
@@ -56,7 +71,7 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview", 
+      model: "gemini-3.1-flash-lite", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -113,7 +128,7 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-3.1-flash-lite",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -143,7 +158,11 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
         }
       }
     });
-    return JSON.parse(response.text || "{}") as AIConceptAnalysis;
+    const result = JSON.parse(response.text || "{}");
+    return {
+      concepts: result.concepts || [],
+      suggestedCamera: result.suggestedCamera || { angle: 0, focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false }
+    };
   } catch (error: any) { throw error; }
 };
 
@@ -152,7 +171,7 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.0-flash",
       contents: `Sản phẩm: ${productName}. Concept: "${concept}". 
       YÊU CẦU:
       1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
@@ -178,7 +197,7 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-flash-latest",
       contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
       YÊU CẦU:
       1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
@@ -195,7 +214,11 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
         }
       }
     });
-    return JSON.parse(response.text || "{}");
+    const result = JSON.parse(response.text || "{}");
+    return {
+      props: result.props || [],
+      placement: result.placement || ""
+    };
   } catch (error) { return { props: [], placement: "" }; }
 };
 
@@ -204,7 +227,7 @@ export const suggestTechConcepts = async (productName: string, title: string): P
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-flash-latest",
       contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm. JSON array với 'title' (tiếng Việt) và 'prompt'.
       YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
       - [Mô tả phong cách]
@@ -231,7 +254,8 @@ export const suggestTechConcepts = async (productName: string, title: string): P
         }
       }
     });
-    return JSON.parse(response.text || "{}").concepts || [];
+    const result = JSON.parse(response.text || "{}");
+    return result.concepts || [];
   } catch (error) { return []; }
 };
 
@@ -246,7 +270,7 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
       { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
     ];
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-3.1-flash-lite",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -256,7 +280,8 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
         }
       }
     });
-    return JSON.parse(response.text || "{}").items || [];
+    const result = JSON.parse(response.text || "{}");
+    return result.items || [];
   } catch (error) { return []; }
 };
 
@@ -290,7 +315,7 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview", 
+      model: "gemini-3.1-flash-lite", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -645,19 +670,23 @@ Flat 2D vector style. High clarity, simple schematic outline.
 export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image-preview', aspectRatio: string = "1:1"): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const response = await ai.models.generateImages({
+    const response = await ai.models.generateContent({
       model: modelName,
-      prompt: prompt,
+      contents: { parts: [{ text: prompt }] },
       config: {
-        numberOfImages: 1,
-        outputMimeType: "image/jpeg",
-        aspectRatio: aspectRatio
+        imageConfig: {
+          aspectRatio: aspectRatio as any
+        }
       }
     });
 
-    const base64Image = response.generatedImages?.[0]?.image?.imageBytes;
-    if (base64Image) {
-      return `data:image/jpeg;base64,${base64Image}`;
+    const parts = response.candidates?.[0]?.content?.parts;
+    if (parts) {
+      for (const part of parts) {
+        if (part.inlineData) {
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
     }
     throw new Error("Không có ảnh.");
   } catch (error: any) { throw error; }

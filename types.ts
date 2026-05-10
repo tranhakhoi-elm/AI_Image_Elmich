@@ -119,6 +119,7 @@ export interface GenerationSettings {
   sockets?: TrackSocketConfig[];
   trackSocketMode?: 'CREATIVE' | 'REFERENCE';
 
+  conceptTitle?: string;
   concept: string; // Ý tưởng đã chốt
   placement: string; // Vị trí và tỷ lệ sản phẩm
   location: string; // (Vẫn giữ cho các mode khác, nhưng Concept sẽ dùng logic riêng)

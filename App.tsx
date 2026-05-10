@@ -219,20 +219,8 @@ const App: React.FC = () => {
   const [currentColorDescription, setCurrentColorDescription] = useState('');
   const [currentSampleImage, setCurrentSampleImage] = useState<string | null>(null); 
   
-  const [gallery, setGallery] = useState<GeneratedImage[]>(() => {
-    try {
-      const saved = localStorage.getItem('elmich_ai_gallery');
-      if (saved) {
-        const parsed = JSON.parse(saved) as GeneratedImage[];
-        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        return parsed.filter(img => img.timestamp > oneWeekAgo);
-      }
-    } catch (e) {
-      console.error('Failed to parse gallery', e);
-    }
-    return [];
-  });
-  
+  const [gallery, setGallery] = useState<GeneratedImage[]>([]);
+  const [isGalleryLoaded, setIsGalleryLoaded] = useState(false);
   const [askFeedbackImage, setAskFeedbackImage] = useState<GeneratedImage | null>(null);
   const [successfulPrompts, setSuccessfulPrompts] = useState<SuccessfulPrompt[]>(() => {
     try {
@@ -245,6 +233,23 @@ const App: React.FC = () => {
     }
     return [];
   });
+  useEffect(() => {
+    import('localforage').then((localforage) => {
+      // Load gallery
+      localforage.default.getItem('elmich_ai_gallery').then((saved) => {
+        if (saved) {
+           const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved as GeneratedImage[];
+           const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+           setGallery(parsed.filter((img: any) => img.timestamp > oneWeekAgo));
+        }
+        setIsGalleryLoaded(true);
+      });
+    }).catch(e => {
+       console.error('Failed to load gallery', e);
+       setIsGalleryLoaded(true);
+    });
+  }, []);
+
   const [activeImage, setActiveImage] = useState<GeneratedImage | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
 
@@ -283,8 +288,14 @@ const App: React.FC = () => {
   });
   
   useEffect(() => {
-    localStorage.setItem('elmich_ai_chat_sessions', JSON.stringify(chatSessions));
-  }, [chatSessions]);
+    if (isChatLoaded) {
+      import('localforage').then((localforage) => {
+        localforage.default.setItem('elmich_ai_chat_sessions', chatSessions).catch((e: any) => {
+          console.error('Lỗi khi lưu chat vào localForage:', e);
+        });
+      });
+    }
+  }, [chatSessions, isChatLoaded]);
 
   const currentSession = chatSessions.find(s => s.id === activeSessionId);
   const chatMessages = currentSession?.messages || [];
@@ -365,8 +376,15 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    localStorage.setItem('elmich_ai_gallery', JSON.stringify(gallery));
-  }, [gallery]);
+    if (isGalleryLoaded) {
+      import('localforage').then((localforage) => {
+        localforage.default.setItem('elmich_ai_gallery', gallery).catch((e: any) => {
+          console.error('Lỗi khi lưu vào localForage:', e);
+          setAlertMessage('Bộ nhớ quá tải, không thể lưu thêm ảnh.');
+        });
+      });
+    }
+  }, [gallery, isGalleryLoaded]);
 
   const productFilesRef = useRef<HTMLInputElement>(null);
   const refFileRef = useRef<HTMLInputElement>(null);
@@ -452,7 +470,7 @@ const App: React.FC = () => {
       const dimStr = `${settings.dimensions.length}x${settings.dimensions.width}x${settings.dimensions.height}mm`;
       const result = await analyzeConceptAndCamera(settings.productName, dimStr, settings.productImages, settings.referenceImage);
       setSuggestions(prev => ({ ...prev, concepts: result.concepts }));
-      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0]?.prompt || '' }));
+      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0]?.prompt || '', conceptTitle: result.concepts[0]?.title || '' }));
       setConceptStep(2);
     } catch (e: any) { console.error(e); } 
     finally { setAppState(AppState.READY); }
@@ -743,7 +761,7 @@ const App: React.FC = () => {
                <label className="block text-[9px] font-bold text-[#65676B] uppercase">Chọn Phối cảnh</label>
                <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                  {suggestions.concepts.map((c, idx) => (
-                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>
+                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt, conceptTitle: c.title})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>
                      <div className="font-bold text-[11px] mb-1">{c.title}</div>
                      <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
                    </button>
@@ -2038,7 +2056,7 @@ const renderTrackSocketWorkflow = () => (
     
     // Prompt generation cost (Step 1)
     if (image.settings.visualStyle === 'CONCEPT' || image.settings.visualStyle === 'STUDIO') {
-      cost += 0.002; // Cost for gemini-3.1-flash-lite-preview
+      cost += 0.002; // Cost for gemini-3.1-flash-lite
     }
     
     return cost;
@@ -2100,7 +2118,7 @@ const renderTrackSocketWorkflow = () => (
                 >
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash (Chat)</option>
                   <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Chat)</option>
-                  <option value="gemini-3.1-flash-preview">Gemini 3.1 Flash (Chat)</option>
+                  <option value="gemini-3.0-flash">Gemini 3.1 Flash (Chat)</option>
                   <option value="gemini-2.5-flash-image">Gemini 2.5 Image</option>
                   <option value="gemini-3.1-flash-image-preview">Gemini 3.1 Image</option>
                 </select>
@@ -2321,7 +2339,7 @@ const renderTrackSocketWorkflow = () => (
                      </div>
                   </div>
                   <div className="p-4 pt-0">
-                     <p className="text-[15px] text-[#050505]">{activeImage.settings.concept ? `Yêu cầu: ${activeImage.settings.concept}` : `Chế độ: ${activeImage.settings.visualStyle}`}</p>
+                     <p className="text-[15px] text-[#050505]">{activeImage.settings.conceptTitle || activeImage.settings.techTitle || (activeImage.settings.concept ? `Yêu cầu: ${activeImage.settings.concept.substring(0, 100)}...` : `Chế độ: ${activeImage.settings.visualStyle}`)}</p>
                   </div>
                   <div className="bg-[#E4E6EB] w-full relative">
                      <img src={activeImage.url} alt="Generated" className="w-full max-h-[70vh] object-contain block mx-auto" />
@@ -2393,7 +2411,7 @@ const renderTrackSocketWorkflow = () => (
                      </button>
                   </div>
                   <div className="px-4 pb-2">
-                     <p className="text-[15px] text-[#050505]">{img.settings.concept ? `${img.settings.concept}` : `Bộ lọc: ${img.settings.visualStyle}`}</p>
+                     <p className="text-[15px] text-[#050505]">{img.settings.conceptTitle || img.settings.techTitle || (img.settings.concept ? `${img.settings.concept.substring(0, 100)}...` : `Bộ lọc: ${img.settings.visualStyle}`)}</p>
                   </div>
                   <div className="bg-[#E4E6EB] w-full relative cursor-pointer" onClick={() => setActiveImage(img)}>
                      <img src={img.url} className="w-full max-h-[50vh] object-contain block mx-auto" />
