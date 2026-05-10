@@ -2306,7 +2306,7 @@ const renderTrackSocketWorkflow = () => (
                      <div className="flex items-center gap-2">
                         <div className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
                         <div>
-                          <p className="font-semibold text-[15px] text-[#050505]">Ai Image Elmich <span className="font-normal text-[#65676B] text-[13px]">đã tạo ảnh mới.</span></p>
+                          <p className="font-semibold text-[15px] text-[#050505]">{activeImage.settings.productName || 'Ai Image Elmich'} <span className="font-normal text-[#65676B] text-[13px]">đã tạo ảnh mới.</span></p>
                           <p className="text-[13px] text-[#65676B]">Phiên bản 0{activeImage.variant} • Chi phí ${calculateCost(activeImage).toFixed(3)}</p>
                         </div>
                      </div>
@@ -2375,7 +2375,7 @@ const renderTrackSocketWorkflow = () => (
                      <div className="flex items-center gap-2">
                         <div className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
                         <div>
-                          <p className="font-semibold text-[15px] text-[#050505]">Ai Image Elmich</p>
+                          <p className="font-semibold text-[15px] text-[#050505]">{img.settings.productName || 'Ai Image Elmich'}</p>
                           <p className="text-[13px] text-[#65676B]">Phiên bản 0{img.variant} • {new Date(img.timestamp).toLocaleTimeString()}</p>
                         </div>
                      </div>
