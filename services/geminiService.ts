@@ -718,6 +718,9 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
     const response = await ai.models.generateContent({
       model: modelName,
       contents: contents,
+      config: {
+        systemInstruction: "Bạn là một trợ lý AI tư vấn và lên ý tưởng hình ảnh sản phẩm. Luôn ưu tiên trả lời bằng tiếng Việt, trừ khi người dùng yêu cầu ngôn ngữ khác.",
+      }
     });
     return response.text || "No response generated.";
   } catch (error) {

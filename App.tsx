@@ -263,29 +263,31 @@ const App: React.FC = () => {
   
   const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
   
-  const [chatSessions, setChatSessions] = useState<import('./types').ChatSession[]>(() => {
-    try {
-      const saved = localStorage.getItem('elmich_ai_chat_sessions');
-      if (saved) {
-        const parsed = JSON.parse(saved) as import('./types').ChatSession[];
-        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        return parsed.filter(s => s.timestamp > oneWeekAgo);
-      }
-    } catch (e) {
-      console.error('Failed to parse chat sessions', e);
+  const [chatSessions, setChatSessions] = useState<import('./types').ChatSession[]>([]);
+  const [isChatLoaded, setIsChatLoaded] = useState(false);
+
+  useEffect(() => {
+    import('localforage').then((localforage) => {
+      localforage.default.getItem('elmich_ai_chat_sessions').then((saved) => {
+        if (saved) {
+          const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved as import('./types').ChatSession[];
+          const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          setChatSessions(parsed.filter((s: any) => s.timestamp > oneWeekAgo));
+        }
+        setIsChatLoaded(true);
+      });
+    }).catch(e => {
+       console.error('Failed to load chat sessions', e);
+       setIsChatLoaded(true);
+    });
+  }, []);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isChatLoaded && !activeSessionId && chatSessions.length > 0) {
+      setActiveSessionId(chatSessions[0].id);
     }
-    return [];
-  });
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(() => {
-    try {
-       const saved = localStorage.getItem('elmich_ai_chat_sessions');
-       if (saved) {
-         const parsed = JSON.parse(saved) as import('./types').ChatSession[];
-         if (parsed.length > 0) return parsed[0].id;
-       }
-    } catch {}
-    return null;
-  });
+  }, [isChatLoaded, chatSessions, activeSessionId]);
   
   useEffect(() => {
     if (isChatLoaded) {
