@@ -661,16 +661,16 @@ const App: React.FC = () => {
             <div key={idx} className="relative z-10 flex flex-col items-center">
               <motion.div 
                 className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors duration-300 ${
-                  isActive ? 'bg-[#051610] border-cyan-400 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]' : 
-                  isCompleted ? 'bg-cyan-500 border-cyan-500 text-[#051610]' : 
-                  'bg-[#051610] border-white/20 text-white/40'
+                  isActive ? 'bg-white border-[#1877F2] text-[#1877F2] shadow-[0_0_15px_rgba(34,211,238,0.4)]' : 
+                  isCompleted ? 'bg-[#1877F2] border-cyan-500 text-white' : 
+                  'bg-white border-[#CED0D4] text-[#050505]/40'
                 }`}
                 animate={isActive ? { scale: 1.1 } : { scale: 1 }}
               >
                 {isCompleted ? <Check size={16} strokeWidth={3} /> : <span className="text-xs font-bold">{stepNum}</span>}
               </motion.div>
               <div className={`absolute top-10 whitespace-nowrap text-[8px] font-bold uppercase tracking-wider transition-colors duration-300 ${
-                isActive ? 'text-cyan-400' : 'text-slate-500'
+                isActive ? 'text-[#1877F2]' : 'text-[#65676B]'
               }`}>
                 {label}
               </div>
@@ -700,83 +700,83 @@ const App: React.FC = () => {
           {conceptStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Thông tin sản phẩm</label>
-                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Thông tin sản phẩm</label>
+                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
                 <div className="grid grid-cols-3 gap-2 mt-2">
                    {['length', 'width', 'height'].map(f => (
-                     <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-cyan-400 transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
+                     <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white  border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none focus:border-[#1877F2] transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
                    ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm (Tải 1-5 ảnh)</label>
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Ảnh sản phẩm (Tải 1-5 ảnh)</label>
                 <div className="grid grid-cols-5 gap-2">
                    {settings.productImages.map((img, i) => (
-                     <div key={i} className="aspect-square bg-white/5 border border-white/10 rounded-lg overflow-hidden relative group">
+                     <div key={i} className="aspect-square bg-white  border border-[#CED0D4] rounded-lg overflow-hidden relative group">
                        <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                       <button onClick={() => setSettings(s => ({...s, productImages: s.productImages.filter((_, idx) => idx !== i)}))} className="absolute inset-0 bg-red-500/80 opacity-0 group-hover:opacity-100 transition-all text-xs flex items-center justify-center text-white">✕</button>
+                       <button onClick={() => setSettings(s => ({...s, productImages: s.productImages.filter((_, idx) => idx !== i)}))} className="absolute inset-0 bg-red-500/80 opacity-0 group-hover:opacity-100 transition-all text-xs flex items-center justify-center text-[#050505]">✕</button>
                      </div>
                    ))}
                    {settings.productImages.length < 5 && (
-                     <button onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-white/10 rounded-lg text-white/40 flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-all">+</button>
+                     <button onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-[#CED0D4] rounded-lg text-[#050505]/40 flex items-center justify-center hover:border-[#1877F2] hover:text-[#1877F2] transition-all">+</button>
                    )}
                 </div>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
               </div>
 
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh mẫu style tham khảo</label>
-                <div onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer hover:border-cyan-400 transition-all overflow-hidden group">
-                   {settings.referenceImage ? <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-slate-400 text-[10px] font-bold uppercase group-hover:text-cyan-400">+ Thêm ảnh mẫu style</span>}
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Ảnh mẫu style tham khảo</label>
+                <div onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer hover:border-[#1877F2] transition-all overflow-hidden group">
+                   {settings.referenceImage ? <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] text-[10px] font-bold uppercase group-hover:text-[#1877F2]">+ Thêm ảnh mẫu style</span>}
                 </div>
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
 
-              <button onClick={handleConceptAnalysis} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:brightness-110 transition-all">Tiếp tục</button>
+              <button onClick={handleConceptAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:brightness-110 transition-all">Tiếp tục</button>
             </div>
           )}
 
           {conceptStep === 2 && (
             <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-slate-400 uppercase">Chọn Phối cảnh</label>
+               <label className="block text-[9px] font-bold text-[#65676B] uppercase">Chọn Phối cảnh</label>
                <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                  {suggestions.concepts.map((c, idx) => (
-                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>
                      <div className="font-bold text-[11px] mb-1">{c.title}</div>
                      <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
                    </button>
                  ))}
                </div>
                
-               <div className="pt-4 border-t border-white/10 space-y-2">
-                  <label className="block text-[9px] font-bold text-slate-400 uppercase">Chỉnh sửa hoặc mô tả thêm về phối cảnh</label>
+               <div className="pt-4 border-t border-[#CED0D4] space-y-2">
+                  <label className="block text-[9px] font-bold text-[#65676B] uppercase">Chỉnh sửa hoặc mô tả thêm về phối cảnh</label>
                   <textarea 
                     placeholder="Mô tả chi tiết hơn hoặc chỉnh sửa phối cảnh..." 
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-cyan-400 resize-none h-24 custom-scrollbar" 
+                    className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-xs text-[#050505] outline-none focus:border-[#1877F2] resize-none h-24 custom-scrollbar" 
                     value={settings.concept} 
                     onChange={e => setSettings({...settings, concept: e.target.value})} 
                   />
                </div>
 
                <div className="flex gap-2 pt-2">
-                  <button onClick={() => setConceptStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                  <button onClick={handlePropSuggestion} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                  <button onClick={() => setConceptStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                  <button onClick={handlePropSuggestion} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                </div>
             </div>
           )}
 
           {conceptStep === 3 && (
             <div className="space-y-5">
-              <div className="bg-cyan-500/10 p-3 rounded-xl border border-cyan-500/20">
-                 <div className="text-[8px] font-bold text-cyan-400 uppercase mb-1">Phối cảnh đã chọn:</div>
-                 <div className="text-[10px] text-white italic">"{settings.concept}"</div>
+              <div className="bg-[#1877F2]/10 p-3 rounded-xl border border-cyan-500/20">
+                 <div className="text-[8px] font-bold text-[#1877F2] uppercase mb-1">Phối cảnh đã chọn:</div>
+                 <div className="text-[10px] text-[#050505] italic">"{settings.concept}"</div>
               </div>
 
               <div className="space-y-2">
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Vị trí và tỷ lệ sản phẩm</label>
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase">Vị trí và tỷ lệ sản phẩm</label>
                  <textarea 
-                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-cyan-400 min-h-[80px] custom-scrollbar"
+                   className="w-full bg-white  border border-[#CED0D4] rounded-xl p-3 text-xs text-[#050505] outline-none focus:border-[#1877F2] min-h-[80px] custom-scrollbar"
                    value={settings.placement}
                    onChange={e => setSettings(prev => ({ ...prev, placement: e.target.value }))}
                    placeholder="Nhập vị trí và tỷ lệ sản phẩm..."
@@ -784,25 +784,25 @@ const App: React.FC = () => {
               </div>
 
               <div>
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Gợi ý đạo cụ</label>
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Gợi ý đạo cụ</label>
                  <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar">
                     {suggestions.props.map(p => (
-                      <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>{p}</button>
+                      <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}>{p}</button>
                     ))}
                  </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-white/10">
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Thêm đạo cụ khác</label>
+              <div className="space-y-2 pt-2 border-t border-[#CED0D4]">
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase">Thêm đạo cụ khác</label>
                  <div className="flex gap-2">
-                    <input type="text" placeholder="Nhập tên đạo cụ..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none focus:border-cyan-400" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                    <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
+                    <input type="text" placeholder="Nhập tên đạo cụ..." className="flex-1 bg-white  border border-[#CED0D4] rounded-xl px-4 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
+                    <button onClick={addCustomPropToList} className="px-5 bg-[#E4E6EB] rounded-xl text-[#050505] font-bold hover:bg-white/20 transition-all">+</button>
                  </div>
               </div>
 
               <div className="flex gap-2">
-                  <button onClick={() => setConceptStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                  <button onClick={() => setConceptStep(4)} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                  <button onClick={() => setConceptStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                  <button onClick={() => setConceptStep(4)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
               </div>
             </div>
           )}
@@ -831,63 +831,63 @@ const App: React.FC = () => {
           >
             {stagingStep === 1 && (
                 <div className="space-y-4">
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase">Mô tả ý tưởng trang trí</label>
-                    <textarea className="w-full h-32 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-cyan-400 outline-none resize-none transition-colors custom-scrollbar" placeholder="VD: Phòng khách hiện đại với sofa xám, ánh sáng nắng chiều len lỏi qua cửa sổ..." value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
-                    <button onClick={() => settings.concept ? setStagingStep(2) : alert("Thiếu mô tả!")} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.2)]">Tiếp tục</button>
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase">Mô tả ý tưởng trang trí</label>
+                    <textarea className="w-full h-32 bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] focus:border-[#1877F2] outline-none resize-none transition-colors custom-scrollbar" placeholder="VD: Phòng khách hiện đại với sofa xám, ánh sáng nắng chiều len lỏi qua cửa sổ..." value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
+                    <button onClick={() => settings.concept ? setStagingStep(2) : alert("Thiếu mô tả!")} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.2)]">Tiếp tục</button>
                 </div>
             )}
             {stagingStep === 2 && (
                 <div className="space-y-4">
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase">Tải lên ảnh hiện trạng</label>
-                    <div onClick={() => productFilesRef.current?.click()} className="aspect-video w-full bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-cyan-400 transition-all">
-                        {settings.productImages[0] ? <img src={settings.productImages[0]} className="w-full h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-slate-400 font-bold uppercase text-[10px] group-hover:text-cyan-400">+ Ảnh thực tế</span>}
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase">Tải lên ảnh hiện trạng</label>
+                    <div onClick={() => productFilesRef.current?.click()} className="aspect-video w-full bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
+                        {settings.productImages[0] ? <img src={settings.productImages[0]} className="w-full h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Ảnh thực tế</span>}
                     </div>
                     <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
                     <div className="flex gap-2">
-                      <button onClick={() => setStagingStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                      <button onClick={() => settings.productImages[0] ? setStagingStep(3) : alert("Thiếu ảnh!")} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                      <button onClick={() => setStagingStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                      <button onClick={() => settings.productImages[0] ? setStagingStep(3) : alert("Thiếu ảnh!")} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                     </div>
                 </div>
             )}
             {stagingStep === 3 && (
                 <div className="space-y-4">
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase">Ảnh mẫu phong cách tham khảo</label>
-                    <div onClick={() => refFileRef.current?.click()} className="aspect-video w-full bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-cyan-400 transition-all">
-                        {settings.referenceImage ? <img src={settings.referenceImage} className="w-full h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-slate-400 font-bold uppercase text-[10px] group-hover:text-cyan-400">+ Ảnh mẫu phong cách</span>}
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase">Ảnh mẫu phong cách tham khảo</label>
+                    <div onClick={() => refFileRef.current?.click()} className="aspect-video w-full bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
+                        {settings.referenceImage ? <img src={settings.referenceImage} className="w-full h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Ảnh mẫu phong cách</span>}
                     </div>
                     <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
                     <div className="flex gap-2">
-                      <button onClick={() => setStagingStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                      <button onClick={handleStagingAnalysis} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">AI Phân tích</button>
+                      <button onClick={() => setStagingStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                      <button onClick={handleStagingAnalysis} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">AI Phân tích</button>
                     </div>
                 </div>
             )}
             {stagingStep === 4 && (
                 <div className="space-y-4">
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase">Gợi ý đạo cụ phối cảnh</label>
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase">Gợi ý đạo cụ phối cảnh</label>
                     <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
                        {displayedProps.map(p => (
-                         <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>{p}</button>
+                         <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}>{p}</button>
                        ))}
                     </div>
-                    <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
-                       <input type="text" placeholder="Thêm vật phẩm khác..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none focus:border-cyan-400" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                       <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
+                    <div className="flex gap-2 mt-4 pt-4 border-t border-[#CED0D4]">
+                       <input type="text" placeholder="Thêm vật phẩm khác..." className="flex-1 bg-white  border border-[#CED0D4] rounded-xl px-4 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
+                       <button onClick={addCustomPropToList} className="px-5 bg-[#E4E6EB] rounded-xl text-[#050505] font-bold hover:bg-white/20 transition-all">+</button>
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <button onClick={() => setStagingStep(3)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                      <button onClick={() => setStagingStep(5)} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                      <button onClick={() => setStagingStep(3)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                      <button onClick={() => setStagingStep(5)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                     </div>
                 </div>
             )}
             {stagingStep === 5 && (
                 <div className="space-y-5">
-                   <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-2 text-center">
-                       <h3 className="font-bold text-white text-sm">Sẵn sàng dựng phối cảnh</h3>
-                       <p className="text-[10px] text-slate-400">Concept: {settings.concept.substring(0, 30)}... | Props: {settings.props.length}</p>
+                   <div className="bg-white  rounded-xl p-4 border border-[#CED0D4] space-y-2 text-center">
+                       <h3 className="font-bold text-[#050505] text-sm">Sẵn sàng dựng phối cảnh</h3>
+                       <p className="text-[10px] text-[#65676B]">Concept: {settings.concept.substring(0, 30)}... | Props: {settings.props.length}</p>
                    </div>
                    {renderModelSelection()}
-                   <button onClick={startGeneration} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-xl">Tạo ảnh</button>
+                   <button onClick={startGeneration} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-xl">Tạo ảnh</button>
                 </div>
             )}
           </motion.div>
@@ -912,49 +912,49 @@ const App: React.FC = () => {
         >
           {techStep === 1 && (
             <div className="space-y-4">
-              <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-              <textarea placeholder="Mô tả tính năng kỹ thuật..." className="w-full h-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white resize-none outline-none focus:border-cyan-400 transition-colors custom-scrollbar" value={settings.techDescription} onChange={e => setSettings({...settings, techDescription: e.target.value})} />
-              <div onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-cyan-400 transition-all">
-                {settings.productImages.length > 0 ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Ảnh SP</span>}
+              <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+              <textarea placeholder="Mô tả tính năng kỹ thuật..." className="w-full h-24 bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] resize-none outline-none focus:border-[#1877F2] transition-colors custom-scrollbar" value={settings.techDescription} onChange={e => setSettings({...settings, techDescription: e.target.value})} />
+              <div onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                {settings.productImages.length > 0 ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Ảnh SP</span>}
               </div>
               <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
-              <button onClick={() => (settings.productName && settings.techDescription) ? setTechStep(2) : alert("Thiếu thông tin")} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+              <button onClick={() => (settings.productName && settings.techDescription) ? setTechStep(2) : alert("Thiếu thông tin")} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
             </div>
           )}
 
           {techStep === 2 && (
             <div className="space-y-4">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase">Kích thước sản phẩm</label>
+              <label className="block text-[9px] font-bold text-[#65676B] uppercase">Kích thước sản phẩm</label>
               <div className="grid grid-cols-3 gap-3">
                  {['length', 'width', 'height'].map(f => (
-                   <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-white outline-none focus:border-cyan-400 transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
+                   <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white  border border-[#CED0D4] rounded-lg p-3 text-xs text-[#050505] outline-none focus:border-[#1877F2] transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
                  ))}
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setTechStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                <button onClick={handleTechAnalysis} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">AI Thiết kế Visual</button>
+                <button onClick={() => setTechStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                <button onClick={handleTechAnalysis} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">AI Thiết kế Visual</button>
               </div>
             </div>
           )}
 
           {techStep === 3 && (
             <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-slate-400 uppercase">Chọn Tech Concept</label>
+               <label className="block text-[9px] font-bold text-[#65676B] uppercase">Chọn Tech Concept</label>
                <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
                  {suggestions.concepts.map((c, idx) => (
-                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-3 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-3 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>
                      <div className="font-bold text-[11px] mb-1">{c.title}</div>
                      <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
                    </button>
                  ))}
                </div>
-               <div className="pt-4 border-t border-white/10 space-y-2">
-                  <input type="text" placeholder="Tự nhập tech concept..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-cyan-400" value={customConcept} onChange={e => setCustomConcept(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomConceptToList()} />
-                  <button onClick={addCustomConceptToList} className="w-full py-2 bg-white/10 rounded-lg text-white text-[10px] hover:bg-white/20">Thêm vào danh sách</button>
+               <div className="pt-4 border-t border-[#CED0D4] space-y-2">
+                  <input type="text" placeholder="Tự nhập tech concept..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={customConcept} onChange={e => setCustomConcept(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomConceptToList()} />
+                  <button onClick={addCustomConceptToList} className="w-full py-2 bg-[#E4E6EB] rounded-lg text-[#050505] text-[10px] hover:bg-white/20">Thêm vào danh sách</button>
                </div>
                <div className="flex gap-2">
-                 <button onClick={() => setTechStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                 <button onClick={handleTechVisualSuggestion} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                 <button onClick={() => setTechStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                 <button onClick={handleTechVisualSuggestion} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                </div>
             </div>
           )}
@@ -962,30 +962,30 @@ const App: React.FC = () => {
           {techStep === 4 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Vị trí và tỷ lệ sản phẩm</label>
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase">Vị trí và tỷ lệ sản phẩm</label>
                  <textarea 
-                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-cyan-400 min-h-[80px] custom-scrollbar"
+                   className="w-full bg-white  border border-[#CED0D4] rounded-xl p-3 text-xs text-[#050505] outline-none focus:border-[#1877F2] min-h-[80px] custom-scrollbar"
                    value={settings.placement}
                    onChange={e => setSettings(prev => ({ ...prev, placement: e.target.value }))}
                    placeholder="Nhập vị trí và tỷ lệ sản phẩm..."
                  />
               </div>
 
-              <label className="block text-[9px] font-bold text-slate-400 uppercase">Visual Elements</label>
+              <label className="block text-[9px] font-bold text-[#65676B] uppercase">Visual Elements</label>
               <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                 {suggestions.props.map(p => (
-                  <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>{p}</button>
+                  <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}>{p}</button>
                 ))}
               </div>
-              <div className="pt-4 border-t border-white/10 space-y-2">
+              <div className="pt-4 border-t border-[#CED0D4] space-y-2">
                  <div className="flex gap-2">
-                    <input type="text" placeholder="Thêm visual element..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none focus:border-cyan-400" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                    <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
+                    <input type="text" placeholder="Thêm visual element..." className="flex-1 bg-white  border border-[#CED0D4] rounded-xl px-4 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
+                    <button onClick={addCustomPropToList} className="px-5 bg-[#E4E6EB] rounded-xl text-[#050505] font-bold hover:bg-white/20 transition-all">+</button>
                  </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setTechStep(3)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                <button onClick={() => setTechStep(5)} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                <button onClick={() => setTechStep(3)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                <button onClick={() => setTechStep(5)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
               </div>
             </div>
           )}
@@ -1012,31 +1012,31 @@ const App: React.FC = () => {
         >
           {whiteBgStep === 1 && (
             <div className="space-y-4">
-              <input type="text" placeholder="Tên SP..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+              <input type="text" placeholder="Tên SP..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
               
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase">Ảnh sản phẩm gốc</label>
-                <div onClick={() => productFilesRef.current?.click()} className="h-40 w-full bg-white/5 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-cyan-400 transition-all">
-                  {settings.productImages[0] ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-slate-400 font-bold text-xs uppercase group-hover:text-cyan-400">+ Ảnh gốc</span>}
+                <label className="block text-[10px] font-bold text-[#65676B] uppercase">Ảnh sản phẩm gốc</label>
+                <div onClick={() => productFilesRef.current?.click()} className="h-40 w-full bg-white  border-2 border-dashed border-[#CED0D4] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                  {settings.productImages[0] ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] font-bold text-xs uppercase group-hover:text-[#1877F2]">+ Ảnh gốc</span>}
                 </div>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
               </div>
-              <button disabled={!settings.productImages[0]} onClick={() => setWhiteBgStep(2)} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
+              <button disabled={!settings.productImages[0]} onClick={() => setWhiteBgStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
             </div>
           )}
 
           {whiteBgStep === 2 && (
             <div className="space-y-4">
               <div className="space-y-3">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase">Danh sách thay đổi màu</label>
+                  <label className="block text-[10px] font-bold text-[#65676B] uppercase">Danh sách thay đổi màu</label>
                   <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                     {settings.colorChanges.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 text-[10px]">
+                      <div key={i} className="flex items-center justify-between p-3 bg-white  rounded-xl border border-white/5 text-[10px]">
                         <div className="flex items-center gap-3">
-                          {c.sampleImage && <img src={c.sampleImage} className="w-8 h-8 rounded object-cover border border-white/10" referrerPolicy="no-referrer" />}
+                          {c.sampleImage && <img src={c.sampleImage} className="w-8 h-8 rounded object-cover border border-[#CED0D4]" referrerPolicy="no-referrer" />}
                           <div>
-                            <div className="font-bold text-white">{c.partName}</div>
-                            <div className="text-slate-400">{c.pantoneCode || 'Không có mã Pantone'}</div>
+                            <div className="font-bold text-[#050505]">{c.partName}</div>
+                            <div className="text-[#65676B]">{c.pantoneCode || 'Không có mã Pantone'}</div>
                           </div>
                         </div>
                         <button onClick={()=>setSettings(s=>({...s, colorChanges:s.colorChanges.filter((_,idx)=>idx!==i)}))} className="text-red-400 hover:text-red-300">✕</button>
@@ -1044,25 +1044,25 @@ const App: React.FC = () => {
                     ))}
                   </div>
                   
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-3">
-                      <div className="text-[9px] font-bold text-cyan-400 uppercase mb-1">Thêm vị trí đổi màu</div>
-                      <input type="text" placeholder="Vị trí (VD: Thân vỏ, Nắp chai...)" className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-cyan-400" value={currentColorPart} onChange={e=>setCurrentColorPart(e.target.value)} />
+                  <div className="bg-white  p-4 rounded-2xl border border-[#CED0D4] space-y-3">
+                      <div className="text-[9px] font-bold text-[#1877F2] uppercase mb-1">Thêm vị trí đổi màu</div>
+                      <input type="text" placeholder="Vị trí (VD: Thân vỏ, Nắp chai...)" className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg px-3 py-2 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={currentColorPart} onChange={e=>setCurrentColorPart(e.target.value)} />
                       
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <label className="block text-[8px] font-bold text-slate-400 uppercase">Mã Pantone (Tùy chọn)</label>
-                          <input type="text" placeholder="VD: Pantone 18-1662" className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-cyan-400" value={currentPantoneCode} onChange={e=>setCurrentPantoneCode(e.target.value)} />
+                          <label className="block text-[8px] font-bold text-[#65676B] uppercase">Mã Pantone (Tùy chọn)</label>
+                          <input type="text" placeholder="VD: Pantone 18-1662" className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg px-3 py-2 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={currentPantoneCode} onChange={e=>setCurrentPantoneCode(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-[8px] font-bold text-slate-400 uppercase">Ảnh mẫu màu</label>
-                          <div onClick={() => colorSampleRef.current?.click()} className="h-[38px] w-full bg-black/20 border border-dashed border-white/10 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden group hover:border-cyan-400 transition-all">
-                            {currentSampleImage ? <img src={currentSampleImage} className="h-full object-cover w-full" referrerPolicy="no-referrer" /> : <span className="text-[8px] text-slate-500 uppercase group-hover:text-cyan-400">+ Tải ảnh</span>}
+                          <label className="block text-[8px] font-bold text-[#65676B] uppercase">Ảnh mẫu màu</label>
+                          <div onClick={() => colorSampleRef.current?.click()} className="h-[38px] w-full bg-white shadow-sm border border-[#CED0D4] border border-dashed border-[#CED0D4] rounded-lg flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                            {currentSampleImage ? <img src={currentSampleImage} className="h-full object-cover w-full" referrerPolicy="no-referrer" /> : <span className="text-[8px] text-[#65676B] uppercase group-hover:text-[#1877F2]">+ Tải ảnh</span>}
                           </div>
                           <input type="file" hidden ref={colorSampleRef} accept="image/*" onChange={e => onImageUpload(e, 'color_sample')} />
                         </div>
                       </div>
 
-                      <textarea placeholder="Mô tả thêm (VD: Màu đỏ nhám, hiệu ứng kim loại...)" className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-cyan-400 h-16 resize-none custom-scrollbar" value={currentColorDescription} onChange={e=>setCurrentColorDescription(e.target.value)} />
+                      <textarea placeholder="Mô tả thêm (VD: Màu đỏ nhám, hiệu ứng kim loại...)" className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg px-3 py-2 text-xs text-[#050505] outline-none focus:border-[#1877F2] h-16 resize-none custom-scrollbar" value={currentColorDescription} onChange={e=>setCurrentColorDescription(e.target.value)} />
 
                       <button 
                         onClick={()=>{
@@ -1079,15 +1079,15 @@ const App: React.FC = () => {
                             setCurrentSampleImage(null);
                           }
                         }} 
-                        className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold text-white transition-all"
+                        className="w-full py-2 bg-[#E4E6EB] hover:bg-white/20 rounded-lg text-[10px] font-bold text-[#050505] transition-all"
                       >
                         + Thêm vào danh sách
                       </button>
                   </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                <button onClick={() => setWhiteBgStep(3)} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                <button onClick={() => setWhiteBgStep(3)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
               </div>
             </div>
           )}
@@ -1096,9 +1096,9 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase">Tỉ lệ khung hình</label>
-                  <select className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-                    {['1:1', '3:4', '4:3', '9:16', '16:9', '1:4', '4:1'].map(r => <option key={r} value={r} className="bg-[#051610]">{r}</option>)}
+                  <label className="block text-[10px] font-bold text-[#65676B] uppercase">Tỉ lệ khung hình</label>
+                  <select className="w-full bg-white  border border-[#CED0D4] rounded-lg p-2 text-[10px] text-[#050505] outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+                    {['1:1', '3:4', '4:3', '9:16', '16:9', '1:4', '4:1'].map(r => <option key={r} value={r} className="bg-white">{r}</option>)}
                   </select>
                 </div>
               </div>
@@ -1106,8 +1106,8 @@ const App: React.FC = () => {
               {renderModelSelection()}
 
               <div className="flex gap-2">
-                <button onClick={() => setWhiteBgStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                <button onClick={startGeneration} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
+                <button onClick={() => setWhiteBgStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
               </div>
             </div>
           )}
@@ -1132,43 +1132,43 @@ const App: React.FC = () => {
         >
           {packagingStep === 1 && (
             <div className="space-y-4">
-              <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+              <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
               <div className="grid grid-cols-3 gap-2">
                  {['length', 'width', 'height'].map(f => (
-                   <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-cyan-400 transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
+                   <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white  border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none focus:border-[#1877F2] transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
                  ))}
               </div>
-              <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.packagingMaterial} onChange={e => setSettings({...settings, packagingMaterial: e.target.value as any})}>
-                 <option value="COLOR_BOX" className="bg-[#051610]">Hộp giấy màu</option>
-                 <option value="CARTON_BW" className="bg-[#051610]">Thùng Carton</option>
+              <select className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.packagingMaterial} onChange={e => setSettings({...settings, packagingMaterial: e.target.value as any})}>
+                 <option value="COLOR_BOX" className="bg-white">Hộp giấy màu</option>
+                 <option value="CARTON_BW" className="bg-white">Thùng Carton</option>
               </select>
-              <button onClick={() => setPackagingStep(2)} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+              <button onClick={() => setPackagingStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
             </div>
           )}
           {packagingStep === 2 && (
             <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-slate-400 uppercase">File thiết kế phẳng</label>
-               <div onClick={() => { pendingPackagingFace.current = 'flat'; packagingFileRef.current?.click(); }} className="h-40 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-cyan-400 transition-all">
-                 {settings.packagingFaces.flat ? <img src={settings.packagingFaces.flat} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ File thiết kế phẳng</span>}
+               <label className="block text-[9px] font-bold text-[#65676B] uppercase">File thiết kế phẳng</label>
+               <div onClick={() => { pendingPackagingFace.current = 'flat'; packagingFileRef.current?.click(); }} className="h-40 bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                 {settings.packagingFaces.flat ? <img src={settings.packagingFaces.flat} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] text-xs font-bold uppercase group-hover:text-[#1877F2]">+ File thiết kế phẳng</span>}
                </div>
                <input type="file" hidden ref={packagingFileRef} onChange={e => onImageUpload(e, 'packaging')} />
                <div className="flex gap-2">
-                 <button onClick={() => setPackagingStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                 <button onClick={() => setPackagingStep(3)} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                 <button onClick={() => setPackagingStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                 <button onClick={() => setPackagingStep(3)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                </div>
             </div>
           )}
           {packagingStep === 3 && (
             <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-slate-400 uppercase">Kiểu xuất bản</label>
-               <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.packagingOutputStyle} onChange={e => setSettings({...settings, packagingOutputStyle: e.target.value as any})}>
-                 <option value="WHITE_BG_ROTATED" className="bg-[#051610]">Nền trắng xoay</option>
-                 <option value="CONTEXTUAL" className="bg-[#051610]">Lifestyle Context</option>
+               <label className="block text-[9px] font-bold text-[#65676B] uppercase">Kiểu xuất bản</label>
+               <select className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.packagingOutputStyle} onChange={e => setSettings({...settings, packagingOutputStyle: e.target.value as any})}>
+                 <option value="WHITE_BG_ROTATED" className="bg-white">Nền trắng xoay</option>
+                 <option value="CONTEXTUAL" className="bg-white">Lifestyle Context</option>
                </select>
                {renderModelSelection()}
                <div className="flex gap-2">
-                 <button onClick={() => setPackagingStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                 <button onClick={startGeneration} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
+                 <button onClick={() => setPackagingStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                 <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
                </div>
             </div>
           )}
@@ -1193,10 +1193,10 @@ const App: React.FC = () => {
         >
           {techEffectStep === 0 && (
             <div className="space-y-4">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase">Chọn chế độ xử lý</label>
+              <label className="block text-[10px] font-bold text-[#65676B] uppercase">Chọn chế độ xử lý</label>
               <div className="flex gap-2">
-                 <button onClick={() => { setSettings({...settings, techEffectType: 'REMOVE_SIGNATURE'}); setTechEffectStep(1); }} className={`flex-1 py-4 rounded-xl text-[10px] font-bold border transition-all ${settings.techEffectType === 'REMOVE_SIGNATURE' ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>Xóa chữ ký</button>
-                 <button onClick={() => { setSettings({...settings, techEffectType: 'SEA_TECH_GENERATION'}); setTechEffectStep(1); }} className={`flex-1 py-4 rounded-xl text-[10px] font-bold border transition-all ${settings.techEffectType === 'SEA_TECH_GENERATION' ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>Biển đêm</button>
+                 <button onClick={() => { setSettings({...settings, techEffectType: 'REMOVE_SIGNATURE'}); setTechEffectStep(1); }} className={`flex-1 py-4 rounded-xl text-[10px] font-bold border transition-all ${settings.techEffectType === 'REMOVE_SIGNATURE' ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>Xóa chữ ký</button>
+                 <button onClick={() => { setSettings({...settings, techEffectType: 'SEA_TECH_GENERATION'}); setTechEffectStep(1); }} className={`flex-1 py-4 rounded-xl text-[10px] font-bold border transition-all ${settings.techEffectType === 'SEA_TECH_GENERATION' ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>Biển đêm</button>
               </div>
             </div>
           )}
@@ -1205,24 +1205,24 @@ const App: React.FC = () => {
             <div className="space-y-4">
               {settings.techEffectType === 'REMOVE_SIGNATURE' ? (
                 <div className="space-y-4">
-                   <label className="block text-[10px] font-bold text-slate-400 uppercase">Ảnh cần xử lý</label>
-                   <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-cyan-400 transition-all">
-                     {settings.referenceImage ? <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Tải ảnh</span>}
+                   <label className="block text-[10px] font-bold text-[#65676B] uppercase">Ảnh cần xử lý</label>
+                   <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                     {settings.referenceImage ? <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-[#65676B] text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh</span>}
                    </div>
                    <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
                    {renderModelSelection()}
                    <div className="flex gap-2">
-                     <button onClick={() => setTechEffectStep(0)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                     <button onClick={startGeneration} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
+                     <button onClick={() => setTechEffectStep(0)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                     <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
                    </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                   <input type="text" placeholder="Tên SP..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-                   <input type="text" placeholder="Tiêu đề..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.techTitle} onChange={e => setSettings({...settings, techTitle: e.target.value})} />
+                   <input type="text" placeholder="Tên SP..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                   <input type="text" placeholder="Tiêu đề..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.techTitle} onChange={e => setSettings({...settings, techTitle: e.target.value})} />
                    <div className="flex gap-2">
-                     <button onClick={() => setTechEffectStep(0)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                     <button onClick={handleSeaConceptSuggestion} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Concept</button>
+                     <button onClick={() => setTechEffectStep(0)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                     <button onClick={handleSeaConceptSuggestion} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Concept</button>
                    </div>
                 </div>
               )}
@@ -1231,10 +1231,10 @@ const App: React.FC = () => {
 
           {techEffectStep === 3 && (
             <div className="space-y-4">
-               <label className="block text-[10px] font-bold text-slate-400 uppercase">Chọn Concept</label>
+               <label className="block text-[10px] font-bold text-[#65676B] uppercase">Chọn Concept</label>
                <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
                  {suggestions.concepts.map((c, idx) => (
-                   <button key={idx} onClick={() => setSettings({...settings, selectedTechConcept: c.prompt})} className={`w-full text-left p-3 rounded-xl border transition-all ${settings.selectedTechConcept === c.prompt ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                   <button key={idx} onClick={() => setSettings({...settings, selectedTechConcept: c.prompt})} className={`w-full text-left p-3 rounded-xl border transition-all ${settings.selectedTechConcept === c.prompt ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>
                      <div className="font-bold text-[11px] mb-1">{c.title}</div>
                      <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
                    </button>
@@ -1242,8 +1242,8 @@ const App: React.FC = () => {
                </div>
                {renderModelSelection()}
                <div className="flex gap-2">
-                 <button onClick={() => setTechEffectStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                 <button onClick={startGeneration} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
+                 <button onClick={() => setTechEffectStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                 <button onClick={startGeneration} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
                </div>
             </div>
           )}
@@ -1269,32 +1269,32 @@ const App: React.FC = () => {
           {whiteBgStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tên sản phẩm</label>
-                <input type="text" placeholder="Ví dụ: Ấm siêu tốc, Máy xay sinh tố..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Tên sản phẩm</label>
+                <input type="text" placeholder="Ví dụ: Ấm siêu tốc, Máy xay sinh tố..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
               </div>
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Nhóm vật liệu chính</label>
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.whiteBGCategory} onChange={e => setSettings({...settings, whiteBGCategory: e.target.value as any})}>
-                   <option value="METAL" className="bg-[#051610]">Nhóm Kim Loại (Inox/Thép)</option>
-                   <option value="PLASTIC" className="bg-[#051610]">Nhóm Nhựa & Polymer</option>
-                   <option value="GLASS" className="bg-[#051610]">Nhóm Thủy Tinh & Trong Suốt</option>
-                   <option value="CERAMIC" className="bg-[#051610]">Nhóm Gốm Sứ & Chống Dính (Vân đá)</option>
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Nhóm vật liệu chính</label>
+                <select className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.whiteBGCategory} onChange={e => setSettings({...settings, whiteBGCategory: e.target.value as any})}>
+                   <option value="METAL" className="bg-white">Nhóm Kim Loại (Inox/Thép)</option>
+                   <option value="PLASTIC" className="bg-white">Nhóm Nhựa & Polymer</option>
+                   <option value="GLASS" className="bg-white">Nhóm Thủy Tinh & Trong Suốt</option>
+                   <option value="CERAMIC" className="bg-white">Nhóm Gốm Sứ & Chống Dính (Vân đá)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm gốc</label>
-                <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-cyan-400 transition-all">
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Ảnh sản phẩm gốc</label>
+                <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
                    {settings.referenceImage ? (
                      <>
                        <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
+                       <div className="absolute inset-0 bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
                      </>
-                   ) : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Tải ảnh SP gốc</span>}
+                   ) : <span className="text-[#65676B] text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh SP gốc</span>}
                 </div>
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
-              <button disabled={!settings.referenceImage || !settings.productName} onClick={() => setWhiteBgStep(2)} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs disabled:opacity-50 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]">Tiếp tục cài đặt chất liệu</button>
+              <button disabled={!settings.referenceImage || !settings.productName} onClick={() => setWhiteBgStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]">Tiếp tục cài đặt chất liệu</button>
             </div>
           )}
 
@@ -1303,87 +1303,87 @@ const App: React.FC = () => {
               {settings.whiteBGCategory === 'METAL' && (
                 <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Kim Loại</label>
-                    <input type="text" placeholder="Brushed Stainless Steel, Polished Chrome..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGMetalConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, type: e.target.value}})} />
-                    <p className="text-[8px] text-slate-500 mt-1">VD: Inox xước (Brushed), Inox bóng (Polished)</p>
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Loại Kim Loại</label>
+                    <input type="text" placeholder="Brushed Stainless Steel, Polished Chrome..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGMetalConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, type: e.target.value}})} />
+                    <p className="text-[8px] text-[#65676B] mt-1">VD: Inox xước (Brushed), Inox bóng (Polished)</p>
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Vệt Sáng (Highlight)</label>
-                    <input type="text" placeholder="sharp longitudinal highlights, sleek rim lighting..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGMetalConfig?.highlight || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, highlight: e.target.value}})} />
-                    <p className="text-[8px] text-slate-500 mt-1">Sharp cho inox bóng, Soft cho inox xước</p>
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Loại Vệt Sáng (Highlight)</label>
+                    <input type="text" placeholder="sharp longitudinal highlights, sleek rim lighting..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGMetalConfig?.highlight || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, highlight: e.target.value}})} />
+                    <p className="text-[8px] text-[#65676B] mt-1">Sharp cho inox bóng, Soft cho inox xước</p>
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Hình Dáng (Form)</label>
-                    <input type="text" placeholder="cylindrical, rectangular..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGMetalConfig?.shape || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, shape: e.target.value}})} />
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Hình Dáng (Form)</label>
+                    <input type="text" placeholder="cylindrical, rectangular..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGMetalConfig?.shape || ''} onChange={e => setSettings({...settings, whiteBGMetalConfig: {...settings.whiteBGMetalConfig!, shape: e.target.value}})} />
                   </div>
                 </div>
               )}
               {settings.whiteBGCategory === 'PLASTIC' && (
                 <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Nhựa</label>
-                    <input type="text" placeholder="Matte, High-gloss..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGPlasticConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, type: e.target.value}})} />
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Loại Nhựa</label>
+                    <input type="text" placeholder="Matte, High-gloss..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGPlasticConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, type: e.target.value}})} />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Màu Sắc</label>
-                    <input type="text" placeholder="Pastel Pink, Emerald Green, Minimalist White..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGPlasticConfig?.color || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, color: e.target.value}})} />
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Màu Sắc</label>
+                    <input type="text" placeholder="Pastel Pink, Emerald Green, Minimalist White..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGPlasticConfig?.color || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, color: e.target.value}})} />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Đèn</label>
-                    <input type="text" placeholder="Softbox, Octabox..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGPlasticConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, lighting: e.target.value}})} />
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Loại Đèn</label>
+                    <input type="text" placeholder="Softbox, Octabox..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGPlasticConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGPlasticConfig: {...settings.whiteBGPlasticConfig!, lighting: e.target.value}})} />
                   </div>
                 </div>
               )}
               {settings.whiteBGCategory === 'GLASS' && (
                 <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại Thủy Tinh</label>
-                    <input type="text" placeholder="Borosilicate Glass, Crystal Clear Glass..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGGlassConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, type: e.target.value}})} />
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Loại Thủy Tinh</label>
+                    <input type="text" placeholder="Borosilicate Glass, Crystal Clear Glass..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGGlassConfig?.type || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, type: e.target.value}})} />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Kỹ thuật đèn</label>
-                    <input type="text" placeholder="Rim lighting, Dark-field lighting..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGGlassConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, lighting: e.target.value}})} />
-                    <p className="text-[8px] text-slate-500 mt-1">Rim lighting (Sáng viền) rất quan trọng để không bị lẫn vào nền trắng.</p>
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Kỹ thuật đèn</label>
+                    <input type="text" placeholder="Rim lighting, Dark-field lighting..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGGlassConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, lighting: e.target.value}})} />
+                    <p className="text-[8px] text-[#65676B] mt-1">Rim lighting (Sáng viền) rất quan trọng để không bị lẫn vào nền trắng.</p>
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nội dung bên trong</label>
-                    <input type="text" placeholder="water bubbles, internal mechanism, empty..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGGlassConfig?.content || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, content: e.target.value}})} />
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Nội dung bên trong</label>
+                    <input type="text" placeholder="water bubbles, internal mechanism, empty..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGGlassConfig?.content || ''} onChange={e => setSettings({...settings, whiteBGGlassConfig: {...settings.whiteBGGlassConfig!, content: e.target.value}})} />
                   </div>
                 </div>
               )}
               {settings.whiteBGCategory === 'CERAMIC' && (
                 <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Loại bề mặt</label>
-                    <input type="text" placeholder="Granite speckled coating, Ceramic finish..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGCeramicConfig?.surface || ''} onChange={e => setSettings({...settings, whiteBGCeramicConfig: {...settings.whiteBGCeramicConfig!, surface: e.target.value}})} />
-                    <p className="text-[8px] text-slate-500 mt-1">VD: Vân đá (Granite), Gốm (Ceramic)</p>
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Loại bề mặt</label>
+                    <input type="text" placeholder="Granite speckled coating, Ceramic finish..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGCeramicConfig?.surface || ''} onChange={e => setSettings({...settings, whiteBGCeramicConfig: {...settings.whiteBGCeramicConfig!, surface: e.target.value}})} />
+                    <p className="text-[8px] text-[#65676B] mt-1">VD: Vân đá (Granite), Gốm (Ceramic)</p>
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Hướng đèn</label>
-                    <input type="text" placeholder="45-degree side lighting..." className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none" value={settings.whiteBGCeramicConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGCeramicConfig: {...settings.whiteBGCeramicConfig!, lighting: e.target.value}})} />
-                    <p className="text-[8px] text-slate-500 mt-1">Side lighting tạt ngang làm rõ vân đá/bề mặt.</p>
+                    <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Hướng đèn</label>
+                    <input type="text" placeholder="45-degree side lighting..." className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none" value={settings.whiteBGCeramicConfig?.lighting || ''} onChange={e => setSettings({...settings, whiteBGCeramicConfig: {...settings.whiteBGCeramicConfig!, lighting: e.target.value}})} />
+                    <p className="text-[8px] text-[#65676B] mt-1">Side lighting tạt ngang làm rõ vân đá/bề mặt.</p>
                   </div>
                 </div>
               )}
 
               <div>
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tỷ lệ</label>
-                 <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-                    <option value="1:1" className="bg-[#051610]">1:1 Vuông</option>
-                    <option value="4:3" className="bg-[#051610]">4:3 Catalog</option>
-                    <option value="3:4" className="bg-[#051610]">3:4 Portrait</option>
-                    <option value="16:9" className="bg-[#051610]">16:9 HD</option>
-                    <option value="9:16" className="bg-[#051610]">9:16</option>
-                    <option value="1:4" className="bg-[#051610]">1:4 Siêu dài</option>
-                    <option value="4:1" className="bg-[#051610]">4:1 Siêu rộng</option>
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Tỷ lệ</label>
+                 <select className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+                    <option value="1:1" className="bg-white">1:1 Vuông</option>
+                    <option value="4:3" className="bg-white">4:3 Catalog</option>
+                    <option value="3:4" className="bg-white">3:4 Portrait</option>
+                    <option value="16:9" className="bg-white">16:9 HD</option>
+                    <option value="9:16" className="bg-white">9:16</option>
+                    <option value="1:4" className="bg-white">1:4 Siêu dài</option>
+                    <option value="4:1" className="bg-white">4:1 Siêu rộng</option>
                  </select>
               </div>
 
               {renderModelSelection()}
 
               <div className="flex gap-2 mb-4">
-                <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
+                <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
               </div>
             </div>
           )}
@@ -1397,35 +1397,35 @@ const App: React.FC = () => {
     <div className="space-y-6">
       <div className="space-y-4">
         <div>
-          <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm gốc (Nền trắng)</label>
-          <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-cyan-400 transition-all">
+          <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Ảnh sản phẩm gốc (Nền trắng)</label>
+          <div onClick={() => refFileRef.current?.click()} className="h-48 bg-white  border-2 border-dashed border-[#CED0D4] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
              {settings.referenceImage ? (
                <>
                  <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
+                 <div className="absolute inset-0 bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
                </>
-             ) : <span className="text-slate-400 text-xs font-bold uppercase group-hover:text-cyan-400">+ Tải ảnh SP gốc</span>}
+             ) : <span className="text-[#65676B] text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh SP gốc</span>}
           </div>
           <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
         </div>
 
         <div>
-           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Tỷ lệ</label>
-           <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-              <option value="1:1" className="bg-[#051610]">1:1 Vuông</option>
-              <option value="4:3" className="bg-[#051610]">4:3 Catalog</option>
-              <option value="3:4" className="bg-[#051610]">3:4 Portrait</option>
-              <option value="16:9" className="bg-[#051610]">16:9 HD</option>
-              <option value="9:16" className="bg-[#051610]">9:16</option>
-              <option value="1:4" className="bg-[#051610]">1:4 Siêu dài</option>
-              <option value="4:1" className="bg-[#051610]">4:1 Siêu rộng</option>
+           <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Tỷ lệ</label>
+           <select className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+              <option value="1:1" className="bg-white">1:1 Vuông</option>
+              <option value="4:3" className="bg-white">4:3 Catalog</option>
+              <option value="3:4" className="bg-white">3:4 Portrait</option>
+              <option value="16:9" className="bg-white">16:9 HD</option>
+              <option value="9:16" className="bg-white">9:16</option>
+              <option value="1:4" className="bg-white">1:4 Siêu dài</option>
+              <option value="4:1" className="bg-white">4:1 Siêu rộng</option>
            </select>
         </div>
 
         {renderModelSelection()}
 
         <div className="flex gap-2 pt-2">
-          <button disabled={!settings.referenceImage} onClick={() => startGeneration()} className="w-full py-4 bg-cyan-500 text-black font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Tạo ảnh Line Art</button>
+          <button disabled={!settings.referenceImage} onClick={() => startGeneration()} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Tạo ảnh Line Art</button>
         </div>
       </div>
     </div>
@@ -1448,75 +1448,75 @@ const App: React.FC = () => {
           {studioStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Thông tin sản phẩm</label>
-                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-emerald-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Thông tin sản phẩm</label>
+                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-[#1877F2]" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
                 <div className="grid grid-cols-3 gap-2 mt-2">
                    {['length', 'width', 'height'].map(f => (
-                     <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-emerald-400" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
+                     <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-white  border border-[#CED0D4] rounded-lg p-2 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
                    ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Ảnh sản phẩm (Nền trắng hoặc ảnh chụp điện thoại)</label>
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Ảnh sản phẩm (Nền trắng hoặc ảnh chụp điện thoại)</label>
                 <div className="grid grid-cols-5 gap-2">
                    {settings.productImages.map((img, i) => (
-                     <div key={i} className="aspect-square bg-white/5 border border-white/10 rounded-lg overflow-hidden relative group">
+                     <div key={i} className="aspect-square bg-white  border border-[#CED0D4] rounded-lg overflow-hidden relative group">
                        <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                        <button onClick={() => setSettings(s => ({...s, productImages: s.productImages.filter((_, idx) => idx !== i)}))} className="absolute inset-0 bg-red-500/80 opacity-0 group-hover:opacity-100 transition-all text-xs">✕</button>
                      </div>
                    ))}
                    {settings.productImages.length < 5 && (
-                     <button onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-white/10 rounded-lg text-white flex items-center justify-center hover:border-emerald-400 transition-all">+</button>
+                     <button onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-[#CED0D4] rounded-lg text-[#050505] flex items-center justify-center hover:border-[#1877F2] transition-all">+</button>
                    )}
                 </div>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
               </div>
 
-              <button onClick={handleStudioAnalysis} className="w-full py-4 bg-emerald-500 text-[#051610] font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Tiếp tục</button>
+              <button onClick={handleStudioAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Tiếp tục</button>
             </div>
           )}
 
           {studioStep === 2 && (
             <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-slate-400 uppercase">Chọn Concept Studio</label>
+               <label className="block text-[9px] font-bold text-[#65676B] uppercase">Chọn Concept Studio</label>
                <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                  {suggestions.concepts.map((c, idx) => (
-                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-emerald-400 text-[#051610] border-emerald-400' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                   <button key={idx} onClick={() => setSettings({...settings, concept: c.prompt})} className={`w-full text-left p-4 rounded-xl border transition-all ${settings.concept === c.prompt ? 'bg-[#E8F0FE] text-[#1877F2] border-[#1877F2] text-[#050505] border-[#1877F2]' : 'bg-white  border-[#CED0D4] text-[#050505] hover:bg-[#E4E6EB]'}`}>
                      <div className="font-bold text-[11px] mb-1">{c.title}</div>
                      <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
                    </button>
                  ))}
                </div>
                
-               <div className="pt-4 border-t border-white/10 space-y-2">
-                  <label className="block text-[9px] font-bold text-slate-400 uppercase">Chỉnh sửa hoặc mô tả thêm về concept</label>
+               <div className="pt-4 border-t border-[#CED0D4] space-y-2">
+                  <label className="block text-[9px] font-bold text-[#65676B] uppercase">Chỉnh sửa hoặc mô tả thêm về concept</label>
                   <textarea 
                     placeholder="Mô tả chi tiết hơn hoặc chỉnh sửa concept..." 
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-400 resize-none h-24 custom-scrollbar" 
+                    className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-xs text-[#050505] outline-none focus:border-[#1877F2] resize-none h-24 custom-scrollbar" 
                     value={settings.concept} 
                     onChange={e => setSettings({...settings, concept: e.target.value})} 
                   />
                </div>
 
                <div className="flex gap-2 pt-2">
-                  <button onClick={() => setStudioStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold hover:bg-white/5">Quay lại</button>
-                  <button onClick={handleStudioPropSuggestion} className="flex-[2] bg-emerald-500 text-[#051610] font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                  <button onClick={() => setStudioStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold hover:bg-white ">Quay lại</button>
+                  <button onClick={handleStudioPropSuggestion} className="flex-[2] bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                </div>
             </div>
           )}
 
           {studioStep === 3 && (
             <div className="space-y-5">
-              <div className="bg-emerald-400/10 p-3 rounded-xl border border-emerald-400/20">
-                 <div className="text-[8px] font-bold text-emerald-400 uppercase mb-1">Concept Studio đã chọn:</div>
-                 <div className="text-[10px] text-white italic">"{settings.concept}"</div>
+              <div className="bg-[#E8F0FE] text-[#1877F2] border-[#1877F2]/10 p-3 rounded-xl border border-[#1877F2]/20">
+                 <div className="text-[8px] font-bold text-[#1877F2] uppercase mb-1">Concept Studio đã chọn:</div>
+                 <div className="text-[10px] text-[#050505] italic">"{settings.concept}"</div>
               </div>
 
               <div className="space-y-2">
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Vị trí và tỷ lệ sản phẩm</label>
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase">Vị trí và tỷ lệ sản phẩm</label>
                  <textarea 
-                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-emerald-400 min-h-[80px] custom-scrollbar"
+                   className="w-full bg-white  border border-[#CED0D4] rounded-xl p-3 text-xs text-[#050505] outline-none focus:border-[#1877F2] min-h-[80px] custom-scrollbar"
                    value={settings.placement}
                    onChange={e => setSettings(prev => ({ ...prev, placement: e.target.value }))}
                    placeholder="Nhập vị trí và tỷ lệ sản phẩm..."
@@ -1524,7 +1524,7 @@ const App: React.FC = () => {
               </div>
 
               <div>
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Vị trí để trống chèn Text (Chọn nhiều)</label>
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Vị trí để trống chèn Text (Chọn nhiều)</label>
                  <div className="grid grid-cols-2 gap-2">
                     {[
                       {id: 'TOP', label: 'Ở trên'},
@@ -1546,7 +1546,7 @@ const App: React.FC = () => {
                               setSettings({...settings, emptySpacePosition: next.length === 0 ? ['NONE'] : next});
                             }
                           }} 
-                          className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${isSelected ? 'bg-emerald-400 text-[#051610] border-emerald-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                          className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${isSelected ? 'bg-[#E8F0FE] text-[#1877F2] border-[#1877F2] text-[#050505] border-[#1877F2]' : 'bg-white  border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}
                         >
                           {pos.label}
                         </button>
@@ -1556,25 +1556,25 @@ const App: React.FC = () => {
               </div>
 
               <div>
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase mb-2">Gợi ý đạo cụ Studio</label>
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-2">Gợi ý đạo cụ Studio</label>
                  <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar">
                     {suggestions.props.map(p => (
-                      <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-emerald-400 text-[#051610] border-emerald-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>{p}</button>
+                      <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-[#E8F0FE] text-[#1877F2] border-[#1877F2] text-[#050505] border-[#1877F2]' : 'bg-white  border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}>{p}</button>
                     ))}
                  </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-white/10">
-                 <label className="block text-[9px] font-bold text-slate-400 uppercase">Thêm đạo cụ khác</label>
+              <div className="space-y-2 pt-2 border-t border-[#CED0D4]">
+                 <label className="block text-[9px] font-bold text-[#65676B] uppercase">Thêm đạo cụ khác</label>
                  <div className="flex gap-2">
-                    <input type="text" placeholder="Nhập tên đạo cụ..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none focus:border-emerald-400" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                <button onClick={addCustomPropToList} className="px-5 bg-white/10 rounded-xl text-white font-bold hover:bg-white/20 transition-all">+</button>
+                    <input type="text" placeholder="Nhập tên đạo cụ..." className="flex-1 bg-white  border border-[#CED0D4] rounded-xl px-4 text-xs text-[#050505] outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
+                <button onClick={addCustomPropToList} className="px-5 bg-[#E4E6EB] rounded-xl text-[#050505] font-bold hover:bg-white/20 transition-all">+</button>
              </div>
           </div>
 
           <div className="flex gap-2">
-              <button onClick={() => setStudioStep(2)} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
-              <button onClick={() => setStudioStep(4)} className="flex-[2] bg-emerald-500 text-[#051610] font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+              <button onClick={() => setStudioStep(2)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
+              <button onClick={() => setStudioStep(4)} className="flex-[2] bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
           </div>
         </div>
       )}
@@ -1602,14 +1602,14 @@ const renderTrackSocketWorkflow = () => (
       {trackSocketStep === 1 && (
         <div className="space-y-4">
           <div className="flex gap-4 mb-2">
-             <button onClick={() => setSettings({...settings, trackSocketMode: 'CREATIVE'})} className={`flex-1 p-3 rounded-xl border text-xs font-bold transition-all ${settings.trackSocketMode === 'CREATIVE' || !settings.trackSocketMode ? 'bg-blue-500 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-white/10 hover:text-white'}`}>Tự sáng tạo ảnh</button>
-             <button onClick={() => setSettings({...settings, trackSocketMode: 'REFERENCE'})} className={`flex-1 p-3 rounded-xl border text-xs font-bold transition-all ${settings.trackSocketMode === 'REFERENCE' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-white/10 hover:text-white'}`}>Tạo theo mẫu sẵn</button>
+             <button onClick={() => setSettings({...settings, trackSocketMode: 'CREATIVE'})} className={`flex-1 p-3 rounded-xl border text-xs font-bold transition-all ${settings.trackSocketMode === 'CREATIVE' || !settings.trackSocketMode ? 'bg-blue-500 text-white border-blue-500' : 'bg-white shadow-sm text-white text-[#65676B] border-[#CED0D4] hover:text-[#050505]'}`}>Tự sáng tạo ảnh</button>
+             <button onClick={() => setSettings({...settings, trackSocketMode: 'REFERENCE'})} className={`flex-1 p-3 rounded-xl border text-xs font-bold transition-all ${settings.trackSocketMode === 'REFERENCE' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white shadow-sm text-white text-[#65676B] border-[#CED0D4] hover:text-[#050505]'}`}>Tạo theo mẫu sẵn</button>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase">Ảnh Thanh ray (Cố định gắn tường)</label>
-              <div onClick={() => trackFileRef.current?.click()} className="h-24 w-full bg-white/5 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
+              <label className="block text-[9px] font-bold text-[#65676B] uppercase">Ảnh Thanh ray (Cố định gắn tường)</label>
+              <div onClick={() => trackFileRef.current?.click()} className="h-24 w-full bg-white  border-2 border-dashed border-[#CED0D4] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
                 {settings.trackImage ? <img src={settings.trackImage} className="w-full h-full object-contain" /> : <span className="text-blue-400 font-bold text-[10px] uppercase">+ Tải ảnh Thanh ray</span>}
               </div>
               <input type="file" hidden ref={trackFileRef} accept="image/*" onChange={e => onImageUpload(e, 'track')} />
@@ -1617,40 +1617,40 @@ const renderTrackSocketWorkflow = () => (
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="block text-[9px] font-bold text-slate-400 uppercase">Danh sách Ổ cắm</label>
+                <label className="block text-[9px] font-bold text-[#65676B] uppercase">Danh sách Ổ cắm</label>
                 <button onClick={() => socketFileRef.current?.click()} className="text-[10px] text-blue-400 font-bold uppercase hover:text-blue-300">+ Thêm Ổ cắm</button>
               </div>
               <input type="file" hidden ref={socketFileRef} accept="image/*" onChange={e => onImageUpload(e, 'socket')} />
               
               <div className="space-y-3">
                 {settings.sockets?.map((socket, idx) => (
-                  <div key={socket.id} className="bg-white/5 border border-white/10 rounded-xl p-3 flex gap-3 items-start">
-                    <div className="w-16 h-16 bg-black/20 rounded-lg overflow-hidden shrink-0">
+                  <div key={socket.id} className="bg-white  border border-[#CED0D4] rounded-xl p-3 flex gap-3 items-start">
+                    <div className="w-16 h-16 bg-white shadow-sm border border-[#CED0D4] rounded-lg overflow-hidden shrink-0">
                       <img src={socket.image} className="w-full h-full object-contain" />
                     </div>
                     <div className="flex-1 space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-white">Loại ổ cắm {idx + 1}</span>
+                        <span className="text-xs font-bold text-[#050505]">Loại ổ cắm {idx + 1}</span>
                         <button onClick={() => setSettings(s => ({...s, sockets: s.sockets?.filter(sk => sk.id !== socket.id)}))} className="text-red-400 text-xs hover:text-red-300">Xóa</button>
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-[10px] text-slate-400">Số lượng:</label>
+                        <label className="text-[10px] text-[#65676B]">Số lượng:</label>
                         <input type="number" min="1" value={socket.quantity} onChange={e => {
                           const newSockets = [...(settings.sockets || [])];
                           newSockets[idx].quantity = parseInt(e.target.value) || 1;
                           setSettings({...settings, sockets: newSockets});
-                        }} className="w-16 bg-black/20 border border-white/10 rounded p-1 text-xs text-white outline-none" />
+                        }} className="w-16 bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded p-1 text-xs text-[#050505] outline-none" />
                       </div>
                       <input type="text" placeholder="Ghi chú thiết bị cắm vào (VD: Tivi, Đèn bàn...)" value={socket.applianceNote} onChange={e => {
                         const newSockets = [...(settings.sockets || [])];
                         newSockets[idx].applianceNote = e.target.value;
                         setSettings({...settings, sockets: newSockets});
-                      }} className="w-full bg-black/20 border border-white/10 rounded p-2 text-xs text-white outline-none focus:border-blue-400" />
+                      }} className="w-full bg-white shadow-sm border border-[#CED0D4] border border-[#CED0D4] rounded p-2 text-xs text-[#050505] outline-none focus:border-blue-400" />
                     </div>
                   </div>
                 ))}
                 {(!settings.sockets || settings.sockets.length === 0) && (
-                  <div className="text-center p-4 border border-dashed border-white/10 rounded-xl text-slate-500 text-xs">
+                  <div className="text-center p-4 border border-dashed border-[#CED0D4] rounded-xl text-[#65676B] text-xs">
                     Chưa có ổ cắm nào. Hãy thêm ít nhất 1 ổ cắm.
                   </div>
                 )}
@@ -1660,15 +1660,15 @@ const renderTrackSocketWorkflow = () => (
           
           {settings.trackSocketMode === 'REFERENCE' && (
             <div className="space-y-2">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase">Ảnh Mẫu (Reference Image)</label>
-              <div onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-white/5 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
+              <label className="block text-[9px] font-bold text-[#65676B] uppercase">Ảnh Mẫu (Reference Image)</label>
+              <div onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-white  border-2 border-dashed border-[#CED0D4] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
                 {settings.referenceImage ? <img src={settings.referenceImage} className="w-full h-full object-contain" /> : <span className="text-blue-400 font-bold text-[10px] uppercase">+ Tải ảnh mẫu</span>}
               </div>
               <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
             </div>
           )}
           
-          <input type="text" placeholder="Tên sản phẩm (VD: Thanh ray Chargee V2...)" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+          <input type="text" placeholder="Tên sản phẩm (VD: Thanh ray Chargee V2...)" className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-sm text-[#050505] outline-none focus:border-blue-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
 
           <button onClick={() => { 
             if(!settings.trackImage || !settings.sockets?.length) return alert("Vui lòng tải đủ ảnh thanh ray và ít nhất 1 ổ cắm."); 
@@ -1683,16 +1683,16 @@ const renderTrackSocketWorkflow = () => (
 
       {trackSocketStep === 2 && (
         <div className="space-y-4">
-          <label className="block text-[9px] font-bold text-slate-400 uppercase">Chọn bối cảnh ứng dụng</label>
+          <label className="block text-[9px] font-bold text-[#65676B] uppercase">Chọn bối cảnh ứng dụng</label>
           <div className="grid grid-cols-2 gap-2">
             {['Phòng khách hiện đại', 'Phòng ngủ ấm cúng', 'Bàn làm việc tối giản', 'Khu vực bếp tiện nghi', 'Kệ Tivi sang trọng', 'Văn phòng chuyên nghiệp'].map(loc => (
-              <button key={loc} onClick={() => setSettings({...settings, location: loc})} className={`p-3 rounded-xl border text-[10px] transition-all ${settings.location === loc ? 'bg-blue-400 text-white border-blue-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>{loc}</button>
+              <button key={loc} onClick={() => setSettings({...settings, location: loc})} className={`p-3 rounded-xl border text-[10px] transition-all ${settings.location === loc ? 'bg-blue-400 text-[#050505] border-blue-400' : 'bg-white  border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}>{loc}</button>
             ))}
           </div>
-          <textarea placeholder="Mô tả thêm về bối cảnh (Tùy chọn)..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-blue-400 resize-none h-20" value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
+          <textarea placeholder="Mô tả thêm về bối cảnh (Tùy chọn)..." className="w-full bg-white  border border-[#CED0D4] rounded-xl px-4 py-3 text-xs text-[#050505] outline-none focus:border-blue-400 resize-none h-20" value={settings.concept} onChange={e => setSettings({...settings, concept: e.target.value})} />
           
           <div className="flex gap-2">
-            <button onClick={() => setTrackSocketStep(1)} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
+            <button onClick={() => setTrackSocketStep(1)} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
             <button onClick={() => { if(!settings.location) return alert("Vui lòng chọn bối cảnh."); setTrackSocketStep(3); }} className="flex-[2] bg-blue-500 text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
           </div>
         </div>
@@ -1712,8 +1712,8 @@ const renderTrackSocketWorkflow = () => (
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-lg z-10 space-y-4 px-6"
         >
-          <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Bắt đầu quy trình sáng tạo</h3>
-          <p className="text-slate-300 font-medium text-sm leading-relaxed">Chọn một trong các chế độ phía bên trái để trải nghiệm quy trình làm việc chuyên nghiệp được tối ưu bởi Gemini 3 Pro.</p>
+          <h3 className="text-xl font-bold text-[#050505] uppercase tracking-tighter">Bắt đầu quy trình sáng tạo</h3>
+          <p className="text-[#050505] font-medium text-sm leading-relaxed">Chọn một trong các chế độ phía bên trái để trải nghiệm quy trình làm việc chuyên nghiệp được tối ưu bởi Gemini 3 Pro.</p>
         </motion.div>
       );
     }
@@ -1814,15 +1814,15 @@ const renderTrackSocketWorkflow = () => (
     }
 
     return (
-      <div className="text-left max-w-2xl z-10 space-y-6 px-8 py-8 bg-black/40 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl animate-fade-in">
-        <h3 className="text-2xl font-bold text-white uppercase tracking-tighter border-b border-white/10 pb-4">{title}</h3>
+      <div className="text-left max-w-2xl z-10 space-y-6 px-8 py-8 bg-white shadow-sm  rounded-3xl border border-[#CED0D4] shadow-2xl animate-fade-in">
+        <h3 className="text-2xl font-bold text-[#050505] uppercase tracking-tighter border-b border-[#CED0D4] pb-4">{title}</h3>
         <ul className="space-y-4">
           {steps.map((step, idx) => (
             <li key={idx} className="flex items-start gap-4">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#caf0f8] to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20">
-                <span className="text-[#051610] text-sm font-black">{idx + 1}</span>
+                <span className="text-[#050505] text-sm font-black">{idx + 1}</span>
               </div>
-              <span className="text-slate-200 font-medium text-[15px] leading-relaxed pt-1">{step}</span>
+              <span className="text-[#050505] font-medium text-[15px] leading-relaxed pt-1">{step}</span>
             </li>
           ))}
         </ul>
@@ -1833,48 +1833,38 @@ const renderTrackSocketWorkflow = () => (
   const renderSidebar = () => {
     if (currentStep === 1) {
       const modes = [
-        { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'from-purple-500/20 to-purple-500/5', hover: 'hover:border-purple-400' },
-        { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'from-white/10 to-white/5', hover: 'hover:border-white/50' },
-        { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ (netline).', color: 'from-gray-500/20 to-gray-500/5', hover: 'hover:border-gray-400' },
-        { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'from-[#caf0f8]/20 to-[#caf0f8]/5', hover: 'hover:border-[#caf0f8]' },
-        { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'from-emerald-500/20 to-emerald-500/5', hover: 'hover:border-emerald-400' },
-        { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'from-orange-500/20 to-orange-500/5', hover: 'hover:border-orange-400' },
+        { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'bg-purple-50 text-purple-600', hover: 'hover:bg-purple-100' },
+        { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'bg-blue-50 text-blue-600', hover: 'hover:bg-blue-100' },
+        { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ (netline).', color: 'bg-gray-100 text-gray-700', hover: 'hover:bg-gray-200' },
+        { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'bg-cyan-50 text-cyan-600', hover: 'hover:bg-cyan-100' },
+        { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'bg-emerald-50 text-emerald-600', hover: 'hover:bg-emerald-100' },
+        { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'bg-orange-50 text-orange-600', hover: 'hover:bg-orange-100' },
       ];
 
       return (
-        <div className="space-y-6 animate-fade-in">
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Layers className="text-cyan-400" size={24} />
-            Chọn chế độ sáng tạo
-          </h2>
-          <div className="grid grid-cols-1 gap-3">
+        <div className="space-y-6 animate-fade-in pb-4">
+          <div className="grid grid-cols-1 gap-2 px-2">
             {modes.map((mode, idx) => (
               <motion.button 
                 key={mode.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                whileHover={{ scale: 1.02, x: 5 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => { 
                   setSettings(s => ({...s, visualStyle: mode.id as VisualStyle})); 
                   // Reset steps for the selected mode
                   setConceptStep(1); setTechStep(1); setPackagingStep(1); setTechEffectStep(1); setWhiteBgStep(1); setWhiteBgWebStep(1); setStagingStep(1); setStudioStep(1); setTrackSocketStep(1);
                   setCurrentStep(2); 
                 }} 
-                className={`w-full text-left p-4 rounded-2xl bg-gradient-to-br ${mode.color} border border-white/10 ${mode.hover} transition-all group relative overflow-hidden`}
+                className={`w-full text-left p-3 rounded-xl bg-white border border-[#CED0D4] ${mode.hover} transition-all group relative overflow-hidden shadow-sm`}
               >
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${mode.color}`}>
                     {mode.icon}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-white text-sm group-hover:text-cyan-400 transition-colors">{mode.title}</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{mode.desc}</p>
+                    <h3 className="font-semibold text-[#050505] text-[15px] group-hover:text-[#1877F2] transition-colors">{mode.title}</h3>
+                    <p className="text-[13px] text-[#65676B] mt-0.5 line-clamp-1">{mode.desc}</p>
                   </div>
-                  <ChevronRight size={16} className="text-white/20 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+                  <ChevronRight size={16} className="text-[#65676B] group-hover:text-[#1877F2] group-hover:translate-x-1 transition-all" />
                 </div>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12 group-hover:bg-white/10 transition-colors" />
               </motion.button>
             ))}
           </div>
@@ -1887,7 +1877,7 @@ const renderTrackSocketWorkflow = () => (
          <div className="mb-8 flex items-center justify-between">
            <button 
              onClick={resetMode} 
-             className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400 hover:text-cyan-400 transition-colors group"
+             className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#65676B] hover:text-[#1877F2] transition-colors group"
            >
              <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
              Quay lại Menu chính
@@ -1897,7 +1887,7 @@ const renderTrackSocketWorkflow = () => (
              <button 
                onClick={undoSettings} 
                disabled={!canUndo}
-               className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+               className="p-1.5 rounded-lg bg-white  border border-[#CED0D4] text-[#65676B] hover:text-[#050505] hover:bg-[#E4E6EB] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                title="Hoàn tác (Undo)"
              >
                <Undo2 size={14} />
@@ -1905,7 +1895,7 @@ const renderTrackSocketWorkflow = () => (
              <button 
                onClick={redoSettings} 
                disabled={!canRedo}
-               className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+               className="p-1.5 rounded-lg bg-white  border border-[#CED0D4] text-[#65676B] hover:text-[#050505] hover:bg-[#E4E6EB] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                title="Làm lại (Redo)"
              >
                <Redo2 size={14} />
@@ -1942,13 +1932,13 @@ const renderTrackSocketWorkflow = () => (
   const renderModelSelection = () => (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Chất lượng hình ảnh</label>
+        <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Chất lượng hình ảnh</label>
         <div className="grid grid-cols-3 gap-2">
           {(['1K', '2K', '4K'] as ImageSize[]).map(size => (
             <button 
               key={size} 
               onClick={() => setSettings({...settings, imageSize: size})} 
-              className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.imageSize === size ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+              className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.imageSize === size ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-white shadow-sm text-white border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}
             >
               {size === '1K' ? '1K Standard' : size === '2K' ? '2K Pro' : '4K Ultra HD'}
             </button>
@@ -1956,17 +1946,17 @@ const renderTrackSocketWorkflow = () => (
         </div>
       </div>
       <div className="space-y-2">
-        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Chọn Model AI (Tối ưu chi phí)</label>
+        <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Chọn Model AI (Tối ưu chi phí)</label>
         <div className="grid grid-cols-2 gap-2">
           <button 
             onClick={() => setSettings({...settings, aiModel: 'gemini-2.5-flash-image'})} 
-            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-2.5-flash-image' ? 'bg-[#caf0f8] text-black border-[#caf0f8]' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-2.5-flash-image' ? 'bg-[#caf0f8] text-[#050505] border-[#caf0f8]' : 'bg-white  border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}
           >
             Standard (Tiết kiệm)
           </button>
           <button 
             onClick={() => setSettings({...settings, aiModel: 'gemini-3.1-flash-image-preview'})} 
-            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-3.1-flash-image-preview' ? 'bg-[#caf0f8] text-black border-[#caf0f8]' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-3.1-flash-image-preview' ? 'bg-[#caf0f8] text-[#050505] border-[#caf0f8]' : 'bg-white  border-[#CED0D4] text-[#65676B] hover:text-[#050505]'}`}
           >
             High Quality (Tối ưu)
           </button>
@@ -1977,42 +1967,42 @@ const renderTrackSocketWorkflow = () => (
 
   const renderCameraSettings = (onBack: () => void) => (
     <div className="space-y-5">
-      <div className="bg-white/5 rounded-xl p-4 space-y-4 border border-white/10">
+      <div className="bg-white  rounded-xl p-4 space-y-4 border border-[#CED0D4]">
          <div className="space-y-2">
-            <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase"><span>Góc chụp</span><span className="text-[#caf0f8]">{settings.camera.angle}°</span></div>
-            <input type="range" min="-15" max="90" step="5" className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" value={settings.camera.angle} onChange={e => setSettings({...settings, camera: {...settings.camera, angle: parseInt(e.target.value)}})} />
+            <div className="flex justify-between text-[9px] font-bold text-[#65676B] uppercase"><span>Góc chụp</span><span className="text-[#caf0f8]">{settings.camera.angle}°</span></div>
+            <input type="range" min="-15" max="90" step="5" className="w-full h-1 bg-[#E4E6EB] rounded-lg appearance-none cursor-pointer" value={settings.camera.angle} onChange={e => setSettings({...settings, camera: {...settings.camera, angle: parseInt(e.target.value)}})} />
          </div>
          <div className="space-y-2">
-            <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase"><span>Tiêu cự</span><span className="text-[#caf0f8]">{settings.camera.focalLength}mm</span></div>
-            <input type="range" min="12" max="200" step="1" className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" value={settings.camera.focalLength} onChange={e => setSettings({...settings, camera: {...settings.camera, focalLength: parseInt(e.target.value)}})} />
+            <div className="flex justify-between text-[9px] font-bold text-[#65676B] uppercase"><span>Tiêu cự</span><span className="text-[#caf0f8]">{settings.camera.focalLength}mm</span></div>
+            <input type="range" min="12" max="200" step="1" className="w-full h-1 bg-[#E4E6EB] rounded-lg appearance-none cursor-pointer" value={settings.camera.focalLength} onChange={e => setSettings({...settings, camera: {...settings.camera, focalLength: parseInt(e.target.value)}})} />
          </div>
          <div className="grid grid-cols-2 gap-3">
            <div>
-              <label className="block text-[8px] font-bold text-slate-400 uppercase mb-1">Khẩu độ</label>
-              <select className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none focus:border-[#caf0f8]" value={settings.camera.aperture} onChange={e => setSettings({...settings, camera: {...settings.camera, aperture: e.target.value}})}>
-                {CAMERA_APERTURES.map(a => <option key={a} value={a} className="bg-[#051610]">{a}</option>)}
+              <label className="block text-[8px] font-bold text-[#65676B] uppercase mb-1">Khẩu độ</label>
+              <select className="w-full bg-white  border border-[#CED0D4] rounded-lg p-2 text-[10px] text-[#050505] outline-none focus:border-[#caf0f8]" value={settings.camera.aperture} onChange={e => setSettings({...settings, camera: {...settings.camera, aperture: e.target.value}})}>
+                {CAMERA_APERTURES.map(a => <option key={a} value={a} className="bg-white">{a}</option>)}
               </select>
            </div>
            <div>
-              <label className="block text-[8px] font-bold text-slate-400 uppercase mb-1">ISO</label>
-              <select className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none focus:border-[#caf0f8]" value={settings.camera.iso} onChange={e => setSettings({...settings, camera: {...settings.camera, iso: e.target.value}})}>
-                {CAMERA_ISO.map(i => <option key={i} value={i} className="bg-[#051610]">{i}</option>)}
+              <label className="block text-[8px] font-bold text-[#65676B] uppercase mb-1">ISO</label>
+              <select className="w-full bg-white  border border-[#CED0D4] rounded-lg p-2 text-[10px] text-[#050505] outline-none focus:border-[#caf0f8]" value={settings.camera.iso} onChange={e => setSettings({...settings, camera: {...settings.camera, iso: e.target.value}})}>
+                {CAMERA_ISO.map(i => <option key={i} value={i} className="bg-white">{i}</option>)}
               </select>
            </div>
          </div>
       </div>
       <div className="grid grid-cols-1 gap-3">
         <div>
-           <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tỷ lệ</label>
-           <select className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-              <option value="1:1" className="bg-[#051610]">1:1 Vuông</option><option value="16:9" className="bg-[#051610]">16:9 HD</option><option value="9:16" className="bg-[#051610]">9:16</option><option value="4:3" className="bg-[#051610]">4:3</option><option value="3:4" className="bg-[#051610]">3:4</option><option value="1:4" className="bg-[#051610]">1:4</option><option value="4:1" className="bg-[#051610]">4:1</option>
+           <label className="block text-[9px] font-bold text-[#65676B] uppercase mb-1">Tỷ lệ</label>
+           <select className="w-full bg-white  border border-[#CED0D4] rounded-lg p-2 text-[10px] text-[#050505] outline-none" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+              <option value="1:1" className="bg-white">1:1 Vuông</option><option value="16:9" className="bg-white">16:9 HD</option><option value="9:16" className="bg-white">9:16</option><option value="4:3" className="bg-white">4:3</option><option value="3:4" className="bg-white">3:4</option><option value="1:4" className="bg-white">1:4</option><option value="4:1" className="bg-white">4:1</option>
            </select>
         </div>
       </div>
       {renderModelSelection()}
       <div className="flex gap-2">
-        <button onClick={onBack} className="flex-1 py-4 border border-white/10 text-white rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
-        <button onClick={startGeneration} className="flex-[2] vibrant-button text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl">Tạo ảnh</button>
+        <button onClick={onBack} className="flex-1 py-4 border border-[#CED0D4] text-[#050505] rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
+        <button onClick={startGeneration} className="flex-[2] bg-[#1877F2] text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl">Tạo ảnh</button>
       </div>
     </div>
   );
@@ -2020,12 +2010,7 @@ const renderTrackSocketWorkflow = () => (
   if (isLocked) {
     return (
       <div className="fixed inset-0 z-[150] bg-[#051610] flex flex-col items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full space-y-8 glass-card p-10 rounded-[40px] border border-white/10">
-          <div className="w-20 h-20 bg-white/10 rounded-3xl mx-auto flex items-center justify-center"><span className="text-3xl">🔒</span></div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-white tracking-tighter">Ai Image Elmich</h1>
-            <h2 className="text-lg font-bold text-[#caf0f8]">Bảo mật hệ thống</h2>
-          </div>
+        <div className="max-w-md w-full glass-card p-10 rounded-[40px] border border-white/10">
           <div className="space-y-4">
             <input type="password" placeholder="Mật khẩu..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center text-white tracking-[0.5em] outline-none" value={passwordInput} onChange={(e) => handlePasswordChange(e.target.value)} autoFocus />
             {passwordError && <p className="text-red-400 text-xs font-bold uppercase">{passwordError}</p>}
@@ -2169,7 +2154,7 @@ const renderTrackSocketWorkflow = () => (
                     AI
                   </div>
                 )}
-                <div className={`px-4 py-3 rounded-2xl max-w-[85%] break-words flex flex-col gap-3 shadow-sm ${msg.role === 'user' ? 'bg-[#1877F2] text-white rounded-br-sm' : 'bg-[#F0F2F5] text-[#050505] rounded-bl-sm border border-[#E4E6EB]'}`}>
+                <div className={`px-4 py-3 rounded-2xl max-w-[85%] break-words flex flex-col gap-3 shadow-sm ${msg.role === 'user' ? 'bg-[#1877F2] text-white rounded-br-sm' : 'bg-[#F0F2F5] text-white rounded-bl-sm border border-[#E4E6EB]'}`}>
                   <span className="leading-relaxed whitespace-pre-wrap">
                     {msg.role === 'model' && index === chatMessages.length - 1 ? (
                       <TypingEffect text={msg.text} />
@@ -2252,12 +2237,6 @@ const renderTrackSocketWorkflow = () => (
     <div className="min-h-screen bg-[#F0F2F5] text-[#050505] font-sans flex flex-col relative animate-fade-in">
       <header className="h-[56px] w-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center justify-between px-4 sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setIsSidebarVisible(!isSidebarVisible)}
-            className="p-2 rounded-full bg-[#F0F2F5] text-[#050505] hover:bg-[#E4E6EB] transition-colors lg:hidden"
-          >
-            {isSidebarVisible ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
-          </button>
           <div className="w-10 h-10 bg-[#1877F2] rounded-full flex items-center justify-center shadow-sm">
             <span className="text-white font-bold text-lg">AE</span>
           </div>
@@ -2267,17 +2246,17 @@ const renderTrackSocketWorkflow = () => (
         </div>
 
         {/* View Mode Navigation */}
-        <div className="flex-1 flex justify-center max-w-md mx-auto hidden md:flex">
+        <div className="flex-1 flex justify-center max-w-md mx-auto">
           <div className="flex gap-2 p-1 bg-[#F0F2F5] rounded-lg">
             <button
               onClick={() => setViewMode('studio')}
-              className={`px-6 py-1.5 rounded-md text-[15px] font-semibold transition-all ${viewMode === 'studio' ? 'bg-white shadow-sm text-[#050505]' : 'text-[#65676B] hover:bg-[#E4E6EB]'}`}
+              className={`px-6 py-1.5 rounded-md text-[15px] font-semibold transition-all ${viewMode === 'studio' ? 'bg-white ' : 'text-[#65676B] hover:bg-[#E4E6EB]'}`}
             >
               Tạo ảnh
             </button>
             <button
               onClick={() => setViewMode('chat')}
-              className={`px-6 py-1.5 rounded-md text-[15px] font-semibold transition-all flex items-center gap-2 ${viewMode === 'chat' ? 'bg-white shadow-sm text-[#050505]' : 'text-[#65676B] hover:bg-[#E4E6EB]'}`}
+              className={`px-6 py-1.5 rounded-md text-[15px] font-semibold transition-all flex items-center gap-2 ${viewMode === 'chat' ? 'bg-white ' : 'text-[#65676B] hover:bg-[#E4E6EB]'}`}
             >
               <MessageCircle size={18} /> Chat AI
             </button>
@@ -2291,22 +2270,20 @@ const renderTrackSocketWorkflow = () => (
       </header>
 
       {viewMode === 'studio' ? (
-      <main className="flex-1 flex max-w-[1920px] mx-auto w-full relative pt-4">
+      <main className="flex-1 flex flex-col lg:flex-row max-w-[1920px] mx-auto w-full relative pt-4">
         {/* Left Sidebar Layout */}
-        {isSidebarVisible && (
-          <aside className="hidden lg:block w-[360px] shrink-0 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto custom-scrollbar px-2">
-            <div className="space-y-1">
-               <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#E4E6EB] text-left transition-colors" onClick={() => setCurrentStep(1)}>
-                  <div className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
-                  <span className="font-semibold text-[15px] text-[#050505]">Ai Image Elmich</span>
-               </button>
-            </div>
-            <div className="mt-4 border-t border-[#CED0D4] pt-4 px-2">
-              <h3 className="text-[#65676B] font-semibold text-[17px] mb-2 px-2">Công cụ</h3>
-              {renderSidebar()}
-            </div>
-          </aside>
-        )}
+        <aside className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-[72px] lg:h-[calc(100vh-72px)] lg:overflow-y-auto custom-scrollbar px-2 mb-8 lg:mb-0">
+          <div className="space-y-1">
+             <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#E4E6EB] text-left transition-colors" onClick={() => setCurrentStep(1)}>
+                <div className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
+                <span className="font-semibold text-[15px] text-[#050505]">Ai Image Elmich</span>
+             </button>
+          </div>
+          <div className="mt-4 border-t border-[#CED0D4] pt-4 px-2">
+            <h3 className="text-[#65676B] font-semibold text-[17px] mb-2 px-2">Công cụ</h3>
+            {renderSidebar()}
+          </div>
+        </aside>
 
         {/* Center Feed Layout */}
         <section className="flex-1 max-w-[680px] w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0">
@@ -2423,7 +2400,7 @@ const renderTrackSocketWorkflow = () => (
         </section>
 
         {/* Right Sidebar */}
-        <aside className="hidden xl:block w-[360px] shrink-0 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto px-2">
+        <aside className="w-full xl:w-[360px] shrink-0 xl:sticky xl:top-[72px] xl:h-[calc(100vh-72px)] overflow-y-auto px-2 mt-8 xl:mt-0 pb-10">
            <div className="p-4 flex items-center justify-between">
              <span className="font-semibold text-[#65676B] text-[17px]">Bộ sưu tập</span>
              <button title="Làm mới bộ sưu tập" className="text-[#1877F2] text-[13px] hover:underline" onClick={() => {
