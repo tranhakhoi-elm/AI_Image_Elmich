@@ -2304,7 +2304,7 @@ const renderTrackSocketWorkflow = () => (
       {viewMode === 'studio' ? (
       <main className="flex-1 flex flex-col xl:flex-row max-w-[1920px] mx-auto w-full relative xl:h-[calc(100vh-56px)] xl:overflow-hidden bg-[#F0F2F5] xl:bg-white xl:py-0">
         {/* Left Sidebar Layout */}
-        <aside className="w-full xl:w-[360px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mb-8 xl:mb-0 xl:pt-4 xl:border-r xl:border-[#CED0D4] bg-white xl:bg-transparent">
+        <aside className="w-full xl:w-[480px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mb-8 xl:mb-0 xl:pt-4 xl:border-r xl:border-[#CED0D4] bg-white xl:bg-transparent flex flex-col">
           <div className="space-y-1">
              <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#E4E6EB] text-left transition-colors" onClick={() => setCurrentStep(1)}>
                 <div className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
@@ -2315,10 +2315,43 @@ const renderTrackSocketWorkflow = () => (
             <h3 className="text-[#65676B] font-semibold text-[17px] mb-2 px-2">Công cụ</h3>
             {renderSidebar()}
           </div>
+        
+          {/* Bộ Sưu Tập (Moved down) */}
+          <div className="w-full mt-8 border-t border-[#CED0D4] pt-4 xl:bg-transparent shrink-0">
+           <div className="p-4 flex items-center justify-between">
+             <span className="font-semibold text-[#65676B] text-[17px]">Bộ sưu tập</span>
+             <button title="Làm mới bộ sưu tập" className="text-[#1877F2] text-[13px] hover:underline" onClick={() => {
+                 setGallery([]);
+                 setActiveImage(null);
+             }}>Xóa tất cả</button>
+           </div>
+           <div className="px-4 pb-4 text-[13px] text-[#65676B] border-b border-[#CED0D4] mb-4">
+             Ảnh sẽ tự động hết hạn và bị xóa sau 7 ngày. Bạn nhớ lưu ảnh về máy nhé.
+           </div>
+           
+           <div className="grid grid-cols-3 gap-2 px-2 pb-20">
+             {gallery.map(img => (
+                <div key={img.id} className="relative aspect-square bg-[#E4E6EB] rounded-lg overflow-hidden group cursor-pointer" onClick={() => setActiveImage(img)}>
+                   <img src={img.url} className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 object-center ${activeImage?.id === img.id ? 'opacity-50' : ''}`} />
+                   {activeImage?.id === img.id && (
+                     <div className="absolute inset-0 flex items-center justify-center bg-[#1877F2]/20">
+                        <Check size={24} className="text-white drop-shadow-md" />
+                     </div>
+                   )}
+                </div>
+             ))}
+             {gallery.length === 0 && (
+                <div className="col-span-3 py-8 text-center text-[#65676B] text-[14px]">
+                  Chưa có ảnh nào được tạo.
+                </div>
+             )}
+           </div>
+          </div>
+
         </aside>
 
         {/* Center Feed Layout */}
-        <section className="flex-1 max-w-[680px] w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0 xl:h-full xl:overflow-y-auto custom-scrollbar xl:pt-4 bg-[#F0F2F5] xl:bg-transparent">
+        <section className="flex-1 max-w-[880px] w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0 xl:h-full xl:overflow-y-auto custom-scrollbar xl:pt-4 bg-[#F0F2F5] xl:bg-transparent">
           
           <div className="bg-white rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#CED0D4]">
              <div className="border-b border-[#CED0D4] p-4 font-semibold text-[17px] text-[#050505] flex justify-between items-center">
@@ -2345,10 +2378,15 @@ const renderTrackSocketWorkflow = () => (
                   </div>
                   <div className="p-4 pt-0">
      <p className="font-semibold text-[15px] text-[#050505] mb-2">{activeImage.settings.conceptTitle || activeImage.settings.techTitle || (activeImage.settings.concept ? `Yêu cầu: ${activeImage.settings.concept.substring(0, 100)}...` : `Chế độ: ${activeImage.settings.visualStyle}`)}</p>
-     <div className="bg-[#F0F2F5] p-3 rounded-lg border border-[#CED0D4]">
-       <p className="text-[11px] font-bold text-[#65676B] uppercase mb-1">Prompt đã gửi cho AI:</p>
-       <p className="text-[13px] text-[#050505] whitespace-pre-wrap font-mono leading-relaxed">{activeImage.prompt}</p>
-     </div>
+     <details className="bg-[#F0F2F5] p-3 rounded-lg border border-[#CED0D4] group cursor-pointer marker:content-[''] outline-none">
+       <summary className="text-[11px] font-bold text-[#65676B] outline-none uppercase flex items-center justify-between select-none">
+         <span>Hiện prompt</span>
+         <ChevronDown size={14} className="group-open:rotate-180 transition-transform" />
+       </summary>
+       <div className="mt-2 pt-2 border-t border-[#CED0D4] cursor-text">
+         <p className="text-[13px] text-[#050505] whitespace-pre-wrap font-mono leading-relaxed">{activeImage.prompt}</p>
+       </div>
+     </details>
   </div>
                   <div className="bg-[#E4E6EB] w-full relative">
                      <img src={activeImage.url} alt="Generated" className="w-full max-h-[70vh] object-contain block mx-auto" />
@@ -2421,10 +2459,15 @@ const renderTrackSocketWorkflow = () => (
                   </div>
                   <div className="px-4 pb-2">
      <p className="font-semibold text-[15px] text-[#050505] mb-2">{img.settings.conceptTitle || img.settings.techTitle || (img.settings.concept ? `${img.settings.concept.substring(0, 100)}...` : `Bộ lọc: ${img.settings.visualStyle}`)}</p>
-     <div className="bg-[#F0F2F5] p-3 rounded-lg border border-[#CED0D4] mt-2 mb-2">
-       <p className="text-[11px] font-bold text-[#65676B] uppercase mb-1">Prompt đã gửi cho AI:</p>
-       <p className="text-[13px] text-[#050505] whitespace-pre-wrap font-mono leading-relaxed">{img.prompt}</p>
-     </div>
+     <details className="bg-[#F0F2F5] p-3 rounded-lg border border-[#CED0D4] mt-2 mb-2 group cursor-pointer marker:content-[''] outline-none">
+       <summary className="text-[11px] font-bold text-[#65676B] outline-none uppercase flex items-center justify-between select-none">
+         <span>Hiện prompt</span>
+         <ChevronDown size={14} className="group-open:rotate-180 transition-transform" />
+       </summary>
+       <div className="mt-2 pt-2 border-t border-[#CED0D4] cursor-text">
+         <p className="text-[13px] text-[#050505] whitespace-pre-wrap font-mono leading-relaxed">{img.prompt}</p>
+       </div>
+     </details>
   </div>
                   <div className="bg-[#E4E6EB] w-full relative cursor-pointer" onClick={() => setActiveImage(img)}>
                      <img src={img.url} className="w-full max-h-[50vh] object-contain block mx-auto" />
@@ -2439,37 +2482,7 @@ const renderTrackSocketWorkflow = () => (
 
         </section>
 
-        {/* Right Sidebar */}
-        <aside className="w-full xl:w-[360px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mt-8 xl:mt-0 pb-10 xl:pt-4 xl:border-l xl:border-[#CED0D4] bg-white xl:bg-transparent">
-           <div className="p-4 flex items-center justify-between">
-             <span className="font-semibold text-[#65676B] text-[17px]">Bộ sưu tập</span>
-             <button title="Làm mới bộ sưu tập" className="text-[#1877F2] text-[13px] hover:underline" onClick={() => {
-                 setGallery([]);
-                 setActiveImage(null);
-             }}>Xóa tất cả</button>
-           </div>
-           <div className="px-4 pb-4 text-[13px] text-[#65676B] border-b border-[#CED0D4] mb-4">
-             Ảnh sẽ tự động hết hạn và bị xóa sau 7 ngày. Bạn nhớ lưu ảnh về máy nhé.
-           </div>
-           
-           <div className="grid grid-cols-2 gap-2 px-2 pb-20">
-             {gallery.map(img => (
-                <div key={img.id} className="relative aspect-square bg-[#E4E6EB] rounded-lg overflow-hidden group cursor-pointer" onClick={() => setActiveImage(img)}>
-                   <img src={img.url} className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 object-center ${activeImage?.id === img.id ? 'opacity-50' : ''}`} />
-                   {activeImage?.id === img.id && (
-                     <div className="absolute inset-0 flex items-center justify-center bg-[#1877F2]/20">
-                        <Check size={24} className="text-white drop-shadow-md" />
-                     </div>
-                   )}
-                </div>
-             ))}
-             {gallery.length === 0 && (
-                <div className="col-span-2 py-8 text-center text-[#65676B] text-[14px]">
-                  Chưa có ảnh nào được tạo.
-                </div>
-             )}
-           </div>
-        </aside>
+        
       </main>
       ) : renderChatView()}
 
