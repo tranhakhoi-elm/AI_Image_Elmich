@@ -105,7 +105,7 @@ export interface GenerationSettings {
   // White BG Retouch specific fields
   whiteBGCategory?: 'METAL' | 'PLASTIC' | 'GLASS' | 'CERAMIC';
   whiteBGMetalConfig?: { type: string, highlight: string, shape: string };
-  whiteBGPlasticConfig?: { type: string, color: string, lighting: string };
+  whiteBGPlasticConfig?: { type: string, color?: string, lighting: string };
   whiteBGGlassConfig?: { type: string, lighting: string, content: string };
   whiteBGCeramicConfig?: { surface: string, lighting: string };
   
