@@ -446,7 +446,41 @@ export const generateProductImage = async (settings: GenerationSettings, variant
     
     if (settings.whiteBGCategory === "METAL") {
       const config = settings.whiteBGMetalConfig;
-      stylePrompt = `Professional studio product photography of ${productName}, made of ${config?.type || 'Brushed Stainless Steel'}, isolated on a pure white background. Lighting: High-key setup with ${config?.highlight || 'sharp longitudinal highlights'}, deep black gradients on edges to define the ${config?.shape || 'cylindrical'} form. Minimal shadows, clean metallic surface, 8k resolution, highly detailed.`;
+      stylePrompt = `Ultra realistic lighting and shadow refinement for a single ${productName} on white background.
+
+STRICT PRESERVATION:
+- Keep the exact original product (no change in shape, angle, color, material, or texture)
+- Do NOT duplicate or add objects
+- Do NOT change composition or camera perspective
+
+Lighting:
+- soft directional key light from upper-left at 45 degrees
+- clean studio lighting (premium commercial cookware photography style)
+- highlight on upper rim and inner surface of the ${productName}
+- subtle reflection on metal handle
+- smooth light gradient across curved surfaces
+- no overexposure
+
+Shadow:
+- realistic shadow attached to the ${productName} and handle
+- shadow direction: to the right and slightly backward
+- main shadow under the ${productName} body (elliptical shape)
+- secondary elongated shadow from the handle extending to the right
+- soft edge with gradual fade
+- darker contact shadow directly under the ${productName} base
+- lighter, more diffused shadow toward the handle tip
+
+Background:
+- clean white or very subtle grey gradient
+- no texture, no color cast
+
+Quality:
+- high clarity, crisp but natural
+- realistic depth and grounding
+- premium commercial look
+
+ABSOLUTE RULE:
+- only adjust lighting and shadow, nothing else`;
     } else if (settings.whiteBGCategory === "PLASTIC") {
       const config = settings.whiteBGPlasticConfig;
       stylePrompt = `Studio product shot of ${productName},  ${config?.type || 'Matte'} plastic housing, isolated on a pure white background. Lighting: Large overhead ${config?.lighting || 'Softbox'} for even and diffused illumination, no harsh hotspots, subtle subsurface scattering for realistic plastic texture. Soft drop shadow at the base, clean minimalist presentation, 8k resolution.`;
