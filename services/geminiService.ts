@@ -679,7 +679,8 @@ Flat 2D vector style. High clarity, simple schematic outline.
     parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
   }
   
-  if (settings.productImages.length > 0 && settings.visualStyle !== "SCENE_STAGING") {
+  const productImagesVisualStyles = ["CONCEPT", "TECH_PS", "COLOR_CHANGE", "STUDIO"];
+  if (settings.productImages.length > 0 && productImagesVisualStyles.includes(settings.visualStyle)) {
     settings.productImages.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
   }
 
