@@ -86,7 +86,7 @@ const initialSettings: GenerationSettings = {
   tone: TONE_STYLES[0],
   aspectRatio: '1:1',
   imageSize: '1K',
-  aiModel: 'gemini-2.5-flash-image',
+  aiModel: 'imagen-3.0-fast-generate-001',
   numImages: 1 
 };
 
@@ -258,7 +258,7 @@ const App: React.FC = () => {
   }, [successfulPrompts]);
 
   const [isEditingImage, setIsEditingImage] = useState(false);
-  const [editModel, setEditModel] = useState('gemini-3.1-flash-image-preview');
+  const [editModel, setEditModel] = useState('imagen-3.0-generate-002');
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
   
   const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
@@ -1964,14 +1964,14 @@ const renderTrackSocketWorkflow = () => (
         <label className="block text-[9px] font-bold text-white uppercase mb-1">Chọn Model AI (Tối ưu chi phí)</label>
         <div className="grid grid-cols-2 gap-2">
           <button 
-            onClick={() => setSettings({...settings, aiModel: 'gemini-2.5-flash-image'})} 
-            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-2.5-flash-image' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
+            onClick={() => setSettings({...settings, aiModel: 'imagen-3.0-fast-generate-001'})} 
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'imagen-3.0-fast-generate-001' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
           >
             Standard (Tiết kiệm)
           </button>
           <button 
-            onClick={() => setSettings({...settings, aiModel: 'gemini-3.1-flash-image-preview'})} 
-            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-3.1-flash-image-preview' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
+            onClick={() => setSettings({...settings, aiModel: 'imagen-3.0-generate-002'})} 
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'imagen-3.0-generate-002' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
           >
             High Quality (Tối ưu)
           </button>
@@ -2042,12 +2042,12 @@ const renderTrackSocketWorkflow = () => (
   const calculateCost = (image: GeneratedImage) => {
     let cost = 0;
     // Image generation cost
-    if (image.settings.aiModel === 'gemini-3.1-flash-image-preview') {
+    if (image.settings.aiModel === 'imagen-3.0-generate-002') {
       if (image.settings.imageSize === '4K') cost = 0.151;
       else if (image.settings.imageSize === '2K') cost = 0.101;
       else cost = 0.067;
     } else {
-      cost = 0.039; // Updated to 0.039 for gemini-2.5-flash-image
+      cost = 0.039; // Updated to 0.039 for imagen-3.0-fast-generate-001
     }
     
     // Prompt generation cost (Step 1)
@@ -2112,11 +2112,11 @@ const renderTrackSocketWorkflow = () => (
                   onChange={e => setChatModel(e.target.value)}
                   className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
                 >
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Chat)</option>
-                  <option value="gemini-2.5-pro">Gemini 3.1 Pro (Chat)</option>
-                  <option value="gemini-2.5-flash">Gemini 3.1 Flash (Chat)</option>
-                  <option value="gemini-2.5-flash-image">Gemini 2.5 Image</option>
-                  <option value="gemini-3.1-flash-image-preview">Gemini 3.1 Image</option>
+                  <option value="gemini-2.5-flash">Imagen 3.0 Fast Flash (Chat)</option>
+                  <option value="gemini-2.5-pro">Imagen 3.0 Pro (Chat)</option>
+                  <option value="gemini-2.5-flash">Imagen 3.0 Flash (Chat)</option>
+                  <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
+                  <option value="imagen-3.0-generate-002">Imagen 3.0 Generate</option>
                 </select>
               </div>
               
@@ -2161,7 +2161,7 @@ const renderTrackSocketWorkflow = () => (
                 <p className="text-xl font-medium">Bắt đầu trò chuyện với Trợ lý AI</p>
                 <p className="text-sm text-center max-w-lg">
                   Tải lên hình để AI tư vấn thiết kế bằng chữ (chọn model Chat).<br/>
-                  Để tạo/sửa ảnh, tải hình lên, viết yêu cầu, và bắt buộc chọn model Image (Gemini 2.5 Image/3.1 Image).
+                  Để tạo/sửa ảnh, tải hình lên, viết yêu cầu, và bắt buộc chọn model Image (Imagen 3.0 Fast/3.1 Image).
                 </p>
               </div>
             )}
@@ -2348,8 +2348,8 @@ const renderTrackSocketWorkflow = () => (
                          disabled={isEditingImage}
                          className="flex-1 bg-[#242526] border border-[#3E4042] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
                        >
-                         <option value="gemini-3.1-flash-image-preview">Gemini 3.1</option>
-                         <option value="gemini-2.5-flash-image">Gemini 2.5</option>
+                         <option value="imagen-3.0-generate-002">Imagen 3.0</option>
+                         <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
                        </select>
                        <select 
                          value={editQuality}

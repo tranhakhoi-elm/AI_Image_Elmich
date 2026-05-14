@@ -8,7 +8,7 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
   
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: `Gợi ý cho: "${settings.productName}". ${styleContext}`,
       config: {
         responseMimeType: "application/json",
@@ -71,7 +71,7 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+      model: "gemini-2.5-pro", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -128,7 +128,7 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -171,7 +171,7 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: `Sản phẩm: ${productName}. Concept hoặc bối cảnh: "${concept}".
 YÊU CẦU:
 1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm trong khung hình (cách đặt sản phẩm, tương tác với ánh sáng).
@@ -201,7 +201,7 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
       YÊU CẦU:
       1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
@@ -231,7 +231,7 @@ export const suggestTechConcepts = async (productName: string, title: string): P
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm. JSON array với 'title' (tiếng Việt) và 'prompt'.
       YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
       - [Mô tả phong cách]
@@ -274,7 +274,7 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
       { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
     ];
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -319,7 +319,7 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+      model: "gemini-2.5-pro", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -361,7 +361,7 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
   }
 };
 
-export const editProductImage = async (base64Image: string, prompt: string, modelName: string = 'gemini-3.1-flash-image-preview', imageSize: string = '1K'): Promise<string> => {
+export const editProductImage = async (base64Image: string, prompt: string, modelName: string = 'imagen-3.0-generate-002', imageSize: string = '1K'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
   const mimeTypeMatch = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -381,13 +381,20 @@ export const editProductImage = async (base64Image: string, prompt: string, mode
     let finalModelName = modelName;
     let imageConfig: any = {};
 
-    if (finalModelName === 'gemini-3.1-flash-image-preview' || imageSize === '2K' || imageSize === '4K') {
-      finalModelName = 'gemini-3.1-flash-image-preview';
+    if (finalModelName === 'imagen-3.0-generate-002' || imageSize === '2K' || imageSize === '4K') {
+      finalModelName = 'imagen-3.0-generate-002';
       imageConfig.imageSize = imageSize;
+    }
+let fallbackModel = finalModelName;
+    // Bắt buộc dùng Gemini cho Chỉnh sửa hình ảnh (có input base64Image)
+    if (finalModelName.startsWith('imagen-3.0-generate-002')) {
+        fallbackModel = 'gemini-3.1-flash-image-preview';
+    } else if (finalModelName.startsWith('imagen')) {
+        fallbackModel = 'gemini-2.5-flash-image';
     }
 
     const response = await ai.models.generateContent({
-      model: finalModelName,
+      model: fallbackModel,
       contents: { parts },
       config: { imageConfig }
     });
@@ -396,8 +403,7 @@ export const editProductImage = async (base64Image: string, prompt: string, mode
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
     }
-    throw new Error("Không có ảnh.");
-  } catch (error: any) {
+    throw new Error("Không có ảnh.");  } catch (error: any) {
     throw error;
   }
 };
@@ -519,63 +525,8 @@ Flat 2D vector style. High clarity, simple schematic outline.
     `;
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS") {
     const thinkingPrompt = `
-      Act as an expert AI image generation prompt engineer and professional product photographer.
-      Write a highly detailed, descriptive, and professional image generation prompt (in English) for a product photography shot.
-      
-      Product: ${settings.productName}
-      Creative Concept/Theme: ${settings.concept}
-      Placement and Proportion: ${settings.placement}
-      Props to include: ${formatProps(settings.props)}
-      Camera & Lighting Setup: ${formatCameraSettings(settings.camera)}
-      
-      Instructions for the prompt:
-      - Describe the product's placement, lighting, shadows, and reflections in detail.
-      - Describe the background and environment based on the concept.
-      - Ensure the prompt emphasizes photorealism, 8k resolution, and high-end commercial aesthetic.
-      - ONLY output the final prompt text, no explanations.
-    `;
-    const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: thinkingPrompt
-    });
-    finalPrompt = thinkingResponse.text || "";
-  } else if (settings.visualStyle === "COLOR_CHANGE") {
-    const colorDetails = settings.colorChanges.map(c => {
-      let detail = `${c.partName}: `;
-      if (c.pantoneCode) detail += `Pantone ${c.pantoneCode}, `;
-      if (c.description) detail += `${c.description}, `;
-      if (c.sampleImage) detail += `refer to the provided color sample image for this part, `;
-      return detail.trim().replace(/,$/, '');
-    }).join("; ");
-
-    finalPrompt = `
-      Change the color of the ${settings.productName} according to these specifications:
-      ${colorDetails}.
-      IMPORTANT: Maintain all original textures, labels, and material properties (e.g., metallic, matte, glossy). 
-      The lighting and environment from the original image should be preserved.
-      Output: High-fidelity, realistic color modification, 8k resolution.
-    `;
-  } else if (settings.visualStyle === "STUDIO") {
-    const spaceMap: Record<string, string> = {
-      "TOP": "top",
-      "BOTTOM": "bottom",
-      "LEFT": "left side",
-      "RIGHT": "right side",
-      "NONE": ""
-    };
-    
-    const selectedSpaces = settings.emptySpacePosition
-      .filter(s => s !== "NONE")
-      .map(s => spaceMap[s])
-      .join(" and ");
-
-    const spaceInstruction = selectedSpaces 
-      ? `Leave empty space at the ${selectedSpaces} of the frame for text overlay.` 
-      : "";
-    
-    const thinkingPrompt = `
-      Act as an expert AI image generation prompt engineer and professional product photographer.
-      Write a highly detailed, descriptive, and professional image generation prompt (in English) for a minimalist studio product shot.
+      Act as an expert AI image generation prompt engineer and professional commercial product photographer.
+      Write a highly detailed, descriptive, and professional image generation prompt (in English) for a minimalist high-end studio product shot.
       
       Product: ${settings.productName}
       Creative Concept: ${settings.concept}
@@ -586,15 +537,21 @@ Flat 2D vector style. High clarity, simple schematic outline.
       Composition: The product and props must be neatly arranged and fit entirely within the frame.
       Camera & Lighting Setup: ${formatCameraSettings(settings.camera)}
       
+      CORE STUDIO PRINCIPLES (STRICTLY ENFORCE):
+      1. Strict Geometry Preservation: Describe the product exactly as it is without altering dimensions or structures.
+      2. PBR Lighting: Describe realistic reflections based on the material (Metal: Fresnel, scattered highlights; Plastic: subsurface scattering; Glass: caustics, rim light).
+      3. Shadow Structure: Must include contact shadows (stark black at the base) and soft gradient key shadows.
+      4. Composition: Minimalist, clean, extremely neat layout.
+      
       Instructions for the prompt:
-      - Emphasize clean, minimalist, high-end studio photography.
-      - Describe the soft, professional studio lighting and subtle shadows.
+      - Emphasize clean, minimalist, high-end tone-on-tone studio photography.
+      - Describe the soft, professional studio lighting and multi-layered subtle shadows.
       - Ensure the prompt emphasizes photorealism, 8k resolution, and commercial aesthetic.
       - ONLY output the final prompt text, no explanations.
     `;
     
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: thinkingPrompt
     });
     finalPrompt = thinkingResponse.text || "";
@@ -688,25 +645,48 @@ Flat 2D vector style. High clarity, simple schematic outline.
     let modelName = settings.aiModel;
     let imageConfig: any = { aspectRatio: settings.aspectRatio };
 
-    if (modelName === 'gemini-3.1-flash-image-preview' || settings.imageSize === '2K' || settings.imageSize === '4K' || settings.aspectRatio === '1:4' || settings.aspectRatio === '4:1') {
-      modelName = 'gemini-3.1-flash-image-preview';
+    if (modelName === 'imagen-3.0-generate-002' || settings.imageSize === '2K' || settings.imageSize === '4K' || settings.aspectRatio === '1:4' || settings.aspectRatio === '4:1') {
+      modelName = 'imagen-3.0-generate-002';
       imageConfig.imageSize = settings.imageSize;
     }
+let responseBase64 = "";
 
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: { parts },
-      config: { imageConfig }
-    });
-    if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-    }
-    throw new Error("Không có ảnh.");
-  } catch (error: any) { throw error; }
+    // Nếu model là Imagen 3.0 và KHÔNG CÓ input images nào (parts.length === 1)
+    if (modelName.startsWith('imagen') && parts.length === 1) {
+      const response = await ai.models.generateImages({
+        model: modelName,
+        prompt: parts[0].text,
+        config: {
+          numberOfImages: 1,
+          outputMimeType: 'image/jpeg',
+          aspectRatio: settings.aspectRatio as any || '1:1',
+        }
+      });
+      if (!response.generatedImages?.[0]?.image?.imageBytes) throw new Error("AI không phản hồi.");
+      return `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
+    } else {
+      // Fallback cho việc edit hình / sử dụng input images với Gemini
+      let fallbackModel = modelName;
+      if (modelName.startsWith('imagen-3.0-generate-002')) {
+          fallbackModel = 'gemini-3.1-flash-image-preview';
+      } else if (modelName.startsWith('imagen')) {
+          fallbackModel = 'gemini-2.5-flash-image';
+      }
+
+      const response = await ai.models.generateContent({
+        model: fallbackModel,
+        contents: { parts },
+        config: { imageConfig }
+      });
+      if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      }
+      throw new Error("Không có ảnh.");
+    }  } catch (error: any) { throw error; }
 };
 
-export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image-preview', aspectRatio: string = "1:1", imageBase64?: string): Promise<string> => {
+export const generateImageForChat = async (prompt: string, modelName: string = 'imagen-3.0-generate-002', aspectRatio: string = "1:1", imageBase64?: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const parts: any[] = [{ text: prompt }];
