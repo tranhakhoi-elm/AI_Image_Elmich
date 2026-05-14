@@ -484,7 +484,7 @@ const App: React.FC = () => {
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ phù hợp cho phối cảnh này...");
     try {
-      const result = await suggestPropsForConcept(settings.productName, finalConcept);
+      const result = await suggestPropsForConcept(settings.productName, finalConcept, 'LIFESTYLE');
       setSuggestions(prev => ({ ...prev, props: result.props }));
       setSettings(prev => ({ ...prev, props: [], placement: result.placement }));
       setConceptStep(3);
@@ -601,7 +601,7 @@ const App: React.FC = () => {
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ Studio phù hợp...");
     try {
-      const result = await suggestPropsForConcept(settings.productName, finalConcept);
+      const result = await suggestPropsForConcept(settings.productName, finalConcept, 'STUDIO');
       setSuggestions(prev => ({ ...prev, props: result.props }));
       setSettings(prev => ({ ...prev, props: [], placement: result.placement }));
       setStudioStep(3);
