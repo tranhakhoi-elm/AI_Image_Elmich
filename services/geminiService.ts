@@ -8,7 +8,7 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
   
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: `Gợi ý cho: "${settings.productName}". ${styleContext}`,
       config: {
         responseMimeType: "application/json",
@@ -71,7 +71,7 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro", 
+      model: "gemini-2.5-flash", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -128,7 +128,7 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -171,7 +171,7 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: `Sản phẩm: ${productName}. Concept hoặc bối cảnh: "${concept}".
 YÊU CẦU:
 1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm trong khung hình (cách đặt sản phẩm, tương tác với ánh sáng).
@@ -201,7 +201,7 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
       YÊU CẦU:
       1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
@@ -231,7 +231,7 @@ export const suggestTechConcepts = async (productName: string, title: string): P
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm. JSON array với 'title' (tiếng Việt) và 'prompt'.
       YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
       - [Mô tả phong cách]
@@ -274,7 +274,7 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
       { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
     ];
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -319,7 +319,7 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro", 
+      model: "gemini-2.5-flash", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -523,33 +523,61 @@ No shading, no shadows, no gradients, no colors, no 3D realistic effects, no tex
 Only crisp, continuous, and precise black lines defining the outer shape and essential inner contours of the product. 
 Flat 2D vector style. High clarity, simple schematic outline.
     `;
-  } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS") {
+  } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS" || settings.visualStyle === "STUDIO") {
+    
+    let spaceInstruction = "";
+    if (settings.emptySpacePosition && settings.emptySpacePosition.length > 0 && !settings.emptySpacePosition.includes('NONE' as any)) {
+      const positions = settings.emptySpacePosition.map((p: any) => {
+        if (p === 'TOP') return 'top (upper part)';
+        if (p === 'BOTTOM') return 'bottom (lower part)';
+        if (p === 'LEFT') return 'left side';
+        if (p === 'RIGHT') return 'right side';
+        return p;
+      }).join(' and ');
+      spaceInstruction = `Leave clear, unobstructed empty negative space on the ${positions} of the image for adding text/logos later.`;
+    } else {
+      spaceInstruction = "Center the subject normally.";
+    }
+
+    const isStudio = settings.visualStyle === "STUDIO";
+    const mode = isStudio ? "minimalist high-end studio product shot" : "high-end commercial product photography shot";
+    const propDetails = settings.props && settings.props.length > 0 ? settings.props.map(p => `${p.name}${p.amount ? ' (' + p.amount + ')' : ''}`).join(', ') : 'None';
+    const placementDetails = settings.placement || "Centered";
+    const cameraDetails = `${settings.camera?.angle || 'Front'}, ${settings.camera?.isMacro ? 'Macro Lens' : 'Standard Lens'}`;
+
     const thinkingPrompt = `
       Act as an expert AI image generation prompt engineer and professional commercial product photographer.
-      Write a highly detailed, descriptive, and professional image generation prompt (in English) for a minimalist high-end studio product shot.
+      Write a highly detailed, descriptive, and professional image generation prompt (in English) for a ${mode}.
       
       Product: ${settings.productName}
-      Creative Concept: ${settings.concept}
-      Placement and Proportion: ${settings.placement}
-      Props to include: ${formatProps(settings.props)}
-      Background: Plain paper background that is EXACTLY the same color as the product's primary color (tone-on-tone monochromatic look).
+      Creative Concept/Theme: ${settings.concept}
+      Placement and Proportion: ${placementDetails}
+      Props to include: ${propDetails}
+      ${isStudio ? "Background: Plain paper background that is EXACTLY the same color as the product's primary color (tone-on-tone monochromatic look)." : ""}
       Empty Space Requirement: ${spaceInstruction}
       Composition: The product and props must be neatly arranged and fit entirely within the frame.
-      Camera & Lighting Setup: ${formatCameraSettings(settings.camera)}
+      Camera & Lighting Setup: ${cameraDetails}
       
-      CORE STUDIO PRINCIPLES (STRICTLY ENFORCE):
-      1. Strict Geometry Preservation: Describe the product exactly as it is without altering dimensions or structures.
-      2. PBR Lighting: Describe realistic reflections based on the material (Metal: Fresnel, scattered highlights; Plastic: subsurface scattering; Glass: caustics, rim light).
-      3. Shadow Structure: Must include contact shadows (stark black at the base) and soft gradient key shadows.
-      4. Composition: Minimalist, clean, extremely neat layout.
+      CORE PHOTOGRAPHY AND DESIGN PRINCIPLES (STRICTLY ENFORCE):
+      1. Strict Geometry Preservation: Describe the product exactly as it is without altering dimensions or structures. DO NOT hallucinates shapes, structures, or add extra elements to the product itself.
+      2. PBR (Physically Based Rendering): Describe realistic physical light interactions (reflection, refraction, subsurface scattering). NO fake 3D glows.
+      3. Shadow Structure: Must include contact shadows (stark black at the base), soft gradient key shadows, and feathered extrusion shadows for handles.
+      4. Lighting System: 3-Point Lighting System (Key Light, Fill Light, Rim Light).
+      
+      MATERIAL GUIDELINES TO APPLY IN PROMPT:
+      - Metal (Inox/Aluminum): Fresnel reflection, sharp longitudinal highlights, anisotropic brushed textures.
+      - Plastic: Soft subsurface scattering for matte, sharp reflection shape for glossy.
+      - Glass/Crystal: Caustics (converging light), dark-field/bright-field rim lighting to emphasize glass edges.
+      - Ceramic/Stone: Grazing 45-degree angle light for micro-displacement/pores.
       
       Instructions for the prompt:
-      - Emphasize clean, minimalist, high-end tone-on-tone studio photography.
-      - Describe the soft, professional studio lighting and multi-layered subtle shadows.
-      - Ensure the prompt emphasizes photorealism, 8k resolution, and commercial aesthetic.
-      - ONLY output the final prompt text, no explanations.
+      - Describe the product's placement (MANDATORY: you must explicitly describe placing the product as described in "${placementDetails}"), lighting, shadows, and reflections in vivid technical detail based on the core principles.
+      - Describe the background and environment based on the concept and color palette rules. Make sure the props (${propDetails}) are present.
+      - ${isStudio ? "Ensure minimalist, clean, extremely neat layout." : "Follow the rule of thirds for composition. Use an elegant, harmonious color palette."}
+      - Ensure the prompt emphasizes photorealism, 8k resolution, and high-end commercial aesthetic.
+      - ONLY output the final prompt text (in English), no explanations.
     `;
-    
+
     const thinkingResponse = await ai.models.generateContent({
       model: "gemini-2.5-pro",
       contents: thinkingPrompt
