@@ -8,7 +8,7 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
   
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: `Gợi ý cho: "${settings.productName}". ${styleContext}`,
       config: {
         responseMimeType: "application/json",
@@ -71,7 +71,7 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+      model: "gemini-3.5-flash", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -128,7 +128,7 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -171,7 +171,7 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: `Sản phẩm đang chụp: ${productName}. 
 Concept/Bối cảnh mong muốn: "${concept}".
 
@@ -205,7 +205,7 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
       YÊU CẦU:
       1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
@@ -235,7 +235,7 @@ export const suggestTechConcepts = async (productName: string, title: string): P
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm. JSON array với 'title' (tiếng Việt) và 'prompt'.
       YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
       - [Mô tả phong cách]
@@ -278,7 +278,7 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
       { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
     ];
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -323,7 +323,7 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+      model: "gemini-3.5-flash", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -385,7 +385,7 @@ export const editProductImage = async (base64Image: string, prompt: string, mode
     let finalModelName = modelName;
     let imageConfig: any = {};
 
-    if (finalModelName === 'imagen-3.0-generate-002' || imageSize === '2K' || imageSize === '4K') {
+    if (finalModelName === 'imagen-3.0-generate-002' || imageSize === '4K') {
       finalModelName = 'imagen-3.0-generate-002';
       imageConfig.imageSize = imageSize;
     }
@@ -394,7 +394,7 @@ let fallbackModel = finalModelName;
     if (finalModelName.startsWith('imagen-3.0-generate-002')) {
         fallbackModel = 'gemini-3.1-flash-image-preview';
     } else if (finalModelName.startsWith('imagen')) {
-        fallbackModel = 'gemini-2.5-flash-image';
+        fallbackModel = 'gemini-3.5-flash';
     }
 
     const response = await ai.models.generateContent({
@@ -545,7 +545,7 @@ Flat 2D vector style. High clarity, simple schematic outline.
 
     const isStudio = settings.visualStyle === "STUDIO";
     const mode = isStudio ? "minimalist high-end studio product shot" : "high-end commercial product photography shot";
-    const propDetails = settings.props && settings.props.length > 0 ? settings.props.map(p => `${p.name}${p.amount ? ' (' + p.amount + ')' : ''}`).join(', ') : 'None';
+    const propDetails = settings.props && settings.props.length > 0 ? settings.props.map(p => `${p.name}${p.size && p.size !== 'auto' ? ' (' + p.size + ' size)' : ''}`).join(', ') : 'None';
     const placementDetails = settings.placement || "Centered";
     const cameraDetails = `${settings.camera?.angle || 'Front'}, ${settings.camera?.isMacro ? 'Macro Lens' : 'Standard Lens'}`;
 
@@ -702,7 +702,7 @@ let responseBase64 = "";
       if (modelName.startsWith('imagen-3.0-generate-002')) {
           fallbackModel = 'gemini-3.1-flash-image-preview';
       } else if (modelName.startsWith('imagen')) {
-          fallbackModel = 'gemini-2.5-flash-image';
+          fallbackModel = 'gemini-3.5-flash';
       }
 
       const response = await ai.models.generateContent({
