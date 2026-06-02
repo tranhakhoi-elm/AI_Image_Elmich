@@ -1,4 +1,4 @@
-export type AIModel = "gemini-3.5-flash" | "imagen-3.0-generate-002" | "gemini-2.5-flash-image" | "gemini-3.1-flash-image-preview";
+export type AIModel = "imagen-3.0-fast-generate-001" | "gemini-3.5-flash" | "imagen-3.0-generate-002" | "gemini-2.5-flash-image" | "gemini-3.1-flash-image-preview";
 export type AspectRatio = "1:1" | "3:4" | "4:3" | "9:16" | "16:9" | "1:4" | "4:1";
 export type ImageSize = "1K" | "2K" | "4K";
 export type VisualStyle = "CONCEPT" | "TECH_PS" | "COLOR_CHANGE" | "PACKAGING_MOCKUP" | "TECH_EFFECTS" | "WHITE_BG_RETOUCH" | "SCENE_STAGING" | "STUDIO" | "TRACK_SOCKET_STAGING" | "LINE_ART";

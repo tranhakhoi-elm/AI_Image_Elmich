@@ -86,7 +86,7 @@ const initialSettings: GenerationSettings = {
   tone: TONE_STYLES[0],
   aspectRatio: '1:1',
   imageSize: '1K',
-  aiModel: 'gemini-3.5-flash',
+  aiModel: 'imagen-3.0-fast-generate-001',
   numImages: 1 
 };
 
@@ -258,7 +258,7 @@ const App: React.FC = () => {
   }, [successfulPrompts]);
 
   const [isEditingImage, setIsEditingImage] = useState(false);
-  const [editModel, setEditModel] = useState('gemini-3.5-flash');
+  const [editModel, setEditModel] = useState('imagen-3.0-fast-generate-001');
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
   
   const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
@@ -1953,7 +1953,7 @@ const renderTrackSocketWorkflow = () => (
           {(['1K', '2K', '4K'] as ImageSize[]).map(size => (
             <button 
               key={size} 
-              onClick={() => setSettings({...settings, imageSize: size, aiModel: size === '4K' ? 'imagen-3.0-generate-002' : 'gemini-3.5-flash'})} 
+              onClick={() => setSettings({...settings, imageSize: size, aiModel: size === '4K' ? 'imagen-3.0-generate-002' : 'imagen-3.0-fast-generate-001'})} 
               className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.imageSize === size ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-[#242526] shadow-sm text-white border-[#3E4042] text-white hover:text-white'}`}
             >
               {size === '1K' ? '1K Standard' : size === '2K' ? '2K Pro' : '4K Ultra HD'}
@@ -2327,7 +2327,7 @@ const renderTrackSocketWorkflow = () => (
                        
                        <select 
                          value={editQuality}
-                         onChange={e => { const size = e.target.value as ImageSize; setEditQuality(size); setEditModel(size === '4K' ? 'imagen-3.0-generate-002' : 'gemini-3.5-flash'); }}
+                         onChange={e => { const size = e.target.value as ImageSize; setEditQuality(size); setEditModel(size === '4K' ? 'imagen-3.0-generate-002' : 'imagen-3.0-fast-generate-001'); }}
                          disabled={isEditingImage}
                          className="flex-1 bg-[#242526] border border-[#3E4042] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
                        >

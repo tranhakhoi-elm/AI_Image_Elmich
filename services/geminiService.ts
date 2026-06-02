@@ -394,7 +394,7 @@ let fallbackModel = finalModelName;
     if (finalModelName.startsWith('imagen-3.0-generate-002')) {
         fallbackModel = 'gemini-3.1-flash-image-preview';
     } else if (finalModelName.startsWith('imagen')) {
-        fallbackModel = 'gemini-3.5-flash';
+        fallbackModel = 'gemini-2.5-flash-image';
     }
 
     const response = await ai.models.generateContent({
@@ -677,7 +677,7 @@ Flat 2D vector style. High clarity, simple schematic outline.
     let modelName = settings.aiModel;
     let imageConfig: any = { aspectRatio: settings.aspectRatio };
 
-    if (modelName === 'imagen-3.0-generate-002' || settings.imageSize === '2K' || settings.imageSize === '4K' || settings.aspectRatio === '1:4' || settings.aspectRatio === '4:1') {
+    if (modelName === 'imagen-3.0-generate-002' || settings.imageSize === '4K' || settings.aspectRatio === '1:4' || settings.aspectRatio === '4:1') {
       modelName = 'imagen-3.0-generate-002';
       imageConfig.imageSize = settings.imageSize;
     }
@@ -702,7 +702,7 @@ let responseBase64 = "";
       if (modelName.startsWith('imagen-3.0-generate-002')) {
           fallbackModel = 'gemini-3.1-flash-image-preview';
       } else if (modelName.startsWith('imagen')) {
-          fallbackModel = 'gemini-3.5-flash';
+          fallbackModel = 'gemini-2.5-flash-image';
       }
 
       const response = await ai.models.generateContent({
