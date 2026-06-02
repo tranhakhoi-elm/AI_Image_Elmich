@@ -449,7 +449,46 @@ export const generateProductImage = async (settings: GenerationSettings, variant
       finalPrompt = `Ocean night cinemetic. Product ${settings.productName}. Text "${settings.techTitle}". ${settings.selectedTechConcept}. Neon reflections, Camera: ${formatCameraSettings(settings.camera)}. 8k.`;
     }
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
-    finalPrompt = `3D Packaging Mockup for ${settings.productName}. ${settings.packagingOutputStyle === 'WHITE_BG_ROTATED' ? 'White background studio' : 'Contextual lifestyle'}. Camera: ${formatCameraSettings(settings.camera)}. 8k resolution.`;
+    const prodName = settings.productName || "Product";
+    const dim = settings.dimensions;
+    const hasDimensions = dim && (dim.length || dim.width || dim.height);
+    const dimPhrase = hasDimensions 
+      ? `The 3D box must have physical outer proportions representing dimensions of ${dim.length || "150"}mm (Length) x ${dim.width || "150"}mm (Width) x ${dim.height || "200"}mm (Height).`
+      : "The 3D box must have realistic square or rectangular product container packaging proportions.";
+
+    const matType = settings.packagingMaterial === "CARTON_BW" 
+      ? "Industrial Kraft Corrugated Cardboard box (Thùng carton nâu xi măng nhám, chất liệu bìa carton thô ráp nguyên bản)" 
+      : "Premium coated white folding boxboard or SBS paperboard with high-quality printing (Hộp giấy màu phủ mịn bồi carton cao cấp)";
+      
+    const matDetails = settings.packagingMaterial === "CARTON_BW"
+      ? "Texture: rough, natural raw fibrous kraft paper texture with micro-fibers, crease lines showing exposed light-brown cardboard pulp inside the folded seams. Printing: simple grayscale, matte black, or vintage dark ink colors directly screen-printed onto the brown container."
+      : "Texture: smooth, silk-coated finish with slight satin luster on premium thick paperboard. The folds are crisp, showing white or colored paper pulp precisely. High-brightness, vibrant corporate color reproduction.";
+
+    const outputScene = settings.packagingOutputStyle === "WHITE_BG_ROTATED"
+      ? "White Background Studio: Placed strictly on an absolute pure, clean, seamless white commercial studio backdrop (#FFFFFF). The 3D box is rotated at a 3/4 perspective angle to clearly display three sides of the package (Front, Right/Side, Top)."
+      : "Lifestyle Context: Placed elegantly inside a premium, modern minimalist lifestyle setting, such as on a clean light-refracting oak wood table, a solid concrete shelf, or a matte marble platform. The background is softly out-of-focus (gentle shallow depth-of-field) with natural organic window shadows, minimal natural props like a tiny green leaves plant branch.";
+
+    finalPrompt = `
+3D Packaging Mockup Reconstruction & Folding Task:
+We have a product named "${prodName}".
+Your task is to reconstruct a high-quality, photorealistic 3D paper container box mockup using the provided 2D flat custom die-line graphic layout from the input image (Image 1).
+
+DIMENSIONS & MATERIAL STRUCTURE:
+- ${dimPhrase}
+- Packaging Box Material: ${matType}
+- Material Surface Properties: ${matDetails}
+
+CREATIVE WRAPPING & RECONSTRUCTION RULES (MANDATORY):
+1. Precision 3D Folding: You must fold, wrap, and map the exact 2D graphic design layout from the flat layout image (Image 1) onto the respective faces of the 3D box.
+2. Graphic & Branding Fidelity: All brand logos ("Elmich"), typography, product photos, detailed labels, lists of specifications, certificates, and decorative color patches from Image 1 must transfer cleanly and become perfectly readable on the 3D folded surfaces. No weird gibberish text or distorted details.
+3. Realistic Seams, Flaps, and Creases: The paper seams where flaps lock together must be clearly modeled with paper thickness (approximately 1-2mm card edge). Edges must show natural crease lines (softly rounded edge highlights) reflecting light to define the box shape, rather than sharp computer-generated vectors.
+4. Professional Camera Specifications: ${formatCameraSettings(settings.camera)}
+5. Scene Setup:
+   - ${outputScene}
+6. Lighting and Grounding: Clean 3-point commercial studio lighting. A dark, diffuse, realistic contact shadow (grounding) must sit correctly beneath the bottom edges of the box, with soft ambient light shadows trailing off. No floating.
+
+Output style: Premium commercial packaging mockup, hyper-detailed rendering, photorealistic 8k.
+    `;
   } else if (settings.visualStyle === "WHITE_BG_RETOUCH") {
     let stylePrompt = "";
     const productName = settings.productName || "Product";
