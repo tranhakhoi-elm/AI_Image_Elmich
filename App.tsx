@@ -258,7 +258,7 @@ const App: React.FC = () => {
   }, [successfulPrompts]);
 
   const [isEditingImage, setIsEditingImage] = useState(false);
-  const [editModel, setEditModel] = useState('imagen-3.0-fast-generate-001');
+  const [editModel, setEditModel] = useState('imagen-3.0-generate-002');
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
   
   const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
@@ -305,7 +305,7 @@ const App: React.FC = () => {
   const [chatInput, setChatInput] = useState('');
   const [chatInputImageBase64, setChatInputImageBase64] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [chatMode, setChatMode] = useState<'text' | 'image'>('text');
+  const [chatModel, setChatModel] = useState('gemini-2.5-flash');
   const [chatImageAspectRatio, setChatImageAspectRatio] = useState('1:1');
   const [chatImageQuality, setChatImageQuality] = useState('1K');
   const [showSessionsList, setShowSessionsList] = useState(false);
@@ -342,15 +342,14 @@ const App: React.FC = () => {
 
     try {
       let newModelMsg: ChatMessage;
-      if (chatMode === 'image') {
+      if (chatModel.includes('flash-image')) {
         const fullPrompt = `${chatInput}. Produce the image in high definition ${chatImageQuality} resolution.`;
-        const resolvedModel = chatImageQuality === '4K' ? 'imagen-3.0-generate-002' : 'gemini-3.5-flash';
-        const imageUrl = await generateImageForChat(fullPrompt, resolvedModel, chatImageAspectRatio, chatInputImageBase64 || undefined);
+        const imageUrl = await generateImageForChat(fullPrompt, chatModel, chatImageAspectRatio, chatInputImageBase64 || undefined);
         newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: 'Đây là hình ảnh của bạn:', imageUrl };
       } else {
         const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
         const messagesToSend = [...currentMsgs, newUserMsg];
-        const replyText = await chatWithAI(messagesToSend, 'gemini-3.5-flash');
+        const replyText = await chatWithAI(messagesToSend, chatModel);
         newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: replyText };
       }
       setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newModelMsg], timestamp: Date.now() } : s));
@@ -1953,7 +1952,7 @@ const renderTrackSocketWorkflow = () => (
           {(['1K', '2K', '4K'] as ImageSize[]).map(size => (
             <button 
               key={size} 
-              onClick={() => setSettings({...settings, imageSize: size, aiModel: size === '4K' ? 'imagen-3.0-generate-002' : 'imagen-3.0-fast-generate-001'})} 
+              onClick={() => setSettings({...settings, imageSize: size})} 
               className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.imageSize === size ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-[#242526] shadow-sm text-white border-[#3E4042] text-white hover:text-white'}`}
             >
               {size === '1K' ? '1K Standard' : size === '2K' ? '2K Pro' : '4K Ultra HD'}
@@ -1961,7 +1960,23 @@ const renderTrackSocketWorkflow = () => (
           ))}
         </div>
       </div>
-      
+      <div className="space-y-2">
+        <label className="block text-[9px] font-bold text-white uppercase mb-1">Chọn Model AI (Tối ưu chi phí)</label>
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={() => setSettings({...settings, aiModel: 'imagen-3.0-fast-generate-001'})} 
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'imagen-3.0-fast-generate-001' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
+          >
+            Standard (Tiết kiệm)
+          </button>
+          <button 
+            onClick={() => setSettings({...settings, aiModel: 'imagen-3.0-generate-002'})} 
+            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'imagen-3.0-generate-002' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
+          >
+            High Quality (Tối ưu)
+          </button>
+        </div>
+      </div>
     </div>
   );
 
@@ -2032,7 +2047,7 @@ const renderTrackSocketWorkflow = () => (
       else if (image.settings.imageSize === '2K') cost = 0.101;
       else cost = 0.067;
     } else {
-      cost = 0.039; // Updated to 0.039 for gemini-3.5-flash
+      cost = 0.039; // Updated to 0.039 for imagen-3.0-fast-generate-001
     }
     
     // Prompt generation cost (Step 1)
@@ -2091,18 +2106,21 @@ const renderTrackSocketWorkflow = () => (
             <h2 className="font-bold text-xl">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-white font-semibold">Chế độ:</span>
+                <span className="text-xs text-white font-semibold">Mô hình:</span>
                 <select 
-                  value={chatMode}
-                  onChange={e => setChatMode(e.target.value as 'text' | 'image')}
+                  value={chatModel}
+                  onChange={e => setChatModel(e.target.value)}
                   className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
                 >
-                  <option value="text">Trò chuyện AI (Văn bản)</option>
-                  <option value="image">Tạo/Sửa ảnh (AI Image)</option>
+                  <option value="gemini-2.5-flash">Imagen 3.0 Fast Flash (Chat)</option>
+                  <option value="gemini-2.5-pro">Imagen 3.0 Pro (Chat)</option>
+                  <option value="gemini-2.5-flash">Imagen 3.0 Flash (Chat)</option>
+                  <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
+                  <option value="imagen-3.0-generate-002">Imagen 3.0 Generate</option>
                 </select>
               </div>
               
-              {chatMode === 'image' && (
+              {chatModel.includes('image') && (
                 <>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-white font-semibold">Tỷ lệ:</span>
@@ -2142,8 +2160,8 @@ const renderTrackSocketWorkflow = () => (
                 <Wand2 size={48} />
                 <p className="text-xl font-medium">Bắt đầu trò chuyện với Trợ lý AI</p>
                 <p className="text-sm text-center max-w-lg">
-                  Tải lên hình để AI tư vấn thiết kế bằng chữ (chọn chế độ Trò chuyện).<br/>
-                  Để tạo/sửa ảnh, tải hình lên, viết yêu cầu, và chọn chế độ Tạo ảnh.
+                  Tải lên hình để AI tư vấn thiết kế bằng chữ (chọn model Chat).<br/>
+                  Để tạo/sửa ảnh, tải hình lên, viết yêu cầu, và bắt buộc chọn model Image (Imagen 3.0 Fast/3.1 Image).
                 </p>
               </div>
             )}
@@ -2324,10 +2342,18 @@ const renderTrackSocketWorkflow = () => (
                   <div className="p-4 bg-[#18191A] rounded-b-lg flex flex-col gap-3">
                     <p className="font-semibold text-[13px] text-white">Chỉnh sửa ảnh với AI</p>
                     <div className="flex flex-col sm:flex-row gap-2">
-                       
+                       <select 
+                         value={editModel}
+                         onChange={e => setEditModel(e.target.value)}
+                         disabled={isEditingImage}
+                         className="flex-1 bg-[#242526] border border-[#3E4042] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
+                       >
+                         <option value="imagen-3.0-generate-002">Imagen 3.0</option>
+                         <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
+                       </select>
                        <select 
                          value={editQuality}
-                         onChange={e => { const size = e.target.value as ImageSize; setEditQuality(size); setEditModel(size === '4K' ? 'imagen-3.0-generate-002' : 'imagen-3.0-fast-generate-001'); }}
+                         onChange={e => setEditQuality(e.target.value as ImageSize)}
                          disabled={isEditingImage}
                          className="flex-1 bg-[#242526] border border-[#3E4042] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
                        >
