@@ -199,6 +199,7 @@ const App: React.FC = () => {
   const [packagingStep, setPackagingStep] = useState<number>(1); 
   const [techEffectStep, setTechEffectStep] = useState<number>(1); 
   const [whiteBgStep, setWhiteBgStep] = useState<number>(1); 
+  const [colorChangeStep, setColorChangeStep] = useState<number>(1); 
   const [whiteBgWebStep, setWhiteBgWebStep] = useState<number>(1); 
   const [stagingStep, setStagingStep] = useState<number>(1); 
   const [studioStep, setStudioStep] = useState<number>(1); 
@@ -651,7 +652,7 @@ const App: React.FC = () => {
   };
 
   const resetMode = () => {
-    setCurrentStep(1); setConceptStep(1); setTechStep(1); setPackagingStep(1); setTechEffectStep(1); setWhiteBgStep(1); setStagingStep(1); setStudioStep(1); setTrackSocketStep(1);
+    setCurrentStep(1); setConceptStep(1); setTechStep(1); setPackagingStep(1); setTechEffectStep(1); setWhiteBgStep(1); setColorChangeStep(1); setStagingStep(1); setStudioStep(1); setTrackSocketStep(1);
     setSettings(prev => ({
       ...prev, productName: '', productImages: [], referenceImage: null, techDescription: '', concept: '', placement: '', props: [], colorChanges: [], packagingFaces: {}, techTitle: '', selectedTechConcept: '', productMaterial: 'MATTE', emptySpacePosition: [], trackImage: undefined, sockets: []
     }));
@@ -1020,18 +1021,18 @@ const App: React.FC = () => {
   // 4. Làm màu sản phẩm Workflow
   const renderColorWorkflow = () => (
     <div className="space-y-6">
-      <StepIndicator current={whiteBgStep} total={3} labels={['Dữ liệu', 'Màu sắc', 'Xuất bản']} />
+      <StepIndicator current={colorChangeStep} total={3} labels={['Dữ liệu', 'Màu sắc', 'Xuất bản']} />
       
       <AnimatePresence mode="wait">
         <motion.div
-          key={whiteBgStep}
+          key={colorChangeStep}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.2 }}
           className="space-y-6"
         >
-          {whiteBgStep === 1 && (
+          {colorChangeStep === 1 && (
             <div className="space-y-4">
               <input type="text" placeholder="Tên SP..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
               
@@ -1042,11 +1043,11 @@ const App: React.FC = () => {
                 </div>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
               </div>
-              <button disabled={!settings.productImages[0]} onClick={() => setWhiteBgStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
+              <button disabled={!settings.productImages[0]} onClick={() => setColorChangeStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
             </div>
           )}
 
-          {whiteBgStep === 2 && (
+          {colorChangeStep === 2 && (
             <div className="space-y-4">
               <div className="space-y-3">
                   <label className="block text-[10px] font-bold text-white uppercase">Danh sách thay đổi màu</label>
@@ -1107,13 +1108,13 @@ const App: React.FC = () => {
                   </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                <button onClick={() => setWhiteBgStep(3)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                <button onClick={() => setColorChangeStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
+                <button onClick={() => setColorChangeStep(3)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
               </div>
             </div>
           )}
 
-          {whiteBgStep === 3 && (
+          {colorChangeStep === 3 && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
@@ -1127,7 +1128,7 @@ const App: React.FC = () => {
               {renderModelSelection()}
 
               <div className="flex gap-2">
-                <button onClick={() => setWhiteBgStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
+                <button onClick={() => setColorChangeStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
                 <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
               </div>
             </div>
