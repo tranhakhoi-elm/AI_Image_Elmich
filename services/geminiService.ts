@@ -523,6 +523,34 @@ No shading, no shadows, no gradients, no colors, no 3D realistic effects, no tex
 Only crisp, continuous, and precise black lines defining the outer shape and essential inner contours of the product. 
 Flat 2D vector style. High clarity, simple schematic outline.
     `;
+  } else if (settings.visualStyle === "COLOR_CHANGE") {
+    const changes = settings.colorChanges.map((c, i) => {
+      let changeStr = `- Part / Position to recolor: "${c.partName}"`;
+      if (c.pantoneCode) changeStr += ` to Pantone Color: "${c.pantoneCode}"`;
+      if (c.description) changeStr += ` describing: "${c.description}"`;
+      if (c.sampleImage) changeStr += ` (Reference the recoloring sample image ${i + 1} provided)`;
+      return changeStr;
+    }).join('\n');
+
+    finalPrompt = `
+Product Recoloring & Color Editing Task:
+We have a product named "${settings.productName}".
+Your task is to generate/edit the product image to change the colors of specified parts while meticulously preserving the design, format, and details of the original product.
+
+COLOR CHANGE SPECIFICATIONS:
+${changes || "Change the product colors to match professional kitchenware premium colors."}
+
+STRICT PRESERVATION RULES (MANDATORY):
+1. Original Geometry and Shape: Preserve the exact structural boundaries, dimensions, camera perspective, lens angles, physical silhouette, and coordinates of the product as seen in the original image. Do not distort, warp, or duplicate the product.
+2. Material Texture & Surface Details: Maintain the exact surface textures (e.g., brushed stainless steel inox metal, glossy glazed ceramic coating, matte premium plastic polymers) of each part. The color change must look like a perfectly uniform pigment layer applied to that material, retaining its specific roughness, micro-scratches, or pores.
+3. Luma & Accent Preservation (Luma Preservation): Preserve original specular highlights, reflections, and dark light-occluded crevices. Highlights should remain white or light-grey, reflecting the light source, rather than being painted over with color.
+4. Lighting System: Retain the identical commercial 3-Point studio lighting (Key Light, Fill Light, Rim Light) and shading of the original product.
+5. Color Bleeding (Color Bleed): Realistic light reflection (color bleed) of the new product color onto adjacent stainless steel or surrounding reflective surfaces.
+6. Grounding and Shadows: Keep identical contact shadows (dense dark shadow at base of coordinates) and soft ambient key shadows on the floor/surface exactly as in the original picture.
+7. Background: The background of the original image must be preserved without any other changes.
+
+Output style: Premium commercial cookware photography, hyper-detailed, 8k resolution, photorealistic.
+    `;
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS" || settings.visualStyle === "STUDIO") {
     
     let spaceInstruction = "";

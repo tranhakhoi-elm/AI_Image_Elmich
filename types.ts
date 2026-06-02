@@ -1,4 +1,4 @@
-export type AIModel = "gemini-2.5-flash-image" | "gemini-3.1-flash-image-preview";
+export type AIModel = "gemini-2.5-flash-image" | "gemini-3.1-flash-image-preview" | "imagen-3.0-fast-generate-001" | "imagen-3.0-generate-002";
 export type AspectRatio = "1:1" | "3:4" | "4:3" | "9:16" | "16:9" | "1:4" | "4:1";
 export type ImageSize = "1K" | "2K" | "4K";
 export type VisualStyle = "CONCEPT" | "TECH_PS" | "COLOR_CHANGE" | "PACKAGING_MOCKUP" | "TECH_EFFECTS" | "WHITE_BG_RETOUCH" | "SCENE_STAGING" | "STUDIO" | "TRACK_SOCKET_STAGING" | "LINE_ART";
@@ -73,6 +73,7 @@ export interface PropConfig {
   size?: 'small' | 'medium' | 'large' | 'auto';
   position?: 'left' | 'right' | 'front' | 'back' | 'background' | 'foreground' | 'auto';
   rotation?: 'tilted' | 'upright' | 'flat' | 'auto';
+  amount?: string | number;
 }
 
 export interface SuccessfulPrompt {
