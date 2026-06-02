@@ -528,7 +528,7 @@ Flat 2D vector style. High clarity, simple schematic outline.
       let changeStr = `- Part / Position to recolor: "${c.partName}"`;
       if (c.pantoneCode) changeStr += ` to Pantone Color: "${c.pantoneCode}"`;
       if (c.description) changeStr += ` describing: "${c.description}"`;
-      if (c.sampleImage) changeStr += ` (Reference the recoloring sample image ${i + 1} provided)`;
+      if (c.sampleImage) changeStr += ` (Reference the target/desired color/texture in Image ${i + 2} provided)`;
       return changeStr;
     }).join('\n');
 
@@ -537,17 +537,22 @@ Product Recoloring & Color Editing Task:
 We have a product named "${settings.productName}".
 Your task is to generate/edit the product image to change the colors of specified parts while meticulously preserving the design, format, and details of the original product.
 
+INPUT IMAGES DEFINITION:
+- Image 1 (First uploaded image): This is the ORIGINAL/BASE product image of "${settings.productName}". You MUST edit this image ONLY. This is your template and canvas. Do NOT modify its geometry, silhouette, size, or perspective.
+- Image 2 and onwards: These are color references/sample images indicating the target colors, tones, or materials to be applied to specified parts of Image 1. DO NOT edit or use these as your template; they are only reference samples!
+
 COLOR CHANGE SPECIFICATIONS:
+You must recolor specified parts of Image 1 based on these instructions and reference images (Image 2 onwards):
 ${changes || "Change the product colors to match professional kitchenware premium colors."}
 
 STRICT PRESERVATION RULES (MANDATORY):
-1. Original Geometry and Shape: Preserve the exact structural boundaries, dimensions, camera perspective, lens angles, physical silhouette, and coordinates of the product as seen in the original image. Do not distort, warp, or duplicate the product.
-2. Material Texture & Surface Details: Maintain the exact surface textures (e.g., brushed stainless steel inox metal, glossy glazed ceramic coating, matte premium plastic polymers) of each part. The color change must look like a perfectly uniform pigment layer applied to that material, retaining its specific roughness, micro-scratches, or pores.
-3. Luma & Accent Preservation (Luma Preservation): Preserve original specular highlights, reflections, and dark light-occluded crevices. Highlights should remain white or light-grey, reflecting the light source, rather than being painted over with color.
-4. Lighting System: Retain the identical commercial 3-Point studio lighting (Key Light, Fill Light, Rim Light) and shading of the original product.
+1. Original Geometry and Shape: Preserve the exact structural boundaries, dimensions, camera perspective, lens angles, physical silhouette, and coordinates of the product as seen in Image 1. Do not distort, warp, or duplicate the product. Do NOT use the shapes or dimensions of the reference sample images (Image 2 onwards).
+2. Material Texture & Surface Details: Maintain the exact surface textures (e.g., brushed stainless steel inox metal, glossy glazed ceramic coating, matte premium plastic polymers) of each part in Image 1. The color change must look like a perfectly uniform pigment layer applied to that material, retaining its specific roughness, micro-scratches, or pores as seen in Image 1.
+3. Luma & Accent Preservation (Luma Preservation): Preserve original specular highlights, reflections, and dark light-occluded crevices of Image 1. Highlights should remain white or light-grey, reflecting the light source, rather than being painted over with color.
+4. Lighting System: Retain the identical commercial 3-Point studio lighting (Key Light, Fill Light, Rim Light) and shading of Image 1.
 5. Color Bleeding (Color Bleed): Realistic light reflection (color bleed) of the new product color onto adjacent stainless steel or surrounding reflective surfaces.
-6. Grounding and Shadows: Keep identical contact shadows (dense dark shadow at base of coordinates) and soft ambient key shadows on the floor/surface exactly as in the original picture.
-7. Background: The background of the original image must be preserved without any other changes.
+6. Grounding and Shadows: Keep identical contact shadows (dense dark shadow at base of coordinates) and soft ambient key shadows on the floor/surface exactly as in Image 1.
+7. Background: The background of Image 1 must be preserved without any other changes. Do not use the background of reference sample images.
 
 Output style: Premium commercial cookware photography, hyper-detailed, 8k resolution, photorealistic.
     `;
@@ -683,6 +688,9 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
     }
   } else if (settings.visualStyle === "COLOR_CHANGE") {
+    if (settings.productImages[0]) {
+      parts.push({ inlineData: { data: settings.productImages[0].split(',')[1], mimeType: 'image/png' } });
+    }
     settings.colorChanges.forEach(c => {
       if (c.sampleImage) parts.push({ inlineData: { data: c.sampleImage.split(',')[1], mimeType: 'image/png' } });
     });
@@ -692,7 +700,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
   }
   
-  const productImagesVisualStyles = ["CONCEPT", "TECH_PS", "COLOR_CHANGE", "STUDIO"];
+  const productImagesVisualStyles = ["CONCEPT", "TECH_PS", "STUDIO"];
   if (settings.productImages.length > 0 && productImagesVisualStyles.includes(settings.visualStyle)) {
     settings.productImages.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
   }
