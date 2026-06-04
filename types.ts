@@ -104,11 +104,14 @@ export interface GenerationSettings {
   selectedTechConcept: string; // Concept công nghệ đã chọn
 
   // White BG Retouch specific fields
-  whiteBGCategory?: 'METAL' | 'PLASTIC' | 'GLASS' | 'CERAMIC';
+  whiteBGCategory?: 'METAL' | 'PLASTIC' | 'GLASS' | 'CERAMIC' | 'METAL_AND_PLASTIC';
+  whiteBGSelectedCategories?: string[];
+  whiteBGMaterialsDescription?: string;
   whiteBGMetalConfig?: { type: string, highlight: string, shape: string };
   whiteBGPlasticConfig?: { type: string, color?: string, lighting: string };
   whiteBGGlassConfig?: { type: string, lighting: string, content: string };
   whiteBGCeramicConfig?: { surface: string, lighting: string };
+  whiteBGMetalAndPlasticConfig?: { metalParts: string, plasticParts: string, lighting: string };
   
   productMaterial: ProductMaterial;
 

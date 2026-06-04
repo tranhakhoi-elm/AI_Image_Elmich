@@ -492,59 +492,43 @@ Output style: Premium commercial packaging mockup, hyper-detailed rendering, pho
   } else if (settings.visualStyle === "WHITE_BG_RETOUCH") {
     let stylePrompt = "";
     const productName = settings.productName || "Product";
-    
-    if (settings.whiteBGCategory === "METAL") {
-      const config = settings.whiteBGMetalConfig;
-      stylePrompt = `Ultra realistic lighting and shadow refinement for a single ${productName} on white background.
+    const selectedCats = settings.whiteBGSelectedCategories || [];
+    const matDesc = settings.whiteBGMaterialsDescription || "";
 
-STRICT PRESERVATION:
-- Keep the exact original product (no change in shape, angle, color, material, or texture)
-- Do NOT duplicate or add objects
-- Do NOT change composition or camera perspective
-
-Lighting:
-- soft directional key light from upper-left at 45 degrees
-- clean studio lighting (premium commercial cookware photography style)
-- highlight on upper rim and inner surface of the ${productName}
-- subtle reflection on metal handle
-- smooth light gradient across curved surfaces
-- no overexposure
-
-Shadow:
-- realistic shadow attached to the ${productName} and handle
-- shadow direction: to the right and slightly backward
-- main shadow under the ${productName} body (elliptical shape)
-- secondary elongated shadow from the handle extending to the right
-- soft edge with gradual fade
-- darker contact shadow directly under the ${productName} base
-- lighter, more diffused shadow toward the handle tip
-
-Background:
-- clean white or very subtle grey gradient
-- no texture, no color cast
-
-Quality:
-- high clarity, crisp but natural
-- realistic depth and grounding
-- premium commercial look
-
-ABSOLUTE RULE:
-- only adjust lighting and shadow, nothing else`;
-    } else if (settings.whiteBGCategory === "PLASTIC") {
-      const config = settings.whiteBGPlasticConfig;
-      stylePrompt = `Studio product shot of ${productName},  ${config?.type || 'Matte'} plastic housing, isolated on a pure white background. Lighting: Large overhead ${config?.lighting || 'Softbox'} for even and diffused illumination, no harsh hotspots, subtle subsurface scattering for realistic plastic texture. Soft drop shadow at the base, clean minimalist presentation, 8k resolution.`;
-    } else if (settings.whiteBGCategory === "GLASS") {
-      const config = settings.whiteBGGlassConfig;
-      stylePrompt = `Clean product photography of ${productName} made of ${config?.type || 'Borosilicate Glass'}, isolated on a pure white background. Lighting: Intense ${config?.lighting || 'Rim lighting'} to create sharp dark silhouettes on the edges, backlight to highlight ${config?.content || 'internal empty content'}. High refraction, ray tracing, transparent and crisp, 8k resolution.`;
-    } else if (settings.whiteBGCategory === "CERAMIC") {
-      const config = settings.whiteBGCeramicConfig;
-      stylePrompt = `High-detail product shot of ${productName} with ${config?.surface || 'Granite speckled coating'}, isolated on a pure white background. Lighting: ${config?.lighting || '45-degree side lighting'} to emphasize the surface texture and micro-contrast, evenly lit handle, vibrant colors, clear coating details, photorealistic, 8k resolution.`;
-    } else {
-      stylePrompt = `A premium commercial studio product photograph of ${productName} on a clean, pure white background. High clarity, balanced contrast.`;
+    let materialDirectives = "";
+    if (selectedCats.includes("METAL")) {
+      materialDirectives += `\n- Metallic Parts (Kim loại): Auto-detect and render highly realistic metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster without overexposure.`;
+    }
+    if (selectedCats.includes("PLASTIC")) {
+      materialDirectives += `\n- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Maintain their matte, high-gloss, or textured polymer characteristics. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers.`;
+    }
+    if (selectedCats.includes("GLASS")) {
+      materialDirectives += `\n- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible.`;
+    }
+    if (selectedCats.includes("CERAMIC")) {
+      materialDirectives += `\n- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render smooth ceramic gloss, glaze texturing, or premium speckled non-stick coatings. Emphasize micro-textures and soft, diffused light absorption without harsh glare spots.`;
+    }
+    if (materialDirectives === "") {
+      materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation.";
     }
 
-    finalPrompt = `${stylePrompt}
+    stylePrompt = `High-detail, professional commercial studio product photography of a single ${productName}, meticulously isolated on a pure, solid white background (#FFFFFF).
+    
+MATERIAL SEPARATION & PROPERTY DIRECTIVES:
+The product contains the following material compositions: [${selectedCats.join(', ')}].
+${materialDirectives}
 
+USER MATERIAL LOCATION & DETAIL DESCRIPTION:
+"${matDesc || "Automated multi-material detection based on the input photograph."}"
+-> Use this specific material mapping to accurately assign glossiness, metalness, transparency, or roughness to different parts of the product. Keep original contours and text.
+
+LIGHTING & STUDIO PRESENTATION:
+- Light Source: Professional three-point studio lighting with high-end key and fill lights, displaying pristine product shape and beautiful gradients.
+- Grounding: A very delicate, soft diffuse contact shadow must sit precisely underneath the base contact points. No floating, no artificial halo.
+- Quality: Superb clarity, high contrast, clean noise-free colors, commercial catalog style, photorealistic.`;
+
+    finalPrompt = `${stylePrompt}
+ 
 CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product must remain exactly as it appears in the reference image. The background is a clean, pure white without any visible texture or color contamination. All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 Additional Instructions: ${settings.concept || 'None'}
 Camera Setup: ${formatCameraSettings(settings.camera)}`;
