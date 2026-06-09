@@ -615,16 +615,23 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       Camera & Lighting Setup: ${cameraDetails}
       
       CORE PHOTOGRAPHY AND DESIGN PRINCIPLES (STRICTLY ENFORCE):
-      1. Strict Geometry Preservation: Describe the product exactly as it is without altering dimensions or structures. DO NOT hallucinates shapes, structures, or add extra elements to the product itself.
-      2. PBR (Physically Based Rendering): Describe realistic physical light interactions (reflection, refraction, subsurface scattering). NO fake 3D glows.
+      1. Strict Geometry Preservation (Geometry Control Protocol): 
+         - Axis Alignment: "Maintain absolute verticality for all cylindrical products. Ensure the base and lid are perfectly parallel to the horizon."
+         - Logo Integrity: "Apply logo as a precise vector-based decal. No warping or distortion on curved surfaces. Center properly."
+         - Scale Reference: "Scale 1:1 relative to standard environment. Ensure handle-to-body proportion follows engineering standards."
+      2. PBR (Physically Based Rendering & Advanced Micro-surface Optics): 
+         - Metal (Inox/Aluminum): "Use Anisotropic reflection with a blurriness factor of 0.05. Highlights must trace the contour of the object, not bloom uncontrollably." Apply Fresnel reflections.
+         - Plastic: "Apply Micro-bump texture at 5% intensity to mimic high-grade food-safe plastic. Subtle Fresnel effect at the edges to show material thickness."
+         - Glass: "Set Refraction Index (IOR) to 1.5. Ensure the internal walls of the container are visible through the glass, with slight chromatic aberration at the edges to simulate professional camera optics."
+         - Ceramic/Stone: Grazing 45-degree light for micro-displacement/pores.
       3. Shadow Structure: Must include contact shadows (stark black at the base), soft gradient key shadows, and feathered extrusion shadows for handles.
       4. Lighting System: 3-Point Lighting System (Key Light, Fill Light, Rim Light).
       
-      MATERIAL GUIDELINES TO APPLY IN PROMPT:
-      - Metal (Inox/Aluminum): Fresnel reflection, sharp longitudinal highlights, anisotropic brushed textures.
-      - Plastic: Soft subsurface scattering for matte, sharp reflection shape for glossy.
-      - Glass/Crystal: Caustics (converging light), dark-field/bright-field rim lighting to emphasize glass edges.
-      - Ceramic/Stone: Grazing 45-degree angle light for micro-displacement/pores.
+      STRICT AVOIDANCE (NEGATIVE PROMPT EQUIVS):
+      - Avoid distorted logos, skewed geometry, non-functional hinges, floating parts.
+      - Avoid over-saturated colors, unrealistic bloom, plastic-looking metal, blurry reflections.
+      - Avoid inconsistent shadow direction, multiple light sources causing conflicting shadows.
+      - Avoid low-resolution textures, pixelated edges on text/branding.
       
       Instructions for the prompt:
       - Describe the product's placement (MANDATORY: you must explicitly describe placing the product as described in "${placementDetails}"), lighting, shadows, and reflections in vivid technical detail based on the core principles.
