@@ -1,75 +1,51 @@
-# Tài Liệu Định Hình Phong Cách Hình Ảnh (Design/Prompt Guidelines)
+# 📘 Bản Đồ Thiết Kế Nhiếp Ảnh Kỹ Thuật Số (Digital Photography Master Board)
 
-Tài liệu này đóng vai trò là "Bộ quy chuẩn nhiếp ảnh kỹ thuật số" (Digital Photography Rulebook) cho các hình ảnh tạo ra trên Ai Image Elmich. Tài liệu đi sâu vào các thông số vật lý của ánh sáng, cấu trúc vật liệu và thiết lập camera để đảm bảo AI tạo ra kết quả đạt chuẩn thương mại cao cấp (High-end Commercial Photography).
+Chào mừng bạn đến với trung tâm giám sát mỹ thuật hình ảnh của **Ai Image Elmich**. Để đảm bảo tối ưu hóa cao nhất cho từng tác vụ chuyên sâu, bộ quy chuẩn đã được tách biệt thành **7 phân hệ tài liệu thiết kế riêng biệt** tương ứng với từng workflow nghiệp vụ của bạn:
 
-## 1. Triết Lý & Nguyên Tắc Cốt Lõi (Core Principles)
+---
 
-- **Bảo Toàn Hình Học Tuyệt Đối (Strict Geometry Preservation):** AI không được tự ý "sáng tạo" hay nội suy thêm các chi tiết cấu tạo của sản phẩm. Đường cong, khớp nối, logo, núm vặn phải được giữ nguyên kích thước và vị trí.
-- **Mô Phỏng Vật Lý Chân Thực (PBR - Physically Based Rendering):** Hình ảnh phải tuân thủ các định luật vật lý về ánh sáng (Phản xạ, Khúc xạ, Tán xạ). Không sử dụng các hiệu ứng ánh sáng phi thực tế hoặc "ảo giác 3D glow".
-- **Thông Số Camera Tiêu Chuẩn (Default Camera Specs):** 
-  - **Studio White Background:** Tiêu cự (Focal Length) từ `70mm đến 105mm` để chống méo góc (distortion-free). Khẩu độ nhỏ `f/8 - f/11` để sản phẩm nét từ trước ra sau (deep depth of field).
-  - **Lifestyle/Contextual:** Tiêu cự `50mm` hoặc `85mm`. Khẩu độ lớn `f/2.8 - f/4` tạo hiệu ứng xóa phông (bokeh/shallow depth of field) làm nổi bật chủ thể nhưng bối cảnh vẫn có thể nhận diện.
+## 📂 Danh Mục Phân Hệ Tài Liệu Tác Vụ (Task Styling Guides Directory)
 
-### 1.1. Giao Thức Kiểm Soát Hình Học (Geometry Control Protocol)
-Nhằm kiểm soát chặt chẽ khuynh hướng méo mó vật thể hình tròn hoặc hình trụ thường gặp ở các mô hình AI:
-- **Căn Trục (Axis Alignment):** "Maintain absolute verticality for all cylindrical products. Ensure the base and lid are perfectly parallel to the horizon." -> Toàn bộ sản phẩm dạng bình giữ nhiệt, ấm, nồi phải thẳng đứng vuông góc, đáy và nắp song song tuyệt đối với đường chân trời.
-- **Bảo Toàn Logo (Logo Integrity):** "Apply logo as a precise vector-based decal. No warping or distortion on curved surfaces. Strictly adhere to the [Logo_Elmich_Master] placement coordinates: [Specify height/centered]." -> Đảm bảo thương hiệu không bị biến dạng theo mặt cong.
-- **Tham Chiếu Tỷ Lệ (Scale Reference):** "Reference object: 1:1 scale relative to a standard kitchen environment. Ensure handle-to-body proportion follows engineering CAD standards." -> Đảm bảo tỷ lệ các tay cầm, núm vặn cân đối với thân máy đúng thực tế.
+### 1. Làm Ảnh Nền Trắng Thương Mại (White BG Retouch)
+*Chuyên sâu cho việc làm sạch bụi bẩn, tách nền nguyên bản và tái lập ánh sáng phản chiếu nhạt trên chất liệu.*
+- 👉 **[Xem quy chuẩn Làm Sạch Nền Trắng](./Design_WhiteBG_Retouch.md)**
+- **Nội dung:** Quy chuẩn cho Inox bóng, Inox xước, Nhựa nén chịu nhiệt, Thủy tinh Borosilicate, Gốm phủ dòng đá hoa cương và cách tự động phân tách kim loại-nhựa.
 
-## 2. Tiêu Chuẩn Xử Lý Vật Liệu Chuyên Sâu (Advanced Material Guide)
+### 2. Chụp Studio Sáng Tạo (Studio Creative Mode)
+*Thiết kế bối cảnh mỏ neo tinh giản với bàn bệ vững chắc và phụ kiện thương mại.*
+- 👉 **[Xem quy chuẩn Chụp Studio Sáng Tạo](./Design_Studio_Creative.md)**
+- **Nội dung:** Thiết kế dàn ánh sáng 3 điểm (Key - Fill - Rim), cấu trúc bóng đổ tiếp xúc sẫm, loang tản và bóng tay cầm, quy tắc sắp đặt bento đạo cụ mộc.
 
-### 2.1. Kim Loại (Inox, Hợp kim, Nhôm mạ)
-- **Ánh Sáng & Phản Xạ:**
-  - Áp dụng hiệu ứng **Fresnel**: Phản xạ mạnh hơn ở các viền cong góc hẹp so với phần diện tích nhìn thẳng.
-  - Vệt sáng (Highlights): Phải tuân theo hình khối sản phẩm. Ví dụ: Chảo tròn/nồi trụ cần có "sharp longitudinal highlights" (vệt sáng dọc kéo dài) để định hình độ cong.
-  - Phản xạ dị hướng (Anisotropy): Thường dùng cho Inox xước (Brushed Stainless Steel), ánh sáng bị nhòe theo chiều ngang của các thớ xước với quy chuẩn: `"Use Anisotropic reflection with a blurriness factor of 0.05. Highlights must trace the contour of the object, not bloom uncontrollably."`
-- **Bóng (Shadows):** Rất sắc nét ở điểm tiếp xúc (Contact shadow) và nhạt dần về phía xa (Soft unsharp masking).
+### 3. Phối Cảnh Đời Sống & Sắp Đặt (Lifestyle Concept & Scene Staging)
+*Kể câu chuyện nghệ thuật nội thất sâu lắng và ẩm thực mang hơi thở Âu châu hiện đại.*
+- 👉 **[Xem quy chuẩn Phối Cảnh Đời Sống](./Design_Lifestyle_Concept.md)**
+- **Nội dung:** Tiêu cự máy ảnh vàng `50mm/85mm`, lấy khẩu độ lớn xóa phông bầm bokeh mượt, quy tắc 1/3, chừa khoảng trống âm (negative space) làm banner quảng cáo và bảng màu Scandinavian ấm cúng.
 
-### 2.2. Vật Liệu Nhựa (Matte, Glossy, ABS & Nhựa nhiệt dẻo)
-- **Tán Xạ Kém Thấu Kính (Subsurface Scattering - SSS):** Đối với nhựa màu sáng hoặc nhựa silicone, ánh sáng phải hơi xuyên thấu nhẹ qua lớp bề mặt tạo cảm giác mềm mại chân thực, tránh làm vật liệu trông như bìa cứng sơn màu.
-- **Glossy (Nhựa bóng):** Vệt sáng phản chiếu phải sắc và rõ hình dạng nguồn sáng (ví dụ: thấy rõ hình chữ nhật của Softbox).
-- **Matte / Heat-Resistant Plastic (Nhựa nhám / Nhựa chịu nhiệt):** Áp dụng kết cấu nhám siêu vi: `"Apply Micro-bump texture at 5% intensity to mimic high-grade food-safe plastic. Subtle Fresnel effect at the edges to show material thickness."` Vệt sáng khuếch tán rộng mềm mại, độ nhám hấp thụ ánh sáng dịu nhẹ.
+### 4. Đổi Màu Sản Phẩm Cao Cấp (Color Editing / Recoloring)
+*Nhuộm màu sơn phủ bộ phận chính xác tuyệt đối mà không phá hỏng cấu trúc ánh sáng.*
+- 👉 **[Xem quy chuẩn Đổi Màu Sản Phẩm](./Design_Color_Editing.md)**
+- **Nội dung:** Kỹ thuật bảo toàn độ chênh sáng (Luma), bảo lưu vệt specular phản chiếu của softbox, hiệu ứng loang màu gián tiếp (Color bleed) lên inox kế bên khi nhuộm các tông đỏ mận/cam đất nổi bật.
 
-### 2.3. Thủy Tinh & Pha Lê (Glass/Crystal)
-- **Khúc Xạ & Tán Xạ (Caustics):** Đây là yếu tố then chốt. Ánh sáng đi qua thủy tinh hoặc nước bên trong phải tạo ra các luồng sáng hội tụ (caustic patterns) đọng dưới đáy sản phẩm và in lên mặt sàn.
-- **Chiết Suất & Độ Dày (Refraction & Optics):** `"Set Refraction Index (IOR) to 1.5 for borosilicate glass. Ensure the internal walls of the container are visible through the glass, with slight chromatic aberration at the edges to simulate professional lens optics."`
-- **Dark-field / Bright-field Lighting:** 
-  - Cần sử dụng tấm phản quang đen (Black flags) đặt hai bên cạnh để tạo đường viền đen sẫm (Dark rim) dọc theo chu vi khối thủy tinh. Điều này tách bạch rõ ràng thủy tinh trong suốt khởi nền trắng.
-- **Độ Dày Thành (Thickness):** Thể hiện rõ khối lượng thông qua độ dày thành thủy tinh tại miệng và đáy cốc/bình.
+### 5. Mockup Bao Bì Sản Phẩm (Packaging Mockup Styling)
+*Uốn dán bản thiết kế phẳng 2D bao mượt lên giác quan hộp quà phẳng 3D chắc chắn.*
+- 👉 **[Xem quy chuẩn Thiết Kế Mockup Bao Bì](./Design_Packaging_Mockup.md)**
+- **Nội dung:** Kỹ thuật bóng luồn rìa cạnh giấy dày `1-1.5mm`, nếp gập khóa tai hở cơ học chân thực, xử lý thớ xơ thùng Carton nâu Kraft mộc hay hộp lụa bóng màu cao cấp.
 
-### 2.4. Gốm, Men Sứ & Đá (Ceramics & Stone)
-- **Micro-displacement (Độ dập nổi bề mặt):** Chiếu sáng tạt góc hẹp (Grazing light / 45-degree angle) để làm nổi rõ các vết rỗ siêu nhỏ (pores) hoặc vân đá tự nhiên.
-- **Lớp Men Bóng (Glaze):** Bề mặt cần độ phản xạ kép. Lớp men thì phản xạ y hệt kính/nhựa bóng, nhưng kết cấu bên dưới lớp men thì thô ráp và hấp thụ ánh sáng.
+### 6. Hiệu Ứng Công Nghệ Trực Quan (Futuristic Tech Effects)
+*Mô tả luồng năng lượng lốc xoáy nhiệt hay hơi lạnh đại dương thanh khiết cuộn trào quanh thiết bị.*
+- 👉 **[Xem quy chuẩn Hiệu Ứng Công Nghệ](./Design_Tech_Effects.md)**
+- **Nội dung:** Biểu đồ luân chuyển nhiệt 3D đỏ vàng, dải mây sương ngọc bích sủi bọt mát lành, xử lý loại bỏ hoàn toàn các chữ ký viết tay phác thảo rác của mẫu thiết kế thô.
 
-## 3. Quy Chuẩn Bóng Đổ & Môi Trường Studio (Shadow & Environment)
+### 7. Bản Vẽ Nét Kỹ Thuật Tối Giản (Technical Line Art Drafting)
+*Sử dụng nét vector đen tinh khiết trên nền giấy trắng không bóng tì vết phục vụ cẩm nang hướng dẫn sử dụng.*
+- 👉 **[Xem quy chuẩn Vẽ Nét Kỹ Thuật](./Design_Line_Art.md)**
+- **Nội dung:** Thứ bậc độ dày nét (Viền bao `1.5pt`, Khớp ráp `1.0pt`, Decal thương hiệu `0.5pt`), triệt tiêu hoàn toàn vùng tô xám ố đục bẩn.
 
-### 3.1. Hệ Thống Ánh Sáng 3 Điểm (3-Point Lighting System)
-AI cần hiểu môi trường giả lập luôn bao gồm:
-- **Key Light (Sáng chính):** Nguồn sáng mạnh nhất, quyết định hình khối và hướng đổ bóng. Thường lấy từ trái qua, chết dần từ trên xuống.
-- **Fill Light (Sáng phụ):** Cường độ bằng 30-40% sáng chính, dùng để nâng sáng vùng tối (shadows), đảm bảo không có mảng đen nào bị mất hoàn toàn chi tiết (no pure black clippings).
-- **Rim Light / Back Light (Sáng viền):** Chiếu từ phía sau sản phẩm dọc ven rìa để bóc tách sản phẩm khỏi phông nền. Đặc biệt quan trọng với phông nền tối màu.
+---
 
-### 3.2. Cấu Trúc Bóng Đổ (Shadow Structure)
-Không bao giờ dùng một cục bóng đen kịt. Bóng đổ phải có 3 phần:
-1. **Contact Shadow (Bóng tiếp xúc):** Nằm chính xác dưới đáy sản phẩm (viền tiếp xúc mặt bàn), màu đen rất gắt và đậm đặc, mô phỏng Ambient Occlusion (Tắc nghẽn ánh sáng xung quanh).
-2. **Key Shadow (Bóng thân):** Hình dáng phụ thuộc vào chiều nguồn sáng chính chiếu tới, nhạt dần (gradient) khi ra xa.
-3. **Handle/Extrusion Shadow (Bóng chi tiết thừa):** Các chi tiết như quai xách, tay cầm sẽ phóng bóng xuống thân nồi hoặc xuống sàn tùy theo góc độ, đường viền bóng mờ dần (feathered edges).
-
-## 4. Xử Lý Khi Đổi Màu Sản Phẩm (Color Editing)
-
-- **Luma Preservation (Giữ nguyên độ sáng):** Khi đổi từ màu sáng sang màu tối (ví dụ Trắng sang Đen), AI không được biến hình ảnh thành một cục đen tuyền. Nó phải bảo toàn được các vệt phản chiếu ánh sáng (specular highlights) màu trắng. Ngược lại từ tối sang sáng không được làm mất các vùng bóng hốc.
-- **Color Bleed (Loang màu):** Sự giao thoa màu sắc. Nếu thân nồi màu Đỏ mận, một chút ánh sáng đỏ nhạt sẽ phản chiếu nhẹ hắt xuống phần chân đế inox.
-
-## 5. Quy Tắc Bố Cục Riêng Cho Concept Đời Sống (Lifestyle Framing)
-
-- **Không Gian Âm (Negative Space):** Luôn chừa ra một khoảng trống (vùng nền ít chi tiết, như mặt bàn trống hoặc bức tường nhạt màu) để đội ngũ thiết kế có chỗ chèn Text (Giá, Tên chương trình khuyến mãi...).
-- **Quy Tắc 1/3 (Rule of Thirds):** Chếch sản phẩm sang điểm giao cắt 1/3 của khung hình, không luôn luôn đặt ở chính giữa (center-aligned).
-- **Bảng Màu Xuyên Suốt (Color Palette Harmony):** Chấm dứt việc phối màu rực rỡ, lộn xộn. Sử dụng các tone màu thanh lịch (Analogous) hoặc màu tương phản nhẹ nhàng (Soft Complementary) để tạo cảm giác "Premium". Tone nền chủ đạo nên là: Tự nhiên (Mộc/Gỗ/Đá), Trung tính (Xám/Kem/Đen), hoặc Phong cách Bắc Âu (Scandinavian).
-
-## 6. Những Lỗi Thường Gặp & Điều Cấm Kỵ Cần Tránh (Negative Guidelines)
-Để đảm bảo chất lượng nhiếp ảnh đầu ra tuyệt hảo, bộ tạo prompt cần loại bỏ tối đa các đặc tính phi mỹ thuật sau:
-
-- **Lỗi Hình Học & Biến Dạng (Geometry Warp):** Tránh mọi biến dạng méo mó ở logo thương hiệu (distorted logos), tay cầm không khớp hay xiêu vẹo (skewed geometry, non-functional hinges) hoặc các bộ phận lơ lửng không tiếp đất (floating parts).
-- **Bất Đồng Chất Liệu (Material Clashing):** Tránh hiện tượng kim loại trông bệt bẩn như nhựa sơn (plastic-looking metal), phần nhựa bóng quá đà gây chói hoặc vệt phản chiếu bị nhòe nhòa mất nét (blurry reflections). Tránh màu sắc bão hòa lòe loẹt quá mức (over-saturated colors, unrealistic bloom).
-- **Bóng Đổ Sai Hướng (Incorrect Shadows):** Tránh bóng đổ loang lổ nhiều hướng xung đột nhau do bố trí ánh sáng sai lệch (inconsistent shadow direction, conflicting shadows), hoặc mất bóng tiếp đất khiến sản phẩm trông tách rời bối cảnh.
-- **Độ Phân Giải Thấp (Low-Fidelity):** Tránh vỡ hạt ở các chi tiết chữ, tem decal, thông số dung tích hay hoa văn in nổi trên sản phẩm (low-resolution textures, pixelated edges on text/branding).
+## 🚫 Những Hành Vi & Đặc Điểm Cấm Kỵ Toàn Diện (General Negative Guidelines)
+Toàn bộ các tác vụ khi AI xử lý tuyệt đối phải rà soát để loại bỏ hạt nhân phi mỹ thuật sau:
+1. **Méo hỏng mẫu mã (Geometry Deformation):** Logo thương hiệu biến hình gãy khúc hoặc các cạnh nồi uốn dẻo như cao su chảy.
+2. **Loạn hướng ánh sáng (Conflicting Shadows):** Các đổ bóng bối cảnh đâm xiên hướng ngược nhau do AI nhầm lẫn đặt nhiều nguồn sáng Key Light khập khiễng.
+3. **Mù chữ thương hiệu (Blurred decals):** Tem nhãn kỹ thuật, chỉ số của phím bếp, chữ Elmich bị mờ hạt, loang nhạt màu hay viết sai ngữ pháp tự phát.
+4. **Đồ giả vi tính (CGI Plastic Look):** Các bề mặt Inox xước bỗng nhiên bẹt sẫm như nhựa rẻ tiền hay các đạo cụ bay hẫng lơ lửng không bám sàn.
