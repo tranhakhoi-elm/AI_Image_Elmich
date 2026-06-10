@@ -4,7 +4,13 @@ Tài liệu này quy định chi tiết cách thiết lập bối cảnh, ánh s
 
 ---
 
-## 1. Triết Lý Đổi Màu Thực Tế (High-Fidelity Recoloring Philosophy)
+## 1. Yêu Cầu Tiên Quyết: Đọc Quy Chuẩn Trước Khi Tạo Ảnh
+
+- **Bắt buộc đọc trước:** Mỗi khi hệ thống AI nhận được yêu cầu tạo ảnh hoặc tối ưu hóa prompt cho tác vụ Đổi Màu Sản Phẩm (Color Editing), AI **bắt buộc phải đọc toàn bộ file `/Design_Color_Editing.md` đầu tiên** trước khi viết prompt hay gọi API thực hiện inpainting/recoloring. Điều này đảm bảo AI hiểu sâu sắc các nguyên tắc bảo toàn hình học, luma và kỹ thuật masking để tránh nhòe lem màu sắc.
+
+---
+
+## 2. Triết Lý Đổi Màu Thực Tế (High-Fidelity Recoloring Philosophy)
 Khi thay đổi màu sắc của một bộ phận linh kiện cụ thể trên sản phẩm (Ví dụ: thay đổi vỏ từ màu hồng nhạt sang màu xanh lá cây đậm hoặc màu vàng đồng lấp lánh):
 - **Bảo toàn hình học:** Khớp nối, ốc vít, các vết khắc chìm, nếp gấp biên dạng phải được giữ chuẩn xác đúng tỷ lệ 1:1, không được mờ đi hay biến dạng.
 - **Bảo toàn bề mặt:** Vùng mạ kim loại sáng bóng thì khi đổi màu vẫn phải duy trì tính ánh kim (metallic sheen). Vùng nhựa nhám matte khi đổi màu vẫn phải nguyên thớ thô xù mịn màng, không được đột ngột bóng lộn lên.

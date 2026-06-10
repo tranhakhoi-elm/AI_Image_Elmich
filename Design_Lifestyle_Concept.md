@@ -4,7 +4,13 @@ Tài liệu này quy định chi tiết cách phối cảnh, sắp đặt không
 
 ---
 
-## 1. Triết Lý Thiết Kế Phối Cảnh Đời Sống
+## 1. Yêu Cầu Tiên Quyết: Đọc Quy Chuẩn Trước Khi Tạo Ảnh
+
+- **Bắt buộc đọc trước:** Mỗi khi hệ thống AI nhận được yêu cầu tạo ảnh hoặc tối ưu hóa prompt cho phong cách Phối Cảnh Đời Sống / Dựng Cảnh Thật (Lifestyle / Scene Staging), AI **bắt buộc phải đọc toàn bộ file `/Design_Lifestyle_Concept.md` đầu tiên** trước khi viết prompt hay gọi API sinh ảnh. Điều này đảm bảo AI hiểu rõ cách bài trí, ánh sáng, góc máy và không khí hiện đại, sang trọng của Elmich.
+
+---
+
+## 2. Triết Lý Thiết Kế Phối Cảnh Đời Sống
 Chế độ phong cách sống không đơn thuần là đặt một sản phẩm lên bàn bếp, mà là kể một câu chuyện nghệ thuật ẩm thực cảm xúc (Emotional Culinary Storytelling).
 - **Mục tiêu:** Tạo nên những bức ảnh truyền thông mang hơi thở ấm áp của gia đình hiện đại nhưng vẫn sang trọng, mang đậm chất tạp chí ẩm thực Kinfolk hay các thương hiệu gia dụng cao cấp Châu Âu.
 - **Tính tự nhiên:** AI phải lồng ghép sản phẩm vào bối cảnh một cách liền mạch từ bóng đổ tự nhiên, khúc xạ ánh sáng trên mặt bếp, đến sự tương tác vật lý thực tế của thực phẩm tươi sống lên bề mặt sản phẩm.

@@ -1,6 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig, ConceptSuggestion } from "../types";
 
+import designLifestyleConcept from '../Design_Lifestyle_Concept.md?raw';
+import designStudioCreative from '../Design_Studio_Creative.md?raw';
+import designLineArt from '../Design_Line_Art.md?raw';
+import designColorEditing from '../Design_Color_Editing.md?raw';
+import designPackagingMockup from '../Design_Packaging_Mockup.md?raw';
+import designWhiteBGRetouch from '../Design_WhiteBG_Retouch.md?raw';
+import designTechEffects from '../Design_Tech_Effects.md?raw';
+
 // --- CÁC HÀM CHO CÁC MODE CŨ ---
 export const getAiSuggestions = async (settings: { productName: string, visualStyle: string, techDescription?: string }): Promise<AISuggestions> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -47,22 +55,28 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const prompt = `
-      Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm.
-      Sản phẩm: "${productName}". Kích thước: ${dimensions}.
-      ${refImage ? "Tôi có gửi kèm một ảnh mẫu phong cách (Style Reference). Hãy dựa vào style của ảnh này để đề xuất." : ""}
-      
-      YÊU CẦU:
-      1. Đề xuất 5 Ý tưởng (Concept) phối cảnh chụp ảnh Lifestyle. Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
-      2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
-         - [Mô tả phong cách]
-         - [Mô tả không gian, bối cảnh]
-         - [Mô tả cách đánh sáng]
-         - [Mô tả cảm giác, màu sắc chủ đạo]
-         (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
-      3. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất.
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và các lỗi cần tránh của phong cách này:
+${designLifestyleConcept}
+========================================
 
-      Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
-    `;
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich. 
+Dựa vào quy chuẩn phong cách thiết kế phía trên, hãy đề xuất ý tưởng Lifestyle:
+Sản phẩm: "${productName}". Kích thước: ${dimensions}.
+${refImage ? "Tôi có gửi kèm một ảnh mẫu phong cách (Style Reference). Hãy dựa vào style của ảnh này để đề xuất." : ""}
+
+YÊU CẦU ĐỀ XUẤT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
+1. Đề xuất 5 Ý tưởng (Concept) phối cảnh chụp ảnh Lifestyle. Tên của concept (title) BẮT BUỘC phải là tiếng Việt. Bố cục decor phải luôn duy trì sự ngăn nắp, hiện đại, trẻ trung, gọn gàng, tránh bừa bộn quá mức đời thường.
+2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+   - [Mô tả phong cách hiện đại, gọn gàng]
+   - [Mô tả không gian bối cảnh, khoảng trống không gian âm]
+   - [Mô tả cách đánh sáng tự nhiên chân thực]
+   - [Mô tả cảm giác, màu sắc chủ đạo trẻ trung]
+   (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
+3. Đề xuất bộ thông số Camera (Góc chụp lệc nhẹ 1/3, tiêu cự 50mm hoặc 85mm, khẩu độ lớn) lý tưởng nhất dựa trên Quy Chuẩn Phối Cảnh Đời Sống.
+
+Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
+`;
 
     const parts: any[] = [{ text: prompt }];
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
@@ -117,13 +131,23 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
 export const analyzeTechConceptAndCamera = async (productName: string, techDesc: string, dimensions: string, images: string[]): Promise<AIConceptAnalysis> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const prompt = `Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}. 
-    Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
-    YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
-    - [Mô tả phong cách]
-    - [Mô tả không gian, bối cảnh]
-    - [Mô tả cách đánh sáng]
-    - [Mô tả cảm giác, màu sắc chủ đạo]`;
+    const prompt = `
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và đặc tả kỹ năng cho tác vụ này:
+${designTechEffects}
+========================================
+
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich.
+Dựa TRÊN QUY CHUẨN TRÊN, hãy thực hiện phân tích kỹ thuật:
+Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}. 
+
+Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
+YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+- [Mô tả phong cách hiệu năng công nghệ]
+- [Mô tả không gian hiển thị, bối cảnh tối sang trọng]
+- [Mô tả cách đánh sáng phát quang tinh tế]
+- [Mô tả cảm giác, màu sắc của dải nhiệt/lạnh phù hợp]
+- [Quy chuẩn chống lòe loẹt, chống lỗi bóng mờ]`;
     const parts: any[] = [{ text: prompt }];
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
@@ -232,12 +256,19 @@ export const suggestTechConcepts = async (productName: string, title: string): P
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm. JSON array với 'title' (tiếng Việt) và 'prompt'.
-      YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
-      - [Mô tả phong cách]
-      - [Mô tả nền mặt biển]
-      - [Mô tả cách đánh sáng]
-      - [Mô tả cảm giác, màu sắc chủ đạo]`,
+      contents: `
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và đặc tả kỹ năng cho tác vụ này:
+${designTechEffects}
+========================================
+
+Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm theo đúng Quy Chuẩn Hiệu ứng Công nghệ.
+JSON array với 'title' (tiếng Việt) và 'prompt'.
+YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+- [Mô tả phong cách và cấu trúc hiệu ứng của sóng nước đại dương rực rỡ]
+- [Mô tả nền mặt biển ẩm mượt, tinh khôi]
+- [Mô tả cách đánh sáng phát quang, ánh neon phản chiếu xanh lam/ngọc bích]
+- [Mô tả cảm giác, màu sắc chủ đạo, chất lượng hoàn hảo]`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -294,26 +325,30 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const prompt = `
-      Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm.
-      Sản phẩm: "${productName}". Kích thước: ${dimensions}.
-      
-      YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT:
-      1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
-      2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
-         - [Mô tả phong cách]
-         - [Màu sắc, chất liệu nền giấy]
-         - [Cách đánh sáng, tạo bóng]
-         - [Mô tả cảm giác, màu sắc chủ đạo]
-         (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
-      3. RÀNG BUỘC BẮT BUỘC:
-         - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
-         - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
-         - Sản phẩm và đạo cụ nằm gọn trong khung hình.
-         - Chừa khoảng trống trên nền để chèn chữ (Text).
-      4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio.
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+${designStudioCreative}
+========================================
 
-      Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
-    `;
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm của Elmich.
+Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy thực hiện phân tích:
+Sản phẩm: "${productName}". Kích thước: ${dimensions}.
+
+YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
+1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
+2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+   - [Mô tả phong cách studio cao cấp]
+   - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
+   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights)]
+   - [Mô tả cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
+   (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
+3. RÀNG BUỘC BẮT BUỘC:
+   - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
+   - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
+   - Sản phẩm và đạo cụ nằm gọn trong khung hình, chừa khoảng trống trên nền để chèn chữ (Text) theo đúng Quy chuẩn.
+4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
+
+Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
+`;
 
     const parts: any[] = [{ text: prompt }];
     images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
@@ -441,12 +476,20 @@ export const generateProductImage = async (settings: GenerationSettings, variant
   };
   
   if (settings.visualStyle === "SCENE_STAGING") {
-    finalPrompt = `Staging professional: Add ${formatProps(settings.props)} into the real scene image following style "${settings.concept}". Keep original furniture. Camera & Lighting: ${formatCameraSettings(settings.camera)}. 8k, realistic.`;
+    finalPrompt = `
+Style Guide Requirements:
+${designLifestyleConcept}
+
+Staging professional: Add ${formatProps(settings.props)} into the real scene image following style "${settings.concept}". Keep original furniture. Camera & Lighting: ${formatCameraSettings(settings.camera)}. 8k, realistic.`;
   } else if (settings.visualStyle === "TECH_EFFECTS") {
     if (settings.techEffectType === "REMOVE_SIGNATURE") {
       finalPrompt = `Remove watermark/text from this image. Keep high quality, clear, bright.`;
     } else {
-      finalPrompt = `Ocean night cinemetic. Product ${settings.productName}. Text "${settings.techTitle}". ${settings.selectedTechConcept}. Neon reflections, Camera: ${formatCameraSettings(settings.camera)}. 8k.`;
+      finalPrompt = `
+Style Guide Requirements:
+${designTechEffects}
+
+Ocean night cinemetic. Product ${settings.productName}. Text "${settings.techTitle}". ${settings.selectedTechConcept}. Neon reflections, Camera: ${formatCameraSettings(settings.camera)}. 8k.`;
     }
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     const prodName = settings.productName || "Product";
@@ -469,6 +512,9 @@ export const generateProductImage = async (settings: GenerationSettings, variant
       : "Lifestyle Context: Placed elegantly inside a premium, modern minimalist lifestyle setting, such as on a clean light-refracting oak wood table, a solid concrete shelf, or a matte marble platform. The background is softly out-of-focus (gentle shallow depth-of-field) with natural organic window shadows, minimal natural props like a tiny green leaves plant branch.";
 
     finalPrompt = `
+Style Guide Requirements:
+${designPackagingMockup}
+
 3D Packaging Mockup Reconstruction & Folding Task:
 We have a product named "${prodName}".
 Your task is to reconstruct a high-quality, photorealistic 3D paper container box mockup using the provided 2D flat custom die-line graphic layout from the input image (Image 1).
@@ -527,13 +573,20 @@ LIGHTING & STUDIO PRESENTATION:
 - Grounding: A very delicate, soft diffuse contact shadow must sit precisely underneath the base contact points. No floating, no artificial halo.
 - Quality: Superb clarity, high contrast, clean noise-free colors, commercial catalog style, photorealistic.`;
 
-    finalPrompt = `${stylePrompt}
+    finalPrompt = `
+Style Guide Requirements:
+${designWhiteBGRetouch}
+
+${stylePrompt}
  
 CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product must remain exactly as it appears in the reference image. The background is a clean, pure white without any visible texture or color contamination. All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 Additional Instructions: ${settings.concept || 'None'}
 Camera Setup: ${formatCameraSettings(settings.camera)}`;
   } else if (settings.visualStyle === "LINE_ART") {
     finalPrompt = `
+Style Guide Requirements:
+${designLineArt}
+
 A minimalist, clean line art illustration of the product. Pure white background, solid black outlines. Simple netline style, architectural drawing, blueprint style but black on white. 
 
 Strict preservation (VERY IMPORTANT): 
@@ -556,6 +609,9 @@ Flat 2D vector style. High clarity, simple schematic outline.
     }).join('\n');
 
     finalPrompt = `
+Style Guide Requirements:
+${designColorEditing}
+
 Product Recoloring & Color Editing Task:
 We have a product named "${settings.productName}".
 Your task is to generate/edit the product image to change the colors of specified parts while meticulously preserving the design, format, and details of the original product.
@@ -601,7 +657,21 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     const placementDetails = settings.placement || "Centered";
     const cameraDetails = `${settings.camera?.angle || 'Front'}, ${settings.camera?.isMacro ? 'Macro Lens' : 'Standard Lens'}`;
 
+    let selectedStyleGuide = "";
+    if (settings.visualStyle === "CONCEPT") {
+      selectedStyleGuide = designLifestyleConcept;
+    } else if (settings.visualStyle === "STUDIO") {
+      selectedStyleGuide = designStudioCreative;
+    } else if (settings.visualStyle === "TECH_PS") {
+      selectedStyleGuide = designTechEffects;
+    }
+
     const thinkingPrompt = `
+      You must read and strictly adhere to the following style and rules guide before writing the prompt:
+      === STYLE GUIDE & RULES ===
+      ${selectedStyleGuide}
+      ===========================
+
       Act as an expert AI image generation prompt engineer and professional commercial product photographer.
       Write a highly detailed, descriptive, and professional image generation prompt (in English) for a ${mode}.
       
