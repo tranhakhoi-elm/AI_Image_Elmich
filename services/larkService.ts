@@ -33,7 +33,15 @@ export function calculateImagenCost(modelName: string, numImages: number = 1, im
   // Imagen pricing:
   // Aligned with App.tsx: 4K = $0.151, 2K = $0.101, 1K = $0.067, Fast = $0.039
   let perImageUSD = 0.039; 
-  if (modelName.includes("generate-002") || modelName.includes("generate")) {
+  const isHighQuality = 
+    modelName.includes("generate-002") || 
+    modelName.includes("generate") || 
+    modelName.includes("gemini-3.1-flash-image-preview") || 
+    modelName.includes("preview") ||
+    imageSize === "4K" ||
+    imageSize === "2K";
+
+  if (isHighQuality) {
     if (imageSize === "4K") {
       perImageUSD = 0.151;
     } else if (imageSize === "2K") {
@@ -41,7 +49,7 @@ export function calculateImagenCost(modelName: string, numImages: number = 1, im
     } else {
       perImageUSD = 0.067;
     }
-  } else if (modelName.includes("fast")) {
+  } else {
     perImageUSD = 0.039;
   }
   const costUSD = perImageUSD * numImages;
