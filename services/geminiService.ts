@@ -1,5 +1,33 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig, ConceptSuggestion } from "../types";
+import { reportToLark, calculateGeminiCost, calculateImagenCost } from "./larkService";
+
+const trackGeminiUsage = async (response: any, taskName: string) => {
+  try {
+    const usage = response?.usageMetadata;
+    if (usage) {
+      const { promptTokenCount = 0, candidatesTokenCount = 0 } = usage;
+      const { tokens, costUSD } = calculateGeminiCost(promptTokenCount, candidatesTokenCount);
+      const productCode = localStorage.getItem('elmich_ai_product_code') || 'N/A';
+      const productName = localStorage.getItem('elmich_ai_product_name') || taskName || 'Nhiệm vụ AI';
+      reportToLark(productCode, productName, tokens, costUSD);
+    }
+  } catch (error) {
+    console.error("Failed to track Gemini usage:", error);
+  }
+};
+
+const trackImagenUsage = async (modelName: string, numImages: number, taskName: string, imageSize?: string) => {
+  try {
+    const { costUSD } = calculateImagenCost(modelName, numImages, imageSize);
+    const productCode = localStorage.getItem('elmich_ai_product_code') || 'N/A';
+    const productName = localStorage.getItem('elmich_ai_product_name') || taskName || 'Tạo ảnh AI';
+    reportToLark(productCode, productName, 0, costUSD);
+  } catch (error) {
+    console.error("Failed to track Imagen usage:", error);
+  }
+};
+
 
 import designLifestyleConcept from '../Design_Lifestyle_Concept.md?raw';
 import designStudioCreative from '../Design_Studio_Creative.md?raw';
@@ -41,6 +69,7 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
         }
       }
     });
+    trackGeminiUsage(response, settings.productName || "Gợi ý AI");
     const result = JSON.parse(response.text || "{}");
     return {
       concepts: result.concepts || [],
@@ -120,6 +149,7 @@ Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn 
       }
     });
 
+    trackGeminiUsage(response, productName || "Phân tích Concept");
     return JSON.parse(response.text || "{}") as AIConceptAnalysis;
   } catch (error: any) {
     if (error.message?.includes("Requested entity was not found")) throw new Error("AUTH_ERROR");
@@ -182,6 +212,7 @@ YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT 
         }
       }
     });
+    trackGeminiUsage(response, productName || "Phân tích Tech/USP");
     const result = JSON.parse(response.text || "{}");
     return {
       concepts: result.concepts || [],
@@ -216,6 +247,7 @@ Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
         }
       }
     });
+    trackGeminiUsage(response, productName || "Đạo cụ Concept");
     return JSON.parse(response.text || "{}");
   } catch (error) { return { props: [], placement: "" }; }
 };
@@ -242,6 +274,7 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
         }
       }
     });
+    trackGeminiUsage(response, productName || "Hiệu ứng Tech");
     const result = JSON.parse(response.text || "{}");
     return {
       props: result.props || [],
@@ -289,6 +322,7 @@ YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT 
         }
       }
     });
+    trackGeminiUsage(response, productName || "Gợi ý Tech");
     const result = JSON.parse(response.text || "{}");
     return result.concepts || [];
   } catch (error) { return []; }
@@ -315,6 +349,7 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
         }
       }
     });
+    trackGeminiUsage(response, "Phân tích Phối cảnh");
     const result = JSON.parse(response.text || "{}");
     return result.items || [];
   } catch (error) { return []; }
@@ -389,6 +424,7 @@ Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và '
       }
     });
 
+    trackGeminiUsage(response, productName || "Phân tích Studio");
     return JSON.parse(response.text || "{}") as AIConceptAnalysis;
   } catch (error: any) {
     if (error.message?.includes("Requested entity was not found")) throw new Error("AUTH_ERROR");
@@ -436,7 +472,10 @@ let fallbackModel = finalModelName;
     
     if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
     for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      if (part.inlineData) {
+        trackImagenUsage(modelName, 1, "Chỉnh sửa ảnh", imageSize);
+        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      }
     }
     throw new Error("Không có ảnh.");  } catch (error: any) {
     throw error;
@@ -827,6 +866,7 @@ let responseBase64 = "";
         }
       });
       if (!response.generatedImages?.[0]?.image?.imageBytes) throw new Error("AI không phản hồi.");
+      trackImagenUsage(modelName, 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
       return `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
     } else {
       // Fallback cho việc edit hình / sử dụng input images với Gemini
@@ -844,7 +884,10 @@ let responseBase64 = "";
       });
       if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
       for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        if (part.inlineData) {
+          trackImagenUsage(fallbackModel, 1, settings.productName || "Tạo ảnh sản phẩm (Gemini)", settings.imageSize);
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
       }
       throw new Error("Không có ảnh.");
     }  } catch (error: any) { throw error; }
@@ -880,6 +923,7 @@ export const generateImageForChat = async (prompt: string, modelName: string = '
     if (resParts) {
       for (const part of resParts) {
         if (part.inlineData) {
+          trackImagenUsage(modelName, 1, "Tạo ảnh trong Chat");
           return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
       }
@@ -918,6 +962,7 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
         systemInstruction: "Bạn là một trợ lý AI tư vấn và lên ý tưởng hình ảnh sản phẩm. Luôn ưu tiên trả lời bằng tiếng Việt, trừ khi người dùng yêu cầu ngôn ngữ khác.",
       }
     });
+    trackGeminiUsage(response, "Trò chuyện trợ lý");
     return response.text || "No response generated.";
   } catch (error) {
     console.error("Chat generation failed:", error);

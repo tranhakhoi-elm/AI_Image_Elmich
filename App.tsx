@@ -261,6 +261,16 @@ const App: React.FC = () => {
     localStorage.setItem('elmich_ai_successful_prompts', JSON.stringify(successfulPrompts));
   }, [successfulPrompts]);
 
+  // Sync productName and productCode for background Lark tracking
+  useEffect(() => {
+    localStorage.setItem('elmich_ai_product_name', settings.productName || '');
+    if (settings.visualStyle === 'COLOR_CHANGE') {
+      localStorage.setItem('elmich_ai_product_code', 'sản phẩm mới');
+    } else {
+      localStorage.setItem('elmich_ai_product_code', settings.productCode || '');
+    }
+  }, [settings.productName, settings.productCode, settings.visualStyle]);
+
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [editModel, setEditModel] = useState('imagen-3.0-generate-002');
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
@@ -726,7 +736,10 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-[9px] font-bold text-white uppercase mb-2">Thông tin sản phẩm</label>
-                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                  <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+                </div>
                 <div className="grid grid-cols-3 gap-2 mt-2">
                    {['length', 'width', 'height'].map(f => (
                      <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-xs text-white outline-none focus:border-[#1877F2] transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
@@ -937,7 +950,10 @@ const App: React.FC = () => {
         >
           {techStep === 1 && (
             <div className="space-y-4">
-              <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+              <div className="grid grid-cols-3 gap-2">
+                <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+              </div>
               <textarea placeholder="Mô tả tính năng kỹ thuật..." className="w-full h-24 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white resize-none outline-none focus:border-[#1877F2] transition-colors custom-scrollbar" value={settings.techDescription} onChange={e => setSettings({...settings, techDescription: e.target.value})} />
               <div onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
                 {settings.productImages.length > 0 ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Ảnh SP</span>}
@@ -1157,7 +1173,10 @@ const App: React.FC = () => {
         >
           {packagingStep === 1 && (
             <div className="space-y-4">
-              <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+              <div className="grid grid-cols-3 gap-2">
+                <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+              </div>
               <div className="grid grid-cols-3 gap-2">
                  {['length', 'width', 'height'].map(f => (
                    <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-xs text-white outline-none focus:border-[#1877F2] transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
@@ -1294,8 +1313,11 @@ const App: React.FC = () => {
           {whiteBgStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Tên sản phẩm</label>
-                <input type="text" placeholder="Ví dụ: Ấm siêu tốc, Máy xay sinh tố..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <label className="block text-[9px] font-bold text-white uppercase mb-2">Thông tin sản phẩm</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                  <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+                </div>
               </div>
               
               <div>
@@ -1397,6 +1419,14 @@ const App: React.FC = () => {
     <div className="space-y-6">
       <div className="space-y-4">
         <div>
+          <label className="block text-[9px] font-bold text-white uppercase mb-2">Thông tin sản phẩm</label>
+          <div className="grid grid-cols-3 gap-2">
+            <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+            <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+          </div>
+        </div>
+
+        <div>
           <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh sản phẩm gốc (Nền trắng)</label>
           <div onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
              {settings.referenceImage ? (
@@ -1449,7 +1479,10 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-[9px] font-bold text-white uppercase mb-2">Thông tin sản phẩm</label>
-                <input type="text" placeholder="Tên sản phẩm..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                  <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+                </div>
                 <div className="grid grid-cols-3 gap-2 mt-2">
                    {['length', 'width', 'height'].map(f => (
                      <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-xs text-white outline-none focus:border-[#1877F2]" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
@@ -1668,7 +1701,10 @@ const renderTrackSocketWorkflow = () => (
             </div>
           )}
           
-          <input type="text" placeholder="Tên sản phẩm (VD: Thanh ray Chargee V2...)" className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+          <div className="grid grid-cols-3 gap-2">
+            <input type="text" placeholder="Tên sản phẩm (VD: Thanh ray Chargee V2...)" className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-400" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+            <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-400" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
+          </div>
 
           <button onClick={() => { 
             if(!settings.trackImage || !settings.sockets?.length) return setAlertMessage("Vui lòng tải đủ ảnh thanh ray và ít nhất 1 ổ cắm."); 
@@ -2021,7 +2057,11 @@ const renderTrackSocketWorkflow = () => (
   }
 
   const getDownloadFileName = (image: GeneratedImage) => {
-    return `elmich-ai-${image.id}.png`;
+    if (image.settings?.visualStyle === 'COLOR_CHANGE') {
+      return 'Sản phẩm mới.png';
+    }
+    const code = image.settings?.productCode?.trim();
+    return code ? `${code}.png` : `elmich-ai-${image.id}.png`;
   };
 
   const calculateCost = (image: GeneratedImage) => {
