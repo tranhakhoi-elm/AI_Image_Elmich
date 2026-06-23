@@ -1,65 +1,72 @@
-# Quy chuẩn Đổi Màu Sản Phẩm (Color Editing Style Guide)
+# Product Recoloring & Texture Fidelity Style Guide (Design_Color_Editing.md)
 
-Tài liệu này quy định chi tiết cách thiết lập bối cảnh, ánh sáng, xử lý phản xạ bề mặt và giữ vững kết cấu khi thực hiện tác vụ **Đổi Màu Sản Phẩm (Color Editing / Recoloring)** bằng AI trên hệ thống Elmich.
-
----
-
-## 1. Yêu Cầu Tiên Quyết: Đọc Quy Chuẩn Trước Khi Tạo Ảnh
-
-- **Bắt buộc đọc trước:** Mỗi khi hệ thống AI nhận được yêu cầu tạo ảnh hoặc tối ưu hóa prompt cho tác vụ Đổi Màu Sản Phẩm (Color Editing), AI **bắt buộc phải đọc toàn bộ file `/Design_Color_Editing.md` đầu tiên** trước khi viết prompt hay gọi API thực hiện inpainting/recoloring. Điều này đảm bảo AI hiểu sâu sắc các nguyên tắc bảo toàn hình học, luma và kỹ thuật masking để tránh nhòe lem màu sắc.
+This document establishes the precise technical standards, lighting parameters, surface reflection properties, and material constraints required for high-fidelity **Product Recoloring (Color Editing)** using artificial intelligence across the Elmich appliance ecosystem.
 
 ---
 
-## 2. Triết Lý Đổi Màu Thực Tế (High-Fidelity Recoloring Philosophy)
-Khi thay đổi màu sắc của một bộ phận linh kiện cụ thể trên sản phẩm (Ví dụ: thay đổi vỏ từ màu hồng nhạt sang màu xanh lá cây đậm hoặc màu vàng đồng lấp lánh):
-- **Bảo toàn hình học:** Khớp nối, ốc vít, các vết khắc chìm, nếp gấp biên dạng phải được giữ chuẩn xác đúng tỷ lệ 1:1, không được mờ đi hay biến dạng.
-- **Bảo toàn bề mặt:** Vùng mạ kim loại sáng bóng thì khi đổi màu vẫn phải duy trì tính ánh kim (metallic sheen). Vùng nhựa nhám matte khi đổi màu vẫn phải nguyên thớ thô xù mịn màng, không được đột ngột bóng lộn lên.
+## 1. Prerequisite Agent Verification Instruction
+
+- **Mandatory Pre-flight Review:** Before performing any prompt synthesis or API calls involving the Recoloring/Color Editing workflow, the generative model **MUST first read this entire document** (`/Design_Color_Editing.md`). This ensures absolute alignment with structural integrity, luma boundaries, and masking protocols to prevent color-leaking artifacts.
 
 ---
 
-## 2. Kỹ Thuật "Khoanh Vùng" (Inpainting / Vary Region)
-Hiện tại, việc đổi màu sản phẩm trên AI hiếm khi thành công 100% nếu chỉ dùng Text Prompt từ đầu. Yêu cầu bắt buộc người dùng (hoặc AI agent) phải sử dụng tính năng **Inpainting** (như Vary (Region) trên Midjourney).
-- **Quy tắc Masking:** Khoanh vùng chính xác bộ phận cần đổi màu.
-- **Chống lẹm màu:** Tuyệt đối không khoanh lẹm sang logo, tem nhãn (như chữ "Elmich") hay các khớp nối kim loại để tránh lỗi "thấm màu" (Color leakage).
+## 2. High-Fidelity Commercial Recoloring Philosophy
+
+When re-coating or modifying the color profile of a specific product component (e.g., changing a pan outer shell from soft pastel pink to anodized deep emerald or metallic copper):
+- **Geometric Invariance:** Every mechanical seam, screw head, embossed branding element, and outer silhouette contour must be preserved with 100% accuracy in a 1:1 ratio. No smoothing, morphing, or geometric distortion of the physical object shape is permitted.
+- **Surface Texture Preservation:** If the original surface is micro-textured matte plastic, the recolored version must preserve that exact diffuse roughness. If the surface is anodized aluminum, the recolored region must retain its native anisotropic satin sheen rather than becoming gloss-lacquered or flat-painted.
 
 ---
 
-## 3. Giao Thức Bảo Toàn Ánh Sáng & Độ Sáng (Luma & Specular Preservation)
-Mô tả chi tiết trong prompt của AI để tránh việc đổi màu dìm chết kết cấu tạo khối:
-- **Giữ Nguyên Vệt Sáng (Specular Highlight Retention):**
-  - *Nguyên lý:* Khi đổi chất liệu bề mặt sang màu sẫm (Ví dụ: Thân bếp màu Trắng sứ chuyển sang Đen nhám), các vệt bóng trắng phản xạ từ đèn Softbox ở studio rọi vào sản phẩm vẫn phải có màu trắng hoặc xám sáng, chứ không bị sẫm đen hóa theo lớp màu nền mới.
-  - *Prompt:* `"Keep the exact spatial coordinates of all specular highlights and light reflections from the original image. Only modify the diffuse color of the material while retaining pure white light reflections."`
-- **Ánh Sáng Màu (Reflected Tint Highlight):**
-  - *Nguyên lý:* Nếu bề mặt sản phẩm là màu xanh lá cây bóng sang trọng, vệt sáng phản chiếu xiên nhẹ ở rìa sản phẩm phải mang sắc hơi pha lục tinh tế (tinted reflections), tạo cảm giác sơn phủ bóng của công nghệ gia công hiện đại.
+## 3. Inpainting & Vary-Region Precision Control
+
+Replacing or editing colors dynamically relies heavily on coordinate-aligned **Inpainting / Vary Region** workflows rather than global image generation.
+- **Accurate Masking Boundary:** Masking must align precisely with the physical edges of the targeted component. 
+- **Non-Target Isolation:** Strictly exclude brand logos (such as "Elmich" inlays), metallic rims, transparent indicator windows, and structural heat-insulating gaskets from the edit mask to prevent catastrophic color spill or logo degradation.
 
 ---
 
-## 4. Bộ Từ Khóa Kiểm Soát Vật Liệu (Texture Lock Keywords)
-Để giải quyết triệt để lỗi "Biến đổi vật liệu gốc", cần cung cấp sẵn các cụm từ khóa (modifiers) để dán vào prompt tùy theo chất liệu:
-- **Nếu đổi màu nhựa nhám:** Thêm `matte finish, micro-textured surface, diffuse light reflection, non-glossy`.
-- **Nếu đổi màu kim loại xước:** Thêm `brushed metal texture, anisotropic reflections, metallic sheen, stainless steel core`.
-- **Nếu đổi màu sơn bóng:** Thêm `high-gloss car paint finish, sharp specular highlights, clear coat reflections`.
+## 4. Luminance & Specular Reflection Preservation (Luma Calibration)
+
+To avoid flat, lifeless color surfaces that compromise 3D volume, prompts must incorporate professional optical descriptors:
+- **Specular Highlight Retention:**
+  - *Principle:* When shifting a surface to a darker tone (e.g., transforming a white porcelain ceramic kettle into matte black finish), the white bright light reflections (specular highlights) cast by the studio softboxes must remain pure white/light-grey. They must not be muddied or tinted by the new dark diffuse color.
+  - *Engineering Prompt:* `"Preserve the exact coordinates, shapes, and brightness curves of all specular highlights and studio light reflections from the reference image. Modify only the diffuse/albedo color channel of the material while retaining pure white highlights."`
+- **Tinted Reflection Highlights (Specular Tinting):**
+  - *Principle:* High-gloss metallic or lacquer coats exhibit a subtle color tilt in their Fresnel edges. High-gloss anodized surfaces must show extremely subtle color-tinted reflections along the rim to mimic high-end manufacturing coating.
 
 ---
 
-## 5. Hiệu Ứng Loang Sáng Phản Chiếu (Color Bleed / Global Illumination)
-- **Sự Lan Tỏa Màu Sắc:**
-  - *Nguyên lý:* Khi một mảng diện tích lớn trên sản phẩm thay đổi sang màu nổi bật (Ví dụ: Đỏ mận, Cam san hô, Vàng hoàng kim), các bộ phận inox bên cạnh hoặc nền thớt gỗ trắng nằm ngay bên dưới sản phẩm phải tiếp nhận một dải màu mờ hắt nhẹ xuống (Color bleed/Bounce light).
-  - *Prompt:* `"Ensure soft indirect color bleeding (bounce lighting) from the newly colored surfaces onto adjacent metal trims or grounding surfaces for physical integration."`
-  - *Ý nghĩa:* Sự xuất hiện của dải màu hắt nhẹ này là chiếc khóa định hình giúp ảnh ghép trông thật 100% về mặt nhãn quan vật lý học.
+## 5. Advanced Material Texture Lock Keywords
+
+To block AI's tendency to mutate underlying materials during color transfers, apply specialized physical texture descriptors:
+- **Matte Polymer / Textured Plastic:** `matte finish, micro-textured non-slip polymer, high diffuse roughness, zero gloss coat, non-reflective`.
+- **Anodized or Brushed Metal:** `brushed metal texture, anisotropic reflections, metallic satin sheen, stainless steel core, linear grain finish`.
+- **Premium Gloss Lacquer & Car Paint:** `high-gloss clear coat finish, specular highlight retention, dual-layer automotive paint, sharp highlight borders`.
 
 ---
 
-## 6. Công Thức Prompt Mẫu (Inpainting Prompt Blueprint)
-Công thức rõ ràng khi thực hiện tác vụ Inpainting đổi màu:
-`[Hành động] + [Màu sắc mới mã Hex/Pantone hoặc mô tả] + [Vật liệu & Kết cấu bề mặt] + [Yêu cầu giữ nguyên ánh sáng gốc] + [Negative Prompt]`
+## 6. Color Bleeding & Global Illumination (GI Bounce)
 
-*Ví dụ:* `"Change the selected area to deep forest green, maintaining the original matte plastic texture. Keep the exact spatial coordinates of all specular highlights and light reflections. Ensure soft indirect bounce lighting. --no glossy, reflections shifting, flat color bucket."*
+- **Chromatic Spill Realism:**
+  - *Principle:* A large saturated recolored object (e.g., a dark crimson frying pan) will naturally scatter colored photons onto neighboring surfaces, such as polished stainless steel handles or white marble countertops beneath it.
+  - *Engineering Prompt:* `"Calculate soft indirect global illumination (bounce lighting) from the newly colored surfaces, casting a subtle, physically accurate color bleed (chromatic reflection) onto adjacent metallic trims or ground planes."`
+  - *Goal:* This physical light interaction is the ultimate anchor that makes recolored product renders indistinguishable from direct studio photographs.
 
 ---
 
-## 7. Những Điểm Cấm Kỵ Cần Tránh (Negative Guidelines)
-- **Hiện tượng bệt màu (Flat paint-bucket fill):** Trông mảng đổi màu như bị đổ sơn phẳng một cục trong Photoshop, làm mất sạch chiều sâu 3D, bóng đổ và các thớ vân mịn bề mặt.
-- **Thấm màu sang chi tiết khác (Color leakage/bleeding on non-target parts):** Tem thương hiệu "Elmich", nút nguồn bằng cao su đen hay tay nối kim loại bị dính luồng màu dịch chuyển lem nhem sang.
-- **Biến đổi vật liệu gốc (Material mutation):** Một bộ phận bằng nhựa ban đầu biến thành inox bóng loáng sau khi đổi màu, hoặc ngược lại.
-- **Mất cân bằng trắng (White balance tilt):** Đổi màu một bộ phận làm toàn bộ tông màu bối cảnh (background) bị thay đổi sắc độ ấm/lạnh theo một cách bất ổn.
+## 7. Standard Recoloring Prompt Blueprint
+
+Construct inpainted prompts utilizing this precise spatial hierarchy:
+`[Command Interface Trigger] + [Target Component Specifics] + [New Hex/Pantone Color Description] + [Advanced Surface Material and Finish Lock] + [Specular and Luma Preservation Protocol] + [GI Bounce Directive] + [Negative Parameter Restrictions]`
+
+*Photorealistic Example:* `"Inpaint target component to PANTONE 19-4052 Classic Blue with a high-end matte polymer finish. Retain the original micro-texture and diffuse roughness. Keep the exact spatial coordinates of all specular highlights and studio softbox light reflections. Ensure a soft, physically accurate chromatic color bleed onto the neighboring chrome handle. --no glossy, metallic sheen, shape mutation, blurry logo."*
+
+---
+
+## 8. Defect Prevention Checklist (Negative Guidelines)
+
+- **Flat Paint Bucket Artifacts (No Flatness):** The recolored area must never look like a flat, uniform 2D brush stroke. It must preserve all gradients, shadows, and subtle micro-shadowing that define its 3D depth.
+- **Color Over-bleeding (Leakage):** Brand logos (such as "Elmich"), indicator LED panels, touch sensors, and handle rivets must remain untouched by the color-shifting algorithm.
+- **Material Transmutation:** A plastic knob must not transform into polished metal or ceramic unless explicitly requested.
+- **White Balance Tilting:** Recoloring should be locally confined and never skew the overall ambient color temperature of the background or non-mask environments.

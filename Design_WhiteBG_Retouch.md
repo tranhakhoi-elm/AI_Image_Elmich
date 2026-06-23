@@ -1,69 +1,76 @@
-# Quy chuẩn Tạo Ảnh Nền Trắng (White BG Retouch Style Guide)
+# White BG Studio Retouching & Cleansing Guide (Design_WhiteBG_Retouch.md)
 
-Tài liệu này quy định chi tiết cách thiết lập bối cảnh, ánh sáng, vật liệu và chống méo hình học dành riêng cho tác vụ **Làm Ảnh Nền Trắng (White BG Retouch)** trên hệ thống AI Elmich.
-
----
-
-## 1. Triết Lý Thiết Kế Nền Trắng (White BG Philosophy)
-Mục tiêu tối thượng của làm sạch ảnh nền trắng thương mại là **bảo toàn 100% hình thể sản phẩm thực tế** (Original shape, contour, logo, text) và chỉ ứng dụng AI để **tái lập ánh sáng và bóng đổ vật lý tinh xảo** nhằm nâng tầm cao cấp của sản phẩm:
-- **Phong nền:** Trắng tinh khiết chuẩn studio (`#FFFFFF`), không hạt nhiễu, không vết loang hay bị nhiễm màu.
-- **Bắt góc:** Sử dụng tiêu cự dài (Focal length từ `70mm đến 105mm`) để khử hoàn toàn méo phối cảnh (perspective distortion-free).
-- **Độ nét:** Khẩu độ hẹp (`f/8 - f/11`) đảm bảo sản phẩm nét căng từ trước ra sau (infinite/deep depth of field).
+This technical guide regulates the precise photographic requirements, studio lighting properties, structural tolerances, and edge sanitization protocols required to generate flawless, premium **White Background Retouching (White BG Retouch)** images for Elmich products.
 
 ---
 
-## 2. Giao Thức Khống Chế Hình Học (Geometry Control Protocol)
-Nhằm triệt tiêu xu hướng tự ý bóp méo, bo viền cong không chuẩn xác của AI đối với đồ gia dụng hình trụ (ấm siêu tốc, bình giữ nhiệt, nồi liêu):
-- **Căn Trục (Axis Alignment):** 
-  - *Prompt:* `"Maintain absolute verticality for all cylindrical products. Ensure the base and lid are perfectly parallel to the horizon."`
-  - *Ý nghĩa:* Sản phẩm đứng thẳng vuông góc, nắp và đáy luôn song song với đường chân trời.
-- **Bảo Toàn Logo (Logo Integrity):**
-  - *Prompt:* `"Apply logo as a precise vector-based decal. No warping or distortion on curved surfaces. Strictly adhere to the brand placement."`
-  - *Ý nghĩa:* Giữ nguyên dạng vector của chữ "Elmich", không bẻ cong uốn lượn biến dạng trên bề mặt cong.
-- **Tỷ Lệ Thực Tế (Scale Reference):**
-  - *Prompt:* `"Ensure handle-to-body proportion follows exact product design standards, avoiding unnatural scaling or floating artifacts."`
+## 1. High-Fidelity White BG Retouching Philosophy
+
+The ultimate goal of commercial product isolation is to **conserve 100% of the physical design** (original contours, mechanical silhouettes, logos, and textures) of the appliance, using artificial intelligence exclusively to **reconstruct professional studio lighting and realistic physical shadows**:
+- **Pristine Studio Canvas:** The background must be flat, solid, seamless white (`#FFFFFF`) with zero noise, color casting, gradient leaks, or grey vignettes. It must fully eliminate old environment details (marble countertops, kitchen tiles, wood grains, walls, or floorboards).
+- **Perspective Distortion-Free:** Emulate a telephoto lens compression (Focal lengths ranging from `70mm to 105mm`) to completely negate raw wide-angle lens bloating.
+- **Deep Field Sharpness (Deep DOF):** Replicate a tight narrow aperture range (`f/8 to f/11`) to ensure the entire product is in tack-sharp focus from front to back (deep/infinite depth of field).
 
 ---
 
-## 3. Cấu Cụ Thể Từng Loại Vật Liệu (Material Specifics)
+## 2. Geometric Consistency & Axis Controls
 
-### 3.1. Nhóm Kim Loại (Inox xước, Thép bóng, Nhôm)
-- **Ánh Sáng & Phản Xạ:**
-  - Áp dụng hiệu ứng **Fresnel**: Phản xạ phản chiếu cực mạnh ở viền cong sườn hẹp, phản xạ dịu đi ở chính diện bề mặt nhìn thẳng.
-  - Vệt Sáng (Specular Highlights): Định dáng theo hình khối. Sản phẩm hình trụ cần có các vệt dọc dài mảnh (`sharp longitudinal highlights`) để định vị chiều cong 3D.
-  - Phản Xạ Dị Hướng (Anisotropic Reflection): Tạo thớ xước inox mờ sang trọng với thông số mài mờ: 
-    - *Prompt:* `"Use Anisotropic reflection with a blurriness factor of 0.05. Highlights must trace the contour of the object, not bloom uncontrollably."`
-- **Bóng Đổ (Shadows):** Rất đậm và cô đọng sát mép đáy (Contact shadow), loang dịu dần theo một hướng duy nhất (Soft ground shadow).
-
-### 3.2. Nhóm Nhựa & Polymer (Matte, Glossy, ABS)
-- **Tán Xạ Dưới Bề Mặt (Subsurface Scattering):** Tránh làm nhựa mờ trông bệt màu như giấy màu dán. Ánh sáng studio xuyên thấu một biên độ cực nhỏ (<0.2mm) tạo chiều sâu chất liệu polymer.
-- **Nhựa Nhám/Nhựa Chịu Nhiệt (Matte Polymer):**
-  - *Prompt:* `"Apply Micro-bump texture at 5% intensity to mimic high-grade food-safe plastic. Subtle Fresnel effect at the edges to show material thickness."`
-- **Nhựa Bóng (Glossy Polymer):** Giữ rõ viền phản chiếu của hộp sáng (Softbox highlights), phản xạ không bị nhòe mờ.
-
-### 3.3. Nhóm Thủy Tinh & Trong Suốt (Glass & Acrylics)
-- **Khúc Xạ & Tiêu Điểm Sáng (IOR & Caustics):**
-  - *Prompt:* `"Set Refraction Index (IOR) to 1.5 for borosilicate glass. Ensure the internal walls of the container are visible through the glass, with slight chromatic aberration at the edges to simulate professional camera optics."`
-- **Tách Biệt Khỏi Nền Trắng (Rim Isolation):** 
-  - *Prompt:* `"Employ subtle dark-field studio lighting setup with black flags to frame the transparent glass silhouette with pristine dark rim edges."`
-  - *Ý nghĩa:* Dùng dải đen định hình mỏng dọc thành bình thủy tinh để sản phẩm không bị hòa lẫn vào nền trắng tinh `#FFFFFF`.
-
-### 3.4. Nhóm Gốm Sứ & Lớp Phủ Chống Dính (Ceramics & Coatings)
-- **Vân Đá & Rỗ Siêu Nhỏ (Micro-displacement):**
-  - *Prompt:* `"Utilize grazing 45-degree studio companion light to reveal subtle speckled non-stick textures or ceramic glaze pores under micro-contrast lens properties."`
-- **Hai Lớp Phản Xạ (Double-layer Glaze):** Lớp sơn lót thô ráp chìm bên dưới, lớp men bóng gương phủ ngoài cùng tạo độ phản chiếu sâu thẳm sang trọng.
+To prevent AI from introducing unwanted organic curves or asymmetrical bloating into cylindrical appliances (such as electric kettles, thermoses, or stainless pots):
+- **Orthogonal Axis Alignment:**
+  - *Engineering Prompt:* `"Maintain absolute verticality for all cylindrical products. Ensure the base and lid are perfectly parallel to the horizon."`
+  - *Goal:* Keep the product standing perfectly vertical, with handles and lids accurately aligned.
+- **Logo Preservation:**
+  - *Engineering Prompt:* `"Apply logo as a precise vector-based decal. No warping or distortion on curved surfaces. Strictly adhere to the brand placement."`
+  - *Goal:* Prevent the "Elmich" brand text from bending, dissolving, or shifting positions.
+- **Symmetric Handle Proportions:**
+  - *Engineering Prompt:* `"Ensure handle-to-body proportion follows exact product design standards, avoiding unnatural scaling or floating artifacts."`
 
 ---
 
-## 4. Tái Tạo & Phục Hồi Bề Mặt Vật Liệu (Material Surface Reconstruction)
-Nhằm khắc phục tình trạng ảnh đầu vào chụp bằng điện thoại, thiếu sáng, bị nhiễu hạt (noise), hoặc phai màu, AI cần được cấu hình để tái tạo lại bề mặt chuẩn mực như chụp bằng máy ảnh độ phân giải cao:
-- **Khử Nhiễu & Tái Lập Chi Tiết (Denoise & Clarity Enhancement):**
-  - *Prompt:* `"Intelligently reconstruct the material surface to remove mobile-phone noise, color blocking, and low-light artifacts. Elevate the material quality to 8K commercial product photography standard, ensuring pristine, grain-free, and hyper-detailed textures."`
-- **Làm Sạch Bóng Loang (Clean Specular Blooming):** Loại bỏ các đốm sáng bóng mỡ nhòe nhẹt lộn xộn do đèn flash điện thoại gây ra, trả lại một bề mặt tản sáng mượt mà, đồng đều hoặc vệt cắt sáng sắc nét chuẩn Softbox studio.
+## 3. Advanced Material Rendering Specifications
+
+### 3.1. Brushed & Polished Metals (Stainless Steel, Chrome, Aluminum)
+- **Fresnel Physics:** Ensure strong, bright specular reflections along the high-curvature profile edges, fading to soft diffuse values on surfaces perpendicular to the camera angle.
+- **Structured Specular Highlights:** Cylindrical bodies must exhibit sharp, vertical highlights (longitudinal reflections) that outline the 3D form.
+- **Anisotropic Metal Grain:** Apply linear micro-grain reflections characteristic of premium brushed stainless steel:
+  - *Engineering Prompt:* `"Use Anisotropic reflection with a blurriness factor of 0.05. Highlights must trace the contour of the object, not bloom uncontrollably."`
+- **Tonal Contrast:** Retain deep, clean shadows under body joints, balanced with bright softbox highlights for maximum metallic impact.
+
+### 3.2. Polymers & Premium Synthetics (Matte, Glossy, ABS)
+- **Subsurface Scattering (Solid Thickness):** Guard against a thin Paper-mache appearance. Emulate a microscopic plastic light penetration depth (<0.2mm) to convey material weight and density.
+- **Premium Food-Safe Matte Plastic:**
+  - *Engineering Prompt:* `"Apply Micro-bump texture at 5% intensity to mimic high-grade food-safe plastic. Subtle Fresnel effect at the edges to show material thickness."`
+- **Sturdy Gloss Acrylics:** Capture smooth, mirrored curves from the softbox lights without creating raw pixelated flares.
+
+### 3.3. Optical Glass & Borosilicate Containers
+- **Refraction Index Precision (IOR):**
+  - *Engineering Prompt:* `"Set Refraction Index (IOR) to 1.5 for borosilicate glass. Ensure the internal walls of the container are visible through the glass, with slight chromatic aberration at the edges to simulate professional camera optics."`
+- **Dark-Field Silhouette Rendering (Isolating Glass Rims):**
+  - *Engineering Prompt:* `"Employ subtle dark-field studio lighting setup with black flags to frame the transparent glass silhouette with pristine dark rim edges."`
+  - *Goal:* This subtle dark framing ensures transparent glass handles and kettle bodies do not dissolve into the solid white `#FFFFFF` backdrop.
 
 ---
 
-## 5. Thiết Lập Ánh Sáng & Bóng Đổ Studio (Lighting & Shadows)
-- **Góc Ánh Sáng:** Sử dụng hệ thống tạt sáng mềm (`overhead softbox`), kết hợp vệt sáng hắt ven rìa để nâng khối.
-- **Bóng Tiếp Xúc (Contact Shadow):** Bắt buộc phải có một dải sẫm mịn sụp xuống ngay điểm tiếp sàn của đáy sản phẩm để sản phẩm "nặng", cố định chân thực trên mặt phẳng nằm ngang, thay vì lơ lửng vô lý.
-- **Bóng Đổ Mặt Đất (Ground Shadow):** Nhẹ, loang tản xa mềm mại, đồng bộ hướng đổ bóng một chiều duy nhất.
+## 4. Resolution Reconstruction & Image Denoising
+
+Product images received from mobile phones often suffer from compression noise, low-light color staining, or cheap flash flares. Configure the engine to rebuild premium physical surfaces:
+- **Commercial 8K Clarity Restoration:**
+  - *Engineering Prompt:* `"Intelligently reconstruct the material surface to remove mobile-phone noise, color blocking, and low-light artifacts. Elevate the material quality to 8K commercial product photography standard, ensuring pristine, grain-free, and hyper-detailed textures."`
+- **Specular Flare Cleansing:** Replace messy, bloated smartphone camera flares with clean, linear, and elegant vertical highlights resembling studio softbox reflections.
+
+---
+
+## 5. Absolute Background and Vignette Elimination
+
+To guarantee the canvas remains solid white from edge to edge:
+- **Total Environmental Purge:** Fully erase marble grains, kitchen tiles, wood sheets, or dusty walls near the product.
+- **Flat Border Thresholds:** The border and corner pixels of the frame must hit pure Hex white (`#FFFFFF`) with absolute flat values. No soft vignette halos or gradient transitions are allowed around the edges.
+- *Engineering Prompt:* `"Mechanically erase and completely purge all traces of the original background. There must be zero leakage of the previous floor, marble veins, kitchen cabinets, dust, or background patterns. The background must be flat, 100% solid, pure seamless white (#FFFFFF) from edge to edge with absolutely no vignetting, gray streaks, or color contamination."`
+
+---
+
+## 6. Physical Shadow Integration (Contact & Soft Ground Shadows)
+
+- **Overhead Softbox Lighting:** Maintain a professional overhead and key strobe setup for a balanced, premium volumetric feel.
+- **Contact Shadow (Ambient Occlusion):** Establish a very tight, dark, sharp shadow directly at the grounding base of the appliance. This anchors the product firmly to the floor so it does not appear to be floating.
+- **Soft Ground Shadow:** Add a gentle, single-direction shadow that softens and diffuses outward, aligning with the Key Light angle.

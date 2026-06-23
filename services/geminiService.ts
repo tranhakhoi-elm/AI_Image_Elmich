@@ -618,7 +618,9 @@ ${designWhiteBGRetouch}
 
 ${stylePrompt}
  
-CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product must remain exactly as it appears in the reference image. The background is a clean, pure white without any visible texture or color contamination. All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
+CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product must remain exactly as it appears in the reference image.
+BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pure seamless white (#FFFFFF) from edge to edge. You must completely strip, wipe out, and erase any traces, vertical streaks, dark edges, vignetting, wood grains, walls, or marble veins from the source image's environment. Absolutely zero shadows or gray remnants should leak into the sides of the frame.
+All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 Additional Instructions: ${settings.concept || 'None'}
 Camera Setup: ${formatCameraSettings(settings.camera)}`;
   } else if (settings.visualStyle === "LINE_ART") {
@@ -637,6 +639,8 @@ Style constraints:
 No shading, no shadows, no gradients, no colors, no 3D realistic effects, no textures. 
 Only crisp, continuous, and precise black lines defining the outer shape and essential inner contours of the product. 
 Flat 2D vector style. High clarity, simple schematic outline.
+
+BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pure seamless white (#FFFFFF) from edge to edge. You must completely strip, wipe out, or erase any traces, vertical streaks, dark edges, vignetting, wood grains, walls, floors, or marble veins from the source image's environment. Absolutely zero shadows, grey remnants, or gradient borders should leak into the sides or corners of the frame.
     `;
   } else if (settings.visualStyle === "COLOR_CHANGE") {
     const changes = settings.colorChanges.map((c, i) => {

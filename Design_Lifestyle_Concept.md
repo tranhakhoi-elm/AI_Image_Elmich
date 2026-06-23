@@ -1,66 +1,73 @@
-# Quy chuẩn Phối Cảnh Đời Sống & Sắp Đặt (Lifestyle Concept & Scene Staging Style Guide)
+# Lifestyle Concept & Scene Staging Style Guide (Design_Lifestyle_Concept.md)
 
-Tài liệu này quy định chi tiết cách phối cảnh, sắp đặt không gian, căn chỉnh camera đời sống và nguyên tắc phối màu cho các chế độ **Phối Cảnh Ý Tưởng (Concept)** và **Dựng Cảnh Thật (Scene Staging)** trên hệ thống AI Elmich.
-
----
-
-## 1. Yêu Cầu Tiên Quyết: Đọc Quy Chuẩn Trước Khi Tạo Ảnh
-
-- **Bắt buộc đọc trước:** Mỗi khi hệ thống AI nhận được yêu cầu tạo ảnh hoặc tối ưu hóa prompt cho phong cách Phối Cảnh Đời Sống / Dựng Cảnh Thật (Lifestyle / Scene Staging), AI **bắt buộc phải đọc toàn bộ file `/Design_Lifestyle_Concept.md` đầu tiên** trước khi viết prompt hay gọi API sinh ảnh. Điều này đảm bảo AI hiểu rõ cách bài trí, ánh sáng, góc máy và không khí hiện đại, sang trọng của Elmich.
+This styling manual defines the exact technical parameters for scene staging, spatial arrangement, camera optics, natural lighting, and color theory for the **Concept (Lifestyle)** and **Scene Staging** modes in the Elmich AI application.
 
 ---
 
-## 2. Triết Lý Thiết Kế Phối Cảnh Đời Sống
-Chế độ phong cách sống không đơn thuần là đặt một sản phẩm lên bàn bếp, mà là kể một câu chuyện nghệ thuật ẩm thực cảm xúc (Emotional Culinary Storytelling).
-- **Mục tiêu:** Tạo nên những bức ảnh truyền thông mang hơi thở ấm áp của gia đình hiện đại nhưng vẫn sang trọng, mang đậm chất tạp chí ẩm thực Kinfolk hay các thương hiệu gia dụng cao cấp Châu Âu.
-- **Tính tự nhiên:** AI phải lồng ghép sản phẩm vào bối cảnh một cách liền mạch từ bóng đổ tự nhiên, khúc xạ ánh sáng trên mặt bếp, đến sự tương tác vật lý thực tế của thực phẩm tươi sống lên bề mặt sản phẩm.
-- **Bố Cục Trang Trí (Clean & Neat Decor):** Tuy mang hơi thở đời sống, nhưng phong cách bài trí phải tuyệt đối gọn gàng, hướng tới sự hiện đại (modern) và trẻ trung (youthful). Tuyệt đối tránh sự bừa bộn, rườm rà quá mức đời thường (not overly casual).
-- **Không Gian Âm (Aesthetic Negative Space):** Luôn chừa khoảng trống thẩm mỹ (tường trơn, mặt gỗ trống, góc trên mờ nhòe) để đội ngũ marketing dễ dàng chèn typography, slogan giá cả hoặc banner khuyến mãi.
+## 1. Prerequisite Agent Verification Instruction
+
+- **Mandatory Pre-flight Review:** Whenever the AI system receives a request to generate or optimize prompts for the Lifestyle / Scene Staging style, the system **MUST first read this entire document** (`/Design_Lifestyle_Concept.md`) to align with spatial composition, optical settings, and styling standards for Elmich luxury home visual staging.
 
 ---
 
-## 2. Thông Số Máy Ảnh & Góc Nhìn (Lifestyle Camera Specs)
-Đối với bối cảnh đời sống, góc máy cần tạo cảm giác người xem đang trực tiếp trải nghiệm không gian chân thực.
-- **Tiêu cự & Khẩu độ:** Sử dụng tiêu cự `50mm` hoặc `85mm` kết hợp khẩu độ rộng `f/2.2` - `f/3.5`. Mục đích là giữ độ nét căng (sharp focus) ở bề mặt sản phẩm chính, trong khi tiền cảnh (foreground) và hậu cảnh (background) tạo hiệu ứng bokeh mờ mịn, làm tăng chiều sâu trường ảnh (depth of field).
-- **Góc xéo từ trên xuống (30-degree overhead angle):** Tuyệt vời để mô tả mặt bàn ăn được bày biện phong phú (thớt gỗ, đĩa thức ăn, ly nước, v.v.).
-- **Góc ngang tầm mắt (Eye-level medium shot):** Phù hợp để diễn tả không gian tổng thể như một chiếc bình giữ nhiệt đặt cạnh cửa sổ đón nắng chiếu vào.
-- **Bố cục 1/3 (Rule of Thirds):** Tránh luôn luôn đặt sản phẩm chính xác ở tâm điểm chết. Đặt sản phẩm lệch nhẹ sang trục 1/3 trái hoặc phải, và dùng các đạo cụ bổ trợ như thớt gỗ, măng tây, lát chanh tươi hoặc lọ hoa nhỏ ở phía đối diện để cân bằng thị giác.
+## 2. High-End Lifestyle Product Photography Philosophy
+
+Commercial lifestyle imagery does not merely place a product on a kitchen counter; it curates an emotional story around modern culinary arts (Emotional Culinary Storytelling).
+- **Core Objective:** Design highly aspirational, warm, and elegant kitchen scenes that match the editorial aesthetic of premium magazines (e.g., Kinfolk, Epicurean, Cook's Illustrated) or European high-end appliance portfolios.
+- **Physical Integration:** The product must reside organically within its staging environment. This is achieved through calculated soft shadows, light refraction on glass cooktops, and realistic physical interaction of fresh ingredients on surfaces.
+- **Minimalist & Clean Decor (Aesthetic Order):** Staging must be clean, deliberate, and modern. Avoid chaotic household mess or over-decorating. Props should frame rather than crowd the principal product.
+- **Strategic Negative Space:** Maintain elegant, clean background surfaces (such as flat pastel walls, soft-focus matte tiling, or an empty section of the countertop) to provide adequate space for marketing typography, promotional badges, or pricing overlays.
 
 ---
 
-## 3. Ánh Sáng Tự Nhiên & Thời Gian (Natural Lighting & Time of Day)
-Thay vì ánh sáng 3 điểm gắt gao của Studio, Lifestyle cần hệ thống ánh sáng mang tính thời điểm (ambient lighting) để kích thích cảm xúc chân thực:
-- **Morning Sunlight:** Ánh nắng mai trong trẻo chiếu xiên qua cửa sổ, tạo ra các vệt sáng dài nhạt và đổ bóng sắc nét trên mặt bàn/cạnh bếp.
-- **Dappled Light (Gobo Lighting):** Hiệu ứng ánh sáng lốm đốm hắt qua khối tán lá cây hoặc rèm cửa sổ, mang lại cảm giác cực kỳ thơ mộng, hữu tình và tự nhiên.
-- **Golden Hour:** Ánh sáng vàng ấm áp của buổi chiều tà, rất thích hợp cho các concept bữa tối gia đình hoặc đồ gia dụng làm bằng gỗ, kim loại tối màu.
+## 3. Camera Optics, Composition, and Angling (Staging Camera Specs)
+
+To make scenes feel authentic and premium, the camera settings must mimic high-end commercial lenses:
+- **Optical Focal Length & Aperture:** Use a tight focal length (`50mm` or `85mm`) combined with a shallow depth of field (wide apertures like `f/2.2` to `f/3.5`). This ensures the main product is in razor-sharp focus (tack-sharp), while the foreground and background fade out into a smooth, creamy bokeh.
+- **30-Degree Overhead Angle (Three-Quarter Angling):** Exceptional for tabletop settings, capturing the surface of a wood or marble board filled with structured culinary assets (e.g., cutting boards, ingredients, spices).
+- **Eye-Level Medium Shot:** Ideal for appliances like kettles, blenders, or thermal carafes positioned against windows to capture vertical silhouettes and backlight.
+- **Rule of Thirds & Visual Balance:** Avoid centering the main product in a static middle-dead-center position. Displace it slightly along the left or right vertical third axis, balancing the image with out-of-focus background assets (like a miniature vase, a stack of linen plates, or fresh herbs).
 
 ---
 
-## 4. Hơi Thở Con Người & Bố Trí Thực Phẩm (The Human Touch & Food Styling)
-Bức ảnh đời sống sẽ tạo ra sự kết nối cảm xúc mạnh mẽ hơn nếu có yếu tố con người hoặc thực phẩm đang được chế biến:
-- **Hành Động Ngầm (Implied Action):** Thêm vào các từ khóa mô tả hành động chuyển động tĩnh như "bàn tay đang rót nước", "hơi nước bốc lên ngùn ngụt từ nắp nồi", "những giọt sương lạnh đọng trên lát chanh tươi" hoặc "cà chua bi mọng nước vừa được rửa sạch".
-- **Kết Cấu Thực Phẩm (Food Texture):** Yêu cầu mô tả thực phẩm cực kỳ chi tiết chuẩn Cinematic Food Photography. Ví dụ: Khúc cá hồi tươi nguyên bản thấy rõ sớ thịt ẩm mượt, cọng măng tây xanh mướt giòn rụng, hay đĩa gốm trơn mịn không gờ nhẹ nhàng phản chiếu ánh sáng.
+## 4. Atmospheric / Natural Lighting Dynamics
+
+Instead of harsh 3-point studio lighting, lifestyle scenes must feel organic and tied to a specific time of day:
+- **Morning Sunlight:** Soft, crisp morning light entering from a side window, casting elongated, gentle, desaturated shadows across the kitchen counter.
+- **Dappled Gobo Lighting:** Soft light filtering through tree foliage or window blinds, introducing poetic, natural speckled shade matrices across the culinary stage.
+- **Golden Hour Warmth:** Warm, golden-amber afternoon rays. Highly effective for cozy family dinner concepts, rustic wood staging, or cast-iron and copper kitchenware.
 
 ---
 
-## 5. Bảng Màu & Không Gian Nội Thất Tối Giản (Color & Interior)
-Ưu tiên phối màu tương đồng (`Analogous Palette`) hoặc tương phản nhẹ (`Soft Complementary`). Tuyệt đối bài trừ việc phối màu lòe loẹt, sặc sỡ.
-- **Scandinavian / Nordic Home:** Tone màu pastel lạnh dịu, gỗ sồi sáng màu, thảm dệt dầy vặn thừng, ánh nắng mai lọt qua khe cửa sổ tạt nhẹ.
-- **Modern Minimalist Kitchen:** Mặt bàn phiến đá granite màu xám tro, tường xi măng thô mộc, bát đĩa gốm mộc màu kem nhám, bình hoa cỏ đuôi chồn phảng phất tự nhiên.
-- **Cozy Warm Wood Cabin:** Tone màu óc chó trầm ấm, ánh sáng tạt ấm áp kiểu hoàng hôn rọi xiên qua kẽ lá mờ nhạt.
+## 5. Food Styling & Implicit Human Touch
+
+Enrich scenes by indicating culinary activity and microscopic item textures:
+- **Implied Action:** Build sensory cues into the prompt, such as "rising vapor/steam from a lifting lid," "a hand pouring fresh cold water," "microscopic condensation beads running down a frosted pitcher," or "freshly harvested, wet olive sprigs on the side."
+- **Premium Food Styling:** Detail culinary assets with tactile realism. For example, describe "moist, marble-patterned salmon fillets with visible glistening muscle fibers searing inside the pan," "vibrant green snap peas with crisp, dewy pods," or "rustic hand-thrown ceramic bowls with a textured matte finish."
 
 ---
 
-## 6. Công Thức Đặt Prompt Tiêu Chuẩn (Lifestyle Prompt Blueprint)
-Công thức tối ưu để định hướng AI sinh ra ảnh Concept Lifestyle chuẩn xác:
-`[Không gian nội thất] + [Sản phẩm chính & Tương tác thực phẩm/Con người] + [Góc máy & Tiêu cự] + [Loại ánh sáng tự nhiên] + [Đạo cụ bổ trợ/Food styling] + [Negative Prompt]`
+## 6. Curated Minimalist Interior Styles
 
-*Ví dụ:* `"Interior: Modern minimalist kitchen with grey granite countertop. Product: Elmich stainless steel frying pan, a fresh rectangular salmon fillet sizzling inside with steam rising. Camera: 50mm, f/2.8, 30-degree overhead angle. Lighting: Dappled morning sunlight shining through window blinds. Props: Fresh green asparagus and sliced lemons on a wooden cutting board nearby, blurred background. Hyper-realistic, cinematic food photography."*
+Confine staging environments to one of three premium interior design styles:
+- **Japandi / Scandinavian Kitchen:** Cool pastel walls, warm natural light Oak wood counters, thick linen weave textiles, and bright morning sunbeams.
+- **Modern Industrial / Charcoal Slate Kitchen:** Brutalist honed dark granite or concrete slabs, dark textured brick accents, matte black stoneware, and soft moody backlighting.
+- **Cozy Mountain Hearth (Warm Luxury Wood Cabin):** Rich, dark Walnut or Mahogany surfaces, glowing ambient embers or sunset window reflections, brass and iron hardware.
 
 ---
 
-## 7. Những Lỗi Thường Gặp Cần Tránh (Negative Guidelines)
-- **Hỗn loạn phối cảnh (Perspective misalignment):** Sản phẩm đứng ở góc nghiêng này nhưng mặt bàn, đĩa bát xung quanh lại xiên theo một mặt phẳng phẳng lệch lạc vô lý.
-- **Rác bối cảnh (Background clutter):** Tránh xuất hiện dây điện, vòi nước cũ kỹ, phích cắm lộn xộn hoặc các vật dụng dơ bẩn của đời sống thực làm mất đi sự sang trọng.
-- **Sai lệch tỷ lệ (Unrealistic scale):** Kích thước lát chanh không được to gấp đôi tay cầm, ly thủy tinh không được vươn bổng cao bằng cấu trúc bình đun nước chính.
-- **Quá sạch sẽ cứng nhắc (Sterile perfection):** Một bức ảnh đời sống không nên phẳng lỳ như ảnh render 3D giả tạo; có thể điểm xuyết sự chân thực bằng vài giọt nước mỏng trong vắt vương trên mặt bàn. Tuy nhiên, tuyệt đối không làm dơ bẩn bối cảnh bằng vụn rác bừa bộn hằng ngày; bố cục decor phải luôn duy trì sự ngăn nắp, hiện đại.
+## 7. Standard Lifestyle Prompt Blueprint
+
+Construct lifestyle prompts using this highly detailed architectural checklist:
+`[Staging Interior Style] + [Primary Product + Food Interaction/Implicit Action] + [Camera Spec, Focal Length, and Aperture Setting] + [Specific Ambient Lighting Modifiers] + [Props & Food Styling Assets] + [Depth of Field & Negative Parameters]`
+
+*Editorial Example:* `"Interior: Sleek Japandi kitchen with honed white marble countertops. Product: Elmich premium stainless steel frying pan, a fresh king salmon fillet sizzling inside with realistic steam rising. Camera: 85mm portrait lens, f/2.2, eye-level angled shot. Lighting: Atmospheric dappled sunlight filtering through window blinds. Props: Scattering of fresh green asparagus spears and organic lemon slices on a nearby rustic oak cutting board with a shallow depth of field. Hyper-realistic, professional food photography, cinematic depth, Kinfolk style."`
+
+---
+
+## 8. Defect Prevention Checklist (Negative Guidelines)
+
+- **Perspective Distortion (Isometric Clashing):** Ensure background counters, tiled walls, and dishes are aligned to a single unified coordinate space. No skewed perspectives.
+- **Background Clutter (Household Noise):** Eliminate visual debris such as tangled electrical cables, old faucets, plastic bottles, dirty kitchen towels, or messy wall plugs.
+- **Unrealistic Scale Matching:** Guard against mismatched item proportions. A single lemon slice must not appear larger than a pot handle; a salt shaker must not tower over a cooking blender.
+- **Sterile CG Modeling:** Avoid raw, clinical 3D renders with perfectly flat surfaces. Staging thrives on minuscule, realistic flaws: a tiny droplet of water on the granite, a slight weave inconsistency in the linen, or a faint scratch on the cutting board. Keep the scene pristine but naturally organic.
