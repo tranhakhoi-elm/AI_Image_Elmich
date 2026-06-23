@@ -710,13 +710,21 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     }
 
     const thinkingPrompt = `
-      You must read and strictly adhere to the following style and rules guide before writing the prompt:
-      === STYLE GUIDE & RULES ===
-      ${selectedStyleGuide}
-      ===========================
+      Act as Elmich's Head of Creative, a senior commercial product photographer and expert prompt engineer. You must read and strictly adhere to the following three master styling manuals of Elmich AI Image Studio to write the absolute best prompt:
+      
+      === MASTER MANUAL 1: LIFESTYLE CONCEPT (BỐ CẢNH ĐỜI SỐNG ANH/CHỊ ĐÒI HỎI) ===
+      ${designLifestyleConcept}
+      
+      === MASTER MANUAL 2: CREATIVE STUDIO PRO (CHỤP TRONG STUDIO/PHÔNG NỀN TRƠN) ===
+      ${designStudioCreative}
+      
+      === MASTER MANUAL 3: TECH EFFECTS & VISUALS (HIỆU ỨNG CÔNG NGHỆ LOOPS VÀ PHYSICS) ===
+      ${designTechEffects}
+      
+      =============================================================================
 
-      Act as an expert AI image generation prompt engineer and professional commercial product photographer.
-      Write a highly detailed, descriptive, and professional image generation prompt (in English) for a ${mode}.
+      Generate a highly detailed, descriptive, and professional image generation prompt (in English) for a ${mode}.
+      Please apply the specific rules of the current selected style: "${settings.visualStyle}" (Main guide: ${settings.visualStyle === "CONCEPT" ? "LIFESTYLE" : settings.visualStyle === "STUDIO" ? "STUDIO" : "TECH EFFECTS"}), but cross-reference elements from the other manuals to guarantee absolute quality (e.g., maintain the premium material reflections, pristine geometry, absolute verticality, correct light bleed, and avoiding chaotic Sci-Fi graphics at all costs).
       
       Product: ${settings.productName}
       Creative Concept/Theme: ${settings.concept}
@@ -740,7 +748,13 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       3. Shadow Structure: Must include contact shadows (stark black at the base), soft gradient key shadows, and feathered extrusion shadows for handles.
       4. Lighting System: 3-Point Lighting System (Key Light, Fill Light, Rim Light).
       
+      ASPECT RATIO SPECIFIC COMPOSITION DIRECTIVES:
+      - Current Aspect Ratio: ${settings.aspectRatio}
+      - For extremely wide aspect ratios (such as '4:1' or '16:9'), do NOT center a single tiny product in an empty void. Instead, design a breathtaking wide panoramic landscape/tabletop composition. Describe how the countertop, stone slabs, paper backdrop, or floor continuously extend horizontally from left to right across the ultra-wide frame. Place the main product strictly once, ideally offset to the left or right third (rule of thirds), and let the gorgeous ambient scenery or soft matching props (such as scattered ingredients, plants, glassware) flow elegantly along the horizontal axis, forming beautiful negative space.
+      - For extremely tall aspect ratios (such as '1:4' or '9:16'), design a vertical cascading composition where elements stack elegantly vertically.
+      
       STRICT AVOIDANCE (NEGATIVE PROMPT EQUIVS):
+      - NO DUPLICATION: Under no circumstances should there be multiple copies, ghost shapes, blurred visual echoes, double images, or floating duplicate pieces of the main product. The main product must appear exactly ONCE in the entire image.
       - Avoid distorted logos, skewed geometry, non-functional hinges, floating parts.
       - Avoid over-saturated colors, unrealistic bloom, plastic-looking metal, blurry reflections.
       - Avoid inconsistent shadow direction, multiple light sources causing conflicting shadows.
@@ -856,10 +870,14 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       modelName = 'imagen-3.0-generate-002';
       imageConfig.imageSize = settings.imageSize;
     }
-let responseBase64 = "";
+    let responseBase64 = "";
 
-    // Nếu model là Imagen 3.0 và KHÔNG CÓ input images nào (parts.length === 1)
-    if (modelName.startsWith('imagen') && parts.length === 1) {
+    // Imagen 3.0 ONLY supports: '1:1', '3:4', '4:3', '9:16', '16:9'
+    const standardAspectRatios = ['1:1', '3:4', '4:3', '9:16', '16:9'];
+    const isStandardRatio = standardAspectRatios.includes(settings.aspectRatio);
+
+    // Nếu model là Imagen 3.0, tỉ lệ được hỗ trợ bởi Imagen, và KHÔNG CÓ input images nào (parts.length === 1)
+    if (modelName.startsWith('imagen') && parts.length === 1 && isStandardRatio) {
       const response = await ai.models.generateImages({
         model: modelName,
         prompt: parts[0].text,
@@ -873,12 +891,11 @@ let responseBase64 = "";
       trackImagenUsage(modelName, 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
       return `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
     } else {
-      // Fallback cho việc edit hình / sử dụng input images với Gemini
+      // Fallback cho việc edit hình / sử dụng input images với Gemini, hoặc khi tỉ lệ khung hình là tùy chỉnh (ví dụ 1:4, 4:1)
       let fallbackModel = modelName;
-      if (modelName.startsWith('imagen-3.0-generate-002')) {
+      if (modelName.startsWith('imagen-3.0-generate-002') || modelName.startsWith('imagen')) {
+          // Gemini-3.1-flash-image-preview supports custom aspect ratios (like 1:4 and 4:1) perfectly
           fallbackModel = 'gemini-3.1-flash-image-preview';
-      } else if (modelName.startsWith('imagen')) {
-          fallbackModel = 'gemini-2.5-flash-image';
       }
 
       const response = await ai.models.generateContent({
