@@ -32,14 +32,14 @@ To prevent AI from introducing unwanted organic curves or asymmetrical bloating 
 ### 3.1. Brushed & Polished Metals (Stainless Steel, Chrome, Aluminum)
 - **Fresnel Physics:** Ensure strong, bright specular reflections along the high-curvature profile edges, fading to soft diffuse values on surfaces perpendicular to the camera angle.
 - **Structured Specular Highlights:** Cylindrical bodies must exhibit sharp, vertical highlights (longitudinal reflections) that outline the 3D form.
-- **Anisotropic Metal Grain:** Apply linear micro-grain reflections characteristic of premium brushed stainless steel:
-  - *Engineering Prompt:* `"Use Anisotropic reflection with a blurriness factor of 0.05. Highlights must trace the contour of the object, not bloom uncontrollably."`
+- **Anisotropic Metal Luster:** Apply smooth, uniform anisotropic reflections characteristic of premium brushed stainless steel:
+  - *Engineering Prompt:* `"Use smooth Anisotropic reflections with a blurriness factor of 0.05. Metallic surfaces must be impeccably clean, polished, and free of any dirty marks, grain, or visual noise."`
 - **Tonal Contrast:** Retain deep, clean shadows under body joints, balanced with bright softbox highlights for maximum metallic impact.
 
 ### 3.2. Polymers & Premium Synthetics (Matte, Glossy, ABS)
 - **Subsurface Scattering (Solid Thickness):** Guard against a thin Paper-mache appearance. Emulate a microscopic plastic light penetration depth (<0.2mm) to convey material weight and density.
 - **Premium Food-Safe Matte Plastic:**
-  - *Engineering Prompt:* `"Apply Micro-bump texture at 5% intensity to mimic high-grade food-safe plastic. Subtle Fresnel effect at the edges to show material thickness."`
+  - *Engineering Prompt:* `"Apply a perfectly smooth and pristine matte finish to mimic high-grade food-safe plastic, ensuring a clean, uniform, and grain-free surface. Subtle Fresnel effect at the edges to show material thickness."`
 - **Sturdy Gloss Acrylics:** Capture smooth, mirrored curves from the softbox lights without creating raw pixelated flares.
 
 ### 3.3. Optical Glass & Borosilicate Containers
@@ -55,7 +55,7 @@ To prevent AI from introducing unwanted organic curves or asymmetrical bloating 
 
 Product images received from mobile phones often suffer from compression noise, low-light color staining, or cheap flash flares. Configure the engine to rebuild premium physical surfaces:
 - **Commercial 8K Clarity Restoration:**
-  - *Engineering Prompt:* `"Intelligently reconstruct the material surface to remove mobile-phone noise, color blocking, and low-light artifacts. Elevate the material quality to 8K commercial product photography standard, ensuring pristine, grain-free, and hyper-detailed textures."`
+  - *Engineering Prompt:* `"Intelligently reconstruct the material surface to remove mobile-phone noise, color blocking, and low-light artifacts. Elevate the material quality to 8K commercial product photography standard, ensuring pristine, grain-free, dust-free, and hyper-detailed clean textures."`
 - **Specular Flare Cleansing:** Replace messy, bloated smartphone camera flares with clean, linear, and elegant vertical highlights resembling studio softbox reflections.
 
 ---
@@ -65,7 +65,7 @@ Product images received from mobile phones often suffer from compression noise, 
 To guarantee the canvas remains solid white from edge to edge:
 - **Total Environmental Purge:** Fully erase marble grains, kitchen tiles, wood sheets, or dusty walls near the product.
 - **Flat Border Thresholds:** The border and corner pixels of the frame must hit pure Hex white (`#FFFFFF`) with absolute flat values. No soft vignette halos or gradient transitions are allowed around the edges.
-- *Engineering Prompt:* `"Mechanically erase and completely purge all traces of the original background. There must be zero leakage of the previous floor, marble veins, kitchen cabinets, dust, or background patterns. The background must be flat, 100% solid, pure seamless white (#FFFFFF) from edge to edge with absolutely no vignetting, gray streaks, or color contamination."`
+- *Engineering Prompt:* `"Place the product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND. The entire background surrounding the isolated product must be a pristine, uniform, seamless, and flat digital white canvas from edge to edge with absolute zero vignetting, zero shading, or grey streaks. The background is completely solid, plain, and empty white. The border and corner pixels of the image must be perfect flat #FFFFFF white. Absolutely NO noise, NO dust, NO specks, and NO dirty smudges are allowed on either the product or the background."`
 
 ---
 

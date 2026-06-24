@@ -582,19 +582,19 @@ Output style: Premium commercial packaging mockup, hyper-detailed rendering, pho
 
     let materialDirectives = "";
     if (selectedCats.includes("METAL")) {
-      materialDirectives += `\n- Metallic Parts (Kim loại): Auto-detect and render highly realistic metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster without overexposure.`;
+      materialDirectives += `\n- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, free of any digital noise, stains, or dirty smudges.`;
     }
     if (selectedCats.includes("PLASTIC")) {
-      materialDirectives += `\n- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Maintain their matte, high-gloss, or textured polymer characteristics. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers.`;
+      materialDirectives += `\n- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely free of any grain, spots, or dust.`;
     }
     if (selectedCats.includes("GLASS")) {
-      materialDirectives += `\n- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible.`;
+      materialDirectives += `\n- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, streak-free, and crystal clear.`;
     }
     if (selectedCats.includes("CERAMIC")) {
-      materialDirectives += `\n- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render smooth ceramic gloss, glaze texturing, or premium speckled non-stick coatings. Emphasize micro-textures and soft, diffused light absorption without harsh glare spots.`;
+      materialDirectives += `\n- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely free of any physical dust, specks, blemishes, or noise.`;
     }
     if (materialDirectives === "") {
-      materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation.";
+      materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, free of any visual artifacts or dust.";
     }
 
     stylePrompt = `High-detail, professional commercial studio product photography of a single ${productName}, meticulously isolated on a pure, solid white background (#FFFFFF).
@@ -621,11 +621,11 @@ ${stylePrompt}
 CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product must remain exactly as it appears in the reference image.
 
 BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY):
-- We are converting this product photo with a busy kitchen/home environment into a professional commercial catalog e-commerce image on a PURE #FFFFFF SOLID WHITE BACKGROUND.
-- YOU MUST COMPLETELY ERADICATE, DISCARD, AND PURGE THE ENTIRE ORIGINAL BACKGROUND. The original image has kitchen wall tiles, grout lines, wood/marble countertops, cabinets, wall textures, floorboards, and room elements. ALL of these must be 100% erased and made completely invisible.
-- The new background must be a pristine, uniform, seamless, flat, and solid '#FFFFFF' digital white canvas from edge to edge. Under no circumstances should there be any soft grey vignettes, dirty-looking side shading, vertical lines, square pattern grids, tile remnants, or color gradients on the white backdrop.
-- Every background pixel at the top, bottom, left, right borders, and corners must be pure flat '#FFFFFF' white (RGB: 255, 255, 255).
-- The ONLY shadow allowed is the tight, realistic contact shadow (ambient occlusion) at the physical base touchpoints and a soft, highly diffused ground shadow that naturally anchors the product to the flat white floor. Absolutely no other shadow structures from the original environment are kept.
+- We are placing this product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND.
+- The entire background surrounding the product must be 100% solid, uniform, flat, and empty digital white canvas from edge to edge.
+- Every single background pixel at the top, bottom, left, right borders, and corners must be absolute, seamless flat pure white (#FFFFFF). No textures, no patterns, no lines, no gradient shading, and no vignettes are allowed.
+- The background is completely blank and plain, showing only the isolated product.
+- The ONLY shadow allowed is the tight, realistic contact shadow (ambient occlusion) at the physical base touchpoints and a soft, highly diffused ground shadow that naturally anchors the product to the flat white floor. Absolutely no other shadows or environment reflections remain.
 
 All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 Additional Instructions: ${settings.concept || 'None'}
