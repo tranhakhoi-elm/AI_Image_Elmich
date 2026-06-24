@@ -582,19 +582,19 @@ Output style: Premium commercial packaging mockup, hyper-detailed rendering, pho
 
     let materialDirectives = "";
     if (selectedCats.includes("METAL")) {
-      materialDirectives += `\n- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, free of any digital noise, stains, or dirty smudges.`;
+      materialDirectives += `\n- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, clean, flawless, and pristine.`;
     }
     if (selectedCats.includes("PLASTIC")) {
-      materialDirectives += `\n- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely free of any grain, spots, or dust.`;
+      materialDirectives += `\n- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely clean, uniform, smooth, and pristine.`;
     }
     if (selectedCats.includes("GLASS")) {
-      materialDirectives += `\n- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, streak-free, and crystal clear.`;
+      materialDirectives += `\n- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, uniform, and crystal clear.`;
     }
     if (selectedCats.includes("CERAMIC")) {
-      materialDirectives += `\n- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely free of any physical dust, specks, blemishes, or noise.`;
+      materialDirectives += `\n- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely smooth, uniform, flawless, and pristine.`;
     }
     if (materialDirectives === "") {
-      materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, free of any visual artifacts or dust.";
+      materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, completely clean and pristine.";
     }
 
     stylePrompt = `High-detail, professional commercial studio product photography of a single ${productName}, meticulously isolated on a pure, solid white background (#FFFFFF).
@@ -622,10 +622,10 @@ CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspe
 
 BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY):
 - We are placing this product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND.
-- The entire background surrounding the product must be 100% solid, uniform, flat, and empty digital white canvas from edge to edge.
-- Every single background pixel at the top, bottom, left, right borders, and corners must be absolute, seamless flat pure white (#FFFFFF). No textures, no patterns, no lines, no gradient shading, and no vignettes are allowed.
-- The background is completely blank and plain, showing only the isolated product.
-- The ONLY shadow allowed is the tight, realistic contact shadow (ambient occlusion) at the physical base touchpoints and a soft, highly diffused ground shadow that naturally anchors the product to the flat white floor. Absolutely no other shadows or environment reflections remain.
+- The entire background surrounding the product must be 100% solid, uniform, flat, empty, and clean digital white canvas from edge to edge.
+- Every single background pixel at the top, bottom, left, right borders, and corners must be absolute, seamless flat pure white (#FFFFFF) with 100% uniform color across the entire image.
+- The background is completely blank, plain, clean, and empty, showing only the isolated product.
+- The ONLY shadow allowed is the tight, realistic contact shadow (ambient occlusion) at the physical base touchpoints and a soft, highly diffused ground shadow that naturally anchors the product to the flat white floor. The rest of the background is completely white and empty.
 
 All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 Additional Instructions: ${settings.concept || 'None'}
@@ -647,7 +647,7 @@ No shading, no shadows, no gradients, no colors, no 3D realistic effects, no tex
 Only crisp, continuous, and precise black lines defining the outer shape and essential inner contours of the product. 
 Flat 2D vector style. High clarity, simple schematic outline.
 
-BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pure seamless white (#FFFFFF) from edge to edge. You must completely strip, wipe out, or erase any traces, vertical streaks, dark edges, vignetting, wood grains, walls, floors, or marble veins from the source image's environment. Absolutely zero shadows, grey remnants, or gradient borders should leak into the sides or corners of the frame.
+BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pure, clean, and seamless white (#FFFFFF) from edge to edge. The background is completely plain, blank, empty, and uniform. All pixels from center to borders and corners are perfectly solid white.
     `;
   } else if (settings.visualStyle === "COLOR_CHANGE") {
     const changes = settings.colorChanges.map((c, i) => {

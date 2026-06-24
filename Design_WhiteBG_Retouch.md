@@ -7,7 +7,7 @@ This technical guide regulates the precise photographic requirements, studio lig
 ## 1. High-Fidelity White BG Retouching Philosophy
 
 The ultimate goal of commercial product isolation is to **conserve 100% of the physical design** (original contours, mechanical silhouettes, logos, and textures) of the appliance, using artificial intelligence exclusively to **reconstruct professional studio lighting and realistic physical shadows**:
-- **Pristine Studio Canvas:** The background must be flat, solid, seamless white (`#FFFFFF`) with zero noise, color casting, gradient leaks, or grey vignettes. It must fully eliminate old environment details (marble countertops, kitchen tiles, wood grains, walls, or floorboards).
+- **Pristine Studio Canvas:** The background must be flat, solid, seamless white (`#FFFFFF`) with absolute uniform illumination, zero color casting, and zero gradients. It must fully replace the entire original background with a pristine, seamless white background.
 - **Perspective Distortion-Free:** Emulate a telephoto lens compression (Focal lengths ranging from `70mm to 105mm`) to completely negate raw wide-angle lens bloating.
 - **Deep Field Sharpness (Deep DOF):** Replicate a tight narrow aperture range (`f/8 to f/11`) to ensure the entire product is in tack-sharp focus from front to back (deep/infinite depth of field).
 
@@ -33,13 +33,13 @@ To prevent AI from introducing unwanted organic curves or asymmetrical bloating 
 - **Fresnel Physics:** Ensure strong, bright specular reflections along the high-curvature profile edges, fading to soft diffuse values on surfaces perpendicular to the camera angle.
 - **Structured Specular Highlights:** Cylindrical bodies must exhibit sharp, vertical highlights (longitudinal reflections) that outline the 3D form.
 - **Anisotropic Metal Luster:** Apply smooth, uniform anisotropic reflections characteristic of premium brushed stainless steel:
-  - *Engineering Prompt:* `"Use smooth Anisotropic reflections with a blurriness factor of 0.05. Metallic surfaces must be impeccably clean, polished, and free of any dirty marks, grain, or visual noise."`
+  - *Engineering Prompt:* `"Use smooth Anisotropic reflections with a blurriness factor of 0.05. Metallic surfaces must be impeccably clean, pristine, perfectly uniform, highly polished, and seamless."`
 - **Tonal Contrast:** Retain deep, clean shadows under body joints, balanced with bright softbox highlights for maximum metallic impact.
 
 ### 3.2. Polymers & Premium Synthetics (Matte, Glossy, ABS)
 - **Subsurface Scattering (Solid Thickness):** Guard against a thin Paper-mache appearance. Emulate a microscopic plastic light penetration depth (<0.2mm) to convey material weight and density.
 - **Premium Food-Safe Matte Plastic:**
-  - *Engineering Prompt:* `"Apply a perfectly smooth and pristine matte finish to mimic high-grade food-safe plastic, ensuring a clean, uniform, and grain-free surface. Subtle Fresnel effect at the edges to show material thickness."`
+  - *Engineering Prompt:* `"Apply a perfectly smooth, immaculate, and pristine matte finish to mimic high-grade food-safe plastic, ensuring a clean, uniform, and flawless surface. Subtle Fresnel effect at the edges to show material thickness."`
 - **Sturdy Gloss Acrylics:** Capture smooth, mirrored curves from the softbox lights without creating raw pixelated flares.
 
 ### 3.3. Optical Glass & Borosilicate Containers
@@ -53,9 +53,9 @@ To prevent AI from introducing unwanted organic curves or asymmetrical bloating 
 
 ## 4. Resolution Reconstruction & Image Denoising
 
-Product images received from mobile phones often suffer from compression noise, low-light color staining, or cheap flash flares. Configure the engine to rebuild premium physical surfaces:
+Product images received from mobile phones can be enhanced to professional studio quality. Configure the engine to rebuild premium physical surfaces:
 - **Commercial 8K Clarity Restoration:**
-  - *Engineering Prompt:* `"Intelligently reconstruct the material surface to remove mobile-phone noise, color blocking, and low-light artifacts. Elevate the material quality to 8K commercial product photography standard, ensuring pristine, grain-free, dust-free, and hyper-detailed clean textures."`
+  - *Engineering Prompt:* `"Intelligently reconstruct the material surface to produce perfect professional-grade commercial finishes. Elevate the material quality to 8K commercial product photography standard, ensuring pristine, immaculate, and hyper-detailed clean textures."`
 - **Specular Flare Cleansing:** Replace messy, bloated smartphone camera flares with clean, linear, and elegant vertical highlights resembling studio softbox reflections.
 
 ---
@@ -63,9 +63,9 @@ Product images received from mobile phones often suffer from compression noise, 
 ## 5. Absolute Background and Vignette Elimination
 
 To guarantee the canvas remains solid white from edge to edge:
-- **Total Environmental Purge:** Fully erase marble grains, kitchen tiles, wood sheets, or dusty walls near the product.
+- **Total Environmental Purge:** Replace the original background completely with a flat, solid, seamless white color.
 - **Flat Border Thresholds:** The border and corner pixels of the frame must hit pure Hex white (`#FFFFFF`) with absolute flat values. No soft vignette halos or gradient transitions are allowed around the edges.
-- *Engineering Prompt:* `"Place the product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND. The entire background surrounding the isolated product must be a pristine, uniform, seamless, and flat digital white canvas from edge to edge with absolute zero vignetting, zero shading, or grey streaks. The background is completely solid, plain, and empty white. The border and corner pixels of the image must be perfect flat #FFFFFF white. Absolutely NO noise, NO dust, NO specks, and NO dirty smudges are allowed on either the product or the background."`
+- *Engineering Prompt:* `"Place the product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND. The entire background surrounding the isolated product must be a pristine, uniform, seamless, and flat digital white canvas from edge to edge. The background is completely solid, plain, clean, and empty white. The border and corner pixels of the image must be perfect flat #FFFFFF white. The product and background are exceptionally clean, pristine, and uniform."`
 
 ---
 

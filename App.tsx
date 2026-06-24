@@ -238,9 +238,10 @@ const App: React.FC = () => {
     return [];
   });
   useEffect(() => {
-    import('localforage').then((localforage) => {
+    import('localforage').then((m) => {
+      const lf = m.default || m;
       // Load gallery
-      localforage.default.getItem('elmich_ai_gallery').then((saved) => {
+      lf.getItem('elmich_ai_gallery').then((saved) => {
         if (saved) {
            const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved as GeneratedImage[];
            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -281,8 +282,9 @@ const App: React.FC = () => {
   const [isChatLoaded, setIsChatLoaded] = useState(false);
 
   useEffect(() => {
-    import('localforage').then((localforage) => {
-      localforage.default.getItem('elmich_ai_chat_sessions').then((saved) => {
+    import('localforage').then((m) => {
+      const lf = m.default || m;
+      lf.getItem('elmich_ai_chat_sessions').then((saved) => {
         if (saved) {
           const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved as import('./types').ChatSession[];
           const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -305,8 +307,9 @@ const App: React.FC = () => {
   
   useEffect(() => {
     if (isChatLoaded) {
-      import('localforage').then((localforage) => {
-        localforage.default.setItem('elmich_ai_chat_sessions', chatSessions).catch((e: any) => {
+      import('localforage').then((m) => {
+        const lf = m.default || m;
+        lf.setItem('elmich_ai_chat_sessions', chatSessions).catch((e: any) => {
           console.error('Lỗi khi lưu chat vào localForage:', e);
         });
       });
@@ -393,8 +396,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (isGalleryLoaded) {
-      import('localforage').then((localforage) => {
-        localforage.default.setItem('elmich_ai_gallery', gallery).catch((e: any) => {
+      import('localforage').then((m) => {
+        const lf = m.default || m;
+        lf.setItem('elmich_ai_gallery', gallery).catch((e: any) => {
           console.error('Lỗi khi lưu vào localForage:', e);
           setAlertMessage('Bộ nhớ quá tải, không thể lưu thêm ảnh.');
         });
