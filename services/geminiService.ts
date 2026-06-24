@@ -619,7 +619,14 @@ ${designWhiteBGRetouch}
 ${stylePrompt}
  
 CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product must remain exactly as it appears in the reference image.
-BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pure seamless white (#FFFFFF) from edge to edge. You must completely strip, wipe out, and erase any traces, vertical streaks, dark edges, vignetting, wood grains, walls, or marble veins from the source image's environment. Absolutely zero shadows or gray remnants should leak into the sides of the frame.
+
+BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY):
+- We are converting this product photo with a busy kitchen/home environment into a professional commercial catalog e-commerce image on a PURE #FFFFFF SOLID WHITE BACKGROUND.
+- YOU MUST COMPLETELY ERADICATE, DISCARD, AND PURGE THE ENTIRE ORIGINAL BACKGROUND. The original image has kitchen wall tiles, grout lines, wood/marble countertops, cabinets, wall textures, floorboards, and room elements. ALL of these must be 100% erased and made completely invisible.
+- The new background must be a pristine, uniform, seamless, flat, and solid '#FFFFFF' digital white canvas from edge to edge. Under no circumstances should there be any soft grey vignettes, dirty-looking side shading, vertical lines, square pattern grids, tile remnants, or color gradients on the white backdrop.
+- Every background pixel at the top, bottom, left, right borders, and corners must be pure flat '#FFFFFF' white (RGB: 255, 255, 255).
+- The ONLY shadow allowed is the tight, realistic contact shadow (ambient occlusion) at the physical base touchpoints and a soft, highly diffused ground shadow that naturally anchors the product to the flat white floor. Absolutely no other shadow structures from the original environment are kept.
+
 All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 Additional Instructions: ${settings.concept || 'None'}
 Camera Setup: ${formatCameraSettings(settings.camera)}`;
