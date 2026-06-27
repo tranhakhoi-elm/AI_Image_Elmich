@@ -36,6 +36,7 @@ export function calculateImagenCost(modelName: string, numImages: number = 1, im
   const isHighQuality = 
     modelName.includes("generate-002") || 
     modelName.includes("generate") || 
+    modelName.includes("gemini-3.1-flash-image") || 
     modelName.includes("gemini-3.1-flash-image-preview") || 
     modelName.includes("preview") ||
     imageSize === "4K" ||

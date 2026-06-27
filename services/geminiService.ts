@@ -37,6 +37,44 @@ import designPackagingMockup from '../Design_Packaging_Mockup.md?raw';
 import designWhiteBGRetouch from '../Design_WhiteBG_Retouch.md?raw';
 import designTechEffects from '../Design_Tech_Effects.md?raw';
 
+const upscaleImageTo4K = (base64Data: string): Promise<string> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      resolve(base64Data);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        // Scale factor of 2.0 upscales a 2K (2048x2048) image to 4K (4096x4096)
+        const scaleFactor = 2;
+        canvas.width = img.width * scaleFactor;
+        canvas.height = img.height * scaleFactor;
+        
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const mimeType = base64Data.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+          resolve(canvas.toDataURL(mimeType, 0.95));
+        } else {
+          resolve(base64Data);
+        }
+      } catch (err) {
+        console.error("Failed to upscale image to 4K:", err);
+        resolve(base64Data);
+      }
+    };
+    img.onerror = () => {
+      resolve(base64Data);
+    };
+    img.src = base64Data;
+  });
+};
+
 // --- CÁC HÀM CHO CÁC MODE CŨ ---
 export const getAiSuggestions = async (settings: { productName: string, visualStyle: string, techDescription?: string }): Promise<AISuggestions> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -452,14 +490,20 @@ export const editProductImage = async (base64Image: string, prompt: string, mode
     let finalModelName = modelName;
     let imageConfig: any = {};
 
-    if (finalModelName === 'imagen-3.0-generate-002' || imageSize === '2K' || imageSize === '4K') {
-      finalModelName = 'imagen-3.0-generate-002';
+    if (finalModelName === 'gemini-3.1-flash-image') {
       imageConfig.imageSize = imageSize;
+    } else if (finalModelName === 'imagen-3.0-generate-002' || imageSize === '2K' || imageSize === '4K') {
+      finalModelName = 'imagen-3.0-generate-002';
+      imageConfig.imageSize = imageSize === '4K' ? '2K' : imageSize;
     }
-let fallbackModel = finalModelName;
+
+    let fallbackModel: string = finalModelName;
     // Bắt buộc dùng Gemini cho Chỉnh sửa hình ảnh (có input base64Image)
-    if (finalModelName.startsWith('imagen-3.0-generate-002')) {
-        fallbackModel = 'gemini-3.1-flash-image-preview';
+    if (finalModelName === 'gemini-3.1-flash-image') {
+        fallbackModel = 'gemini-3.1-flash-image';
+    } else if (finalModelName.startsWith('imagen-3.0-generate-002') || finalModelName.startsWith('gemini-3.1-flash-image-preview')) {
+        fallbackModel = 'gemini-3.1-flash-image';
+        imageConfig.imageSize = imageSize; // Nâng cấp lên native 4K
     } else if (finalModelName.startsWith('imagen')) {
         fallbackModel = 'gemini-2.5-flash-image';
     }
@@ -473,7 +517,7 @@ let fallbackModel = finalModelName;
     if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
-        trackImagenUsage(modelName, 1, "Chỉnh sửa ảnh", imageSize);
+        trackImagenUsage(fallbackModel, 1, "Chỉnh sửa ảnh", imageSize);
         return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
       }
     }
@@ -877,9 +921,27 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     let modelName = settings.aiModel;
     let imageConfig: any = { aspectRatio: settings.aspectRatio };
 
+    // Nếu model được chọn là Gemini 3.1 Flash Image (mô hình chất lượng cao mới)
+    if (modelName === 'gemini-3.1-flash-image') {
+      imageConfig.imageSize = settings.imageSize; // Hỗ trợ 1K, 2K, 4K gốc trực tiếp từ API!
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-image',
+        contents: { parts },
+        config: { imageConfig }
+      });
+      if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          trackImagenUsage('gemini-3.1-flash-image', 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+      throw new Error("Không có ảnh.");
+    }
+
     if (modelName === 'imagen-3.0-generate-002' || settings.imageSize === '2K' || settings.imageSize === '4K' || settings.aspectRatio === '1:4' || settings.aspectRatio === '4:1') {
       modelName = 'imagen-3.0-generate-002';
-      imageConfig.imageSize = settings.imageSize;
+      imageConfig.imageSize = settings.imageSize === '4K' ? '2K' : settings.imageSize;
     }
     let responseBase64 = "";
 
@@ -900,13 +962,18 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       });
       if (!response.generatedImages?.[0]?.image?.imageBytes) throw new Error("AI không phản hồi.");
       trackImagenUsage(modelName, 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
-      return `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
+      const base64Data = `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
+      if (settings.imageSize === '4K') {
+        return await upscaleImageTo4K(base64Data);
+      }
+      return base64Data;
     } else {
       // Fallback cho việc edit hình / sử dụng input images với Gemini, hoặc khi tỉ lệ khung hình là tùy chỉnh (ví dụ 1:4, 4:1)
-      let fallbackModel = modelName;
+      let fallbackModel: string = modelName;
       if (modelName.startsWith('imagen-3.0-generate-002') || modelName.startsWith('imagen')) {
-          // Gemini-3.1-flash-image-preview supports custom aspect ratios (like 1:4 and 4:1) perfectly
-          fallbackModel = 'gemini-3.1-flash-image-preview';
+          // Gemini-3.1-flash-image hỗ trợ tỉ lệ tùy chọn và ảnh 4K gốc trực tiếp cực kỳ đẹp!
+          fallbackModel = 'gemini-3.1-flash-image';
+          imageConfig.imageSize = settings.imageSize;
       }
 
       const response = await ai.models.generateContent({
