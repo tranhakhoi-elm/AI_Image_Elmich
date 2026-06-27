@@ -78,6 +78,66 @@ const upscaleImageTo4K = (base64Data: string): Promise<string> => {
   });
 };
 
+const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor: string = '#FFFFFF'): Promise<string> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      resolve(base64Data);
+      return;
+    }
+    const [wRatio, hRatio] = aspectRatio.split(':').map(Number);
+    if (!wRatio || !hRatio) {
+      resolve(base64Data);
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const targetRatio = wRatio / hRatio;
+        const currentRatio = img.width / img.height;
+        
+        let newWidth = img.width;
+        let newHeight = img.height;
+
+        if (currentRatio > targetRatio + 0.01) {
+          // Image is wider than target. Need to pad height.
+          newHeight = Math.round(img.width / targetRatio);
+        } else if (currentRatio < targetRatio - 0.01) {
+          // Image is taller than target. Need to pad width.
+          newWidth = Math.round(img.height * targetRatio);
+        } else {
+          resolve(base64Data);
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = padColor;
+          ctx.fillRect(0, 0, newWidth, newHeight);
+          
+          const offsetX = Math.round((newWidth - img.width) / 2);
+          const offsetY = Math.round((newHeight - img.height) / 2);
+          
+          ctx.drawImage(img, offsetX, offsetY);
+          const mimeType = base64Data.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+          resolve(canvas.toDataURL(mimeType, 0.95));
+        } else {
+          resolve(base64Data);
+        }
+      } catch (error) {
+        console.error("Padding error:", error);
+        resolve(base64Data);
+      }
+    };
+    img.onerror = () => resolve(base64Data);
+    img.src = base64Data;
+  });
+};
+
 // --- CÁC HÀM CHO CÁC MODE CŨ ---
 export const getAiSuggestions = async (settings: { productName: string, visualStyle: string, techDescription?: string }): Promise<AISuggestions> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -654,6 +714,7 @@ ${designWhiteBGRetouch}
 ${stylePrompt}
  
 CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product itself must remain exactly as it appears in the reference image.
+DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible inside the frame. Do NOT cut off any edges, handles, lids, or parts of the product. If the requested aspect ratio is different from the original image, you MUST pad the extra space with the pure white background. The product should be centered and completely contained within the image boundaries without any cropping.
 
 BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY / YÊU CẦU BẮT BUỘC):
 - WIPE OUT THE OLD BACKGROUND: You must completely remove, erase, and replace 100% of the original background, old room environment, countertop, floor, walls, and reflections from the input image.
@@ -880,8 +941,14 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
   const parts: any[] = [{ text: finalPrompt }];
   
   if (settings.visualStyle === "SCENE_STAGING") {
-    if (settings.productImages[0]) parts.push({ inlineData: { data: settings.productImages[0].split(',')[1], mimeType: 'image/png' } });
-    if (settings.referenceImage) parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
+    if (settings.productImages[0]) {
+      const paddedImg = await padImageToAspectRatio(settings.productImages[0], settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: paddedImg.split(',')[1], mimeType: 'image/png' } });
+    }
+    if (settings.referenceImage) {
+      const paddedRef = await padImageToAspectRatio(settings.referenceImage, settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: paddedRef.split(',')[1], mimeType: 'image/png' } });
+    }
   } else if (settings.visualStyle === "TRACK_SOCKET_STAGING") {
     if (settings.trackImage) parts.push({ inlineData: { data: settings.trackImage.split(',')[1], mimeType: 'image/png' } });
     settings.sockets?.forEach(s => {
@@ -892,7 +959,8 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     }
   } else if (settings.visualStyle === "COLOR_CHANGE") {
     if (settings.productImages[0]) {
-      parts.push({ inlineData: { data: settings.productImages[0].split(',')[1], mimeType: 'image/png' } });
+      const paddedImg = await padImageToAspectRatio(settings.productImages[0], settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: paddedImg.split(',')[1], mimeType: 'image/png' } });
     }
     settings.colorChanges.forEach(c => {
       if (c.sampleImage) parts.push({ inlineData: { data: c.sampleImage.split(',')[1], mimeType: 'image/png' } });
@@ -900,12 +968,20 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     if (settings.packagingDesignType === "FLAT_DESIGN" && settings.packagingFaces.flat) parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
   } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
-    parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
+    let finalRefImage = settings.referenceImage;
+    if (settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "LINE_ART" || settings.visualStyle === "TECH_EFFECTS") {
+      finalRefImage = await padImageToAspectRatio(finalRefImage, settings.aspectRatio || "1:1", "#FFFFFF");
+    }
+    parts.push({ inlineData: { data: finalRefImage.split(',')[1], mimeType: 'image/png' } });
   }
   
   const productImagesVisualStyles = ["CONCEPT", "TECH_PS", "STUDIO"];
   if (settings.productImages.length > 0 && productImagesVisualStyles.includes(settings.visualStyle)) {
-    settings.productImages.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
+    for (const img of settings.productImages) {
+      let finalImg = img;
+      finalImg = await padImageToAspectRatio(finalImg, settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: finalImg.split(',')[1], mimeType: 'image/png' } });
+    }
   }
 
   try {
