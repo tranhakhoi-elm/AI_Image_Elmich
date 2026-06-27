@@ -64,8 +64,8 @@ Product images received from mobile phones can be enhanced to professional studi
 
 To guarantee the canvas remains solid white from edge to edge:
 - **Total Environmental Purge:** Replace the original background completely with a flat, solid, seamless white color.
-- **Flat Border Thresholds:** The border and corner pixels of the frame must hit pure Hex white (`#FFFFFF`) with absolute flat values. No soft vignette halos or gradient transitions are allowed around the edges.
-- *Engineering Prompt:* `"Place the product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND. The entire background surrounding the isolated product must be a pristine, uniform, seamless, and flat digital white canvas from edge to edge. The background is completely solid, plain, clean, and empty white. The border and corner pixels of the image must be perfect flat #FFFFFF white. The product and background are exceptionally clean, pristine, and uniform."`
+- **Flat Border Thresholds:** The border and corner pixels of the frame must hit pure Hex white (`#FFFFFF`) with absolute flat values. No soft vignette halos, gray clouds, or gradient transitions are allowed around the edges.
+- *Engineering Prompt:* `"Place the product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND. The entire background surrounding the isolated product must be a pristine, uniform, seamless, and flat digital white canvas from edge to edge with absolute zero vignetting, zero shading, or grey streaks. The background is completely solid, plain, clean, and empty white. The border and corner pixels of the image must be perfect flat #FFFFFF white. Absolutely NO noise, NO dust, NO specks, NO spots, and NO dirty smudges are allowed on either the product or the background."`
 
 ---
 
@@ -73,4 +73,6 @@ To guarantee the canvas remains solid white from edge to edge:
 
 - **Overhead Softbox Lighting:** Maintain a professional overhead and key strobe setup for a balanced, premium volumetric feel.
 - **Contact Shadow (Ambient Occlusion):** Establish a very tight, dark, sharp shadow directly at the grounding base of the appliance. This anchors the product firmly to the floor so it does not appear to be floating.
-- **Soft Ground Shadow:** Add a gentle, single-direction shadow that softens and diffuses outward, aligning with the Key Light angle.
+- **Subtle Ground Shadow:** Add an extremely subtle, localized, and tiny ground shadow immediately below the base of the product. The shadow must be clean, tight, and rapidly fade to absolute pure white (`#FFFFFF`) within a few millimeters. 
+- **No Wide Shadows:** Absolutely avoid wide-spreading shadows, blurry gray pools, or broad dark gradients on the floor. The floor must remain flawlessly clean and pure white (`#FFFFFF`) outside of the tiny, immediate touchpoint contact shadow.
+- *Engineering Prompt:* `"The only shadow allowed is a very tight, clean, localized contact shadow directly beneath the physical touchpoints of the product. Absolutely no wide-spreading gray shadows, blurry pools, or broad dark gradients on the floor are permitted. The floor must be flawlessly clean and pure white (#FFFFFF)."`

@@ -597,7 +597,7 @@ Output style: Premium commercial packaging mockup, hyper-detailed rendering, pho
       materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, completely clean and pristine.";
     }
 
-    stylePrompt = `High-detail, professional commercial studio product photography of a single ${productName}, meticulously isolated on a pure, solid white background (#FFFFFF).
+    stylePrompt = `High-detail, professional commercial studio product photography of the product "${productName}", meticulously isolated on a pure, solid white background (#FFFFFF).
     
 MATERIAL SEPARATION & PROPERTY DIRECTIVES:
 The product contains the following material compositions: [${selectedCats.join(', ')}].
@@ -605,11 +605,11 @@ ${materialDirectives}
 
 USER MATERIAL LOCATION & DETAIL DESCRIPTION:
 "${matDesc || "Automated multi-material detection based on the input photograph."}"
--> Use this specific material mapping to accurately assign glossiness, metalness, transparency, or roughness to different parts of the product. Keep original contours and text.
+-> Use this specific material mapping to assign glossiness, metalness, transparency, or roughness to different parts of the product. Keep original contours and text.
 
 LIGHTING & STUDIO PRESENTATION:
 - Light Source: Professional three-point studio lighting with high-end key and fill lights, displaying pristine product shape and beautiful gradients.
-- Grounding: A very delicate, soft diffuse contact shadow must sit precisely underneath the base contact points. No floating, no artificial halo.
+- Grounding: A very delicate, clean, and tight contact shadow must sit precisely underneath the base contact points. No floating, no artificial halo.
 - Quality: Superb clarity, high contrast, clean noise-free colors, commercial catalog style, photorealistic.`;
 
     finalPrompt = `
@@ -618,14 +618,18 @@ ${designWhiteBGRetouch}
 
 ${stylePrompt}
  
-CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product must remain exactly as it appears in the reference image.
+CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product itself must remain exactly as it appears in the reference image.
 
-BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY):
-- We are placing this product on a flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND.
-- The entire background surrounding the product must be 100% solid, uniform, flat, empty, and clean digital white canvas from edge to edge.
-- Every single background pixel at the top, bottom, left, right borders, and corners must be absolute, seamless flat pure white (#FFFFFF) with 100% uniform color across the entire image.
-- The background is completely blank, plain, clean, and empty, showing only the isolated product.
-- The ONLY shadow allowed is the tight, realistic contact shadow (ambient occlusion) at the physical base touchpoints and a soft, highly diffused ground shadow that naturally anchors the product to the flat white floor. The rest of the background is completely white and empty.
+BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY / YÊU CẦU BẮT BUỘC):
+- WIPE OUT THE OLD BACKGROUND: You must completely remove, erase, and replace 100% of the original background, old room environment, countertop, floor, walls, and reflections from the input image.
+- Flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND.
+- The background is completely blank, plain, clean, pristine, and 100% empty white digital canvas from edge to edge.
+- Every single background pixel at the top, bottom, left, right borders, and corners must be absolute, seamless flat pure white (#FFFFFF) (RGB: 255, 255, 255).
+- ABSOLUTELY NO other objects, NO vertical pillars, NO vertical stripes, NO grey patches, NO shadows from the room, and NO environmental reflections are allowed to leak into the background.
+- ABSOLUTELY NO gray areas, NO vignetting, NO gradients, NO shading, NO noise, NO dust, NO specks, NO spots, and NO dirty smudges are allowed anywhere in the image.
+- NỀN TRẮNG PHẢI SẠCH TUYỆT ĐỐI: Bạn phải LOẠI BỎ HOÀN TOÀN phông nền cũ và thay thế bằng màu trắng tinh khiết hoàn hảo (#FFFFFF). Không được có bóng xám dơ, không có cột đứng, không có vết bẩn, không có hạt nhiễu (noise), không có hiệu ứng tối góc (vignette), không có chuyển màu (gradient). Toàn bộ vùng nền xung quanh sản phẩm phải là màu trắng tinh khiết hoàn hảo #FFFFFF từ tâm ra đến tận rìa và bốn góc ảnh.
+- VERY TIGHT GROUND SHADOW ONLY: The only shadow allowed is a very tight, clean, localized contact shadow (ambient occlusion) directly beneath the physical touchpoints of the product. It must be extremely minimal and must rapidly fade to absolute pure white (#FFFFFF) within a few millimeters.
+- KHÔNG CÓ BÓNG ĐỔ RỘNG: Tuyệt đối không vẽ bóng đổ lan rộng ra nền nhà, không tạo bóng mờ xám to làm bẩn nền. Bóng đổ phải cực kỳ gọn, nhỏ, sắc nét và ôm sát ngay dưới chân đế của sản phẩm rồi tan biến hoàn toàn vào nền trắng tinh #FFFFFF.
 
 All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
 Additional Instructions: ${settings.concept || 'None'}
