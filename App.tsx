@@ -89,7 +89,7 @@ const initialSettings: GenerationSettings = {
   tone: TONE_STYLES[0],
   aspectRatio: '1:1',
   imageSize: '1K',
-  aiModel: 'imagen-3.0-fast-generate-001',
+  aiModel: 'gemini-3.1-flash-image',
   numImages: 1 
 };
 
@@ -273,7 +273,6 @@ const App: React.FC = () => {
   }, [settings.productName, settings.productCode, settings.visualStyle]);
 
   const [isEditingImage, setIsEditingImage] = useState(false);
-  const [editModel, setEditModel] = useState('gemini-3.1-flash-image');
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
   
   const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
@@ -322,7 +321,7 @@ const App: React.FC = () => {
   const [chatInput, setChatInput] = useState('');
   const [chatInputImageBase64, setChatInputImageBase64] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [chatModel, setChatModel] = useState('gemini-2.5-flash');
+  const [chatMode, setChatMode] = useState<'chat' | 'image'>('chat');
   const [chatImageAspectRatio, setChatImageAspectRatio] = useState('1:1');
   const [chatImageQuality, setChatImageQuality] = useState('1K');
   const [showSessionsList, setShowSessionsList] = useState(false);
@@ -359,14 +358,18 @@ const App: React.FC = () => {
 
     try {
       let newModelMsg: ChatMessage;
-      if (chatModel.includes('flash-image')) {
-        const fullPrompt = `${chatInput}. Produce the image in high definition ${chatImageQuality} resolution.`;
-        const imageUrl = await generateImageForChat(fullPrompt, chatModel, chatImageAspectRatio, chatInputImageBase64 || undefined);
+      if (chatMode === 'image') {
+        const fullPrompt = `${chatInput}`;
+        // Default implicit image model
+        const defaultImageModel = 'gemini-3.1-flash-image';
+        const imageUrl = await generateImageForChat(fullPrompt, defaultImageModel, chatImageAspectRatio, chatInputImageBase64 || undefined, chatImageQuality);
         newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: 'Đây là hình ảnh của bạn:', imageUrl };
       } else {
         const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
         const messagesToSend = [...currentMsgs, newUserMsg];
-        const replyText = await chatWithAI(messagesToSend, chatModel);
+        // Default implicit chat model
+        const defaultChatModel = 'gemini-2.5-flash';
+        const replyText = await chatWithAI(messagesToSend, defaultChatModel);
         newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: replyText };
       }
       setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newModelMsg], timestamp: Date.now() } : s));
@@ -647,7 +650,7 @@ const App: React.FC = () => {
     if (!activeImage || !editPrompt.trim()) return;
     setIsEditingImage(true);
     try {
-      const newUrl = await editProductImage(activeImage.url, editPrompt, editModel, editQuality);
+      const newUrl = await editProductImage(activeImage.url, editPrompt, editQuality);
       const time = Date.now();
       const newImage: GeneratedImage = {
         id: `${time}-edited`,
@@ -1985,23 +1988,6 @@ const renderTrackSocketWorkflow = () => (
           ))}
         </div>
       </div>
-      <div className="space-y-2">
-        <label className="block text-[9px] font-bold text-white uppercase mb-1">Chọn Model AI (Tối ưu chi phí)</label>
-        <div className="grid grid-cols-2 gap-2">
-          <button 
-            onClick={() => setSettings({...settings, aiModel: 'imagen-3.0-fast-generate-001'})} 
-            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'imagen-3.0-fast-generate-001' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
-          >
-            Standard (Tiết kiệm)
-          </button>
-          <button 
-            onClick={() => setSettings({...settings, aiModel: 'gemini-3.1-flash-image'})} 
-            className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.aiModel === 'gemini-3.1-flash-image' ? 'bg-[#caf0f8] text-white border-[#caf0f8]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}
-          >
-            High Quality (Tối ưu)
-          </button>
-        </div>
-      </div>
     </div>
   );
 
@@ -2068,16 +2054,32 @@ const renderTrackSocketWorkflow = () => (
     return code ? `${code}.png` : `elmich-ai-${image.id}.png`;
   };
 
+  const handleDownload = (e: React.MouseEvent, image: GeneratedImage) => {
+    e.preventDefault();
+    setAskFeedbackImage(image);
+    
+    // Convert base64 to blob to prevent URI length limits in browsers for 4K images
+    fetch(image.url)
+      .then(res => res.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = getDownloadFileName(image);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(err => console.error('Download failed:', err));
+  };
+
   const calculateCost = (image: GeneratedImage) => {
     let cost = 0;
-    // Image generation cost
-    if (image.settings.aiModel === 'gemini-3.1-flash-image' || image.settings.aiModel === 'imagen-3.0-generate-002') {
-      if (image.settings.imageSize === '4K') cost = 0.151;
-      else if (image.settings.imageSize === '2K') cost = 0.101;
-      else cost = 0.067;
-    } else {
-      cost = 0.039; // Updated to 0.039 for imagen-3.0-fast-generate-001
-    }
+    // Image generation cost (using implicitly selected high quality models)
+    if (image.settings.imageSize === '4K') cost = 0.151;
+    else if (image.settings.imageSize === '2K') cost = 0.101;
+    else cost = 0.067;
     
     // Prompt generation cost (Step 1)
     if (image.settings.visualStyle === 'CONCEPT' || image.settings.visualStyle === 'STUDIO') {
@@ -2135,21 +2137,18 @@ const renderTrackSocketWorkflow = () => (
             <h2 className="font-bold text-xl">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-white font-semibold">Mô hình:</span>
+                <span className="text-xs text-white font-semibold">Chế độ:</span>
                 <select 
-                  value={chatModel}
-                  onChange={e => setChatModel(e.target.value)}
+                  value={chatMode}
+                  onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
                   className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
                 >
-                  <option value="gemini-2.5-flash">Imagen 3.0 Fast Flash (Chat)</option>
-                  <option value="gemini-2.5-pro">Imagen 3.0 Pro (Chat)</option>
-                  <option value="gemini-2.5-flash">Imagen 3.0 Flash (Chat)</option>
-                  <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
-                  <option value="gemini-3.1-flash-image">Gemini 3.1 Flash Image</option>
+                  <option value="chat">Chat & Tư vấn</option>
+                  <option value="image">Tạo ảnh AI</option>
                 </select>
               </div>
               
-              {chatModel.includes('image') && (
+              {chatMode === 'image' && (
                 <>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-white font-semibold">Tỷ lệ:</span>
@@ -2362,7 +2361,7 @@ const renderTrackSocketWorkflow = () => (
                      </div>
                   </div>
                   <div className="flex px-2 py-1 border-b border-[#3E4042]">
-                     <a href={activeImage.url} download={getDownloadFileName(activeImage)} onClick={() => setAskFeedbackImage(activeImage)} className="flex-1 flex gap-2 items-center justify-center py-2 text-white font-semibold text-[15px] hover:bg-[#18191A] rounded-md mx-1 transition-colors">
+                     <a href="#" onClick={(e) => handleDownload(e, activeImage)} className="flex-1 flex gap-2 items-center justify-center py-2 text-white font-semibold text-[15px] hover:bg-[#18191A] rounded-md mx-1 transition-colors">
                         <Download size={20} /> Tải xuống
                      </a>
                   </div>
@@ -2371,15 +2370,6 @@ const renderTrackSocketWorkflow = () => (
                   <div className="p-4 bg-[#18191A] rounded-b-lg flex flex-col gap-3">
                     <p className="font-semibold text-[13px] text-white">Chỉnh sửa ảnh với AI</p>
                     <div className="flex flex-col sm:flex-row gap-2">
-                       <select 
-                         value={editModel}
-                         onChange={e => setEditModel(e.target.value)}
-                         disabled={isEditingImage}
-                         className="flex-1 bg-[#242526] border border-[#3E4042] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
-                       >
-                         <option value="gemini-3.1-flash-image">Gemini 3.1 Flash</option>
-                         <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
-                       </select>
                        <select 
                          value={editQuality}
                          onChange={e => setEditQuality(e.target.value as ImageSize)}

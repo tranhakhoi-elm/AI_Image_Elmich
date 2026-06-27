@@ -48,10 +48,13 @@ const upscaleImageTo4K = (base64Data: string): Promise<string> => {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        // Scale factor of 2.0 upscales a 2K (2048x2048) image to 4K (4096x4096)
-        const scaleFactor = 2;
-        canvas.width = img.width * scaleFactor;
-        canvas.height = img.height * scaleFactor;
+        // Calculate scale factor to make the maximum dimension 4096 (4K)
+        const maxDimension = 4096;
+        const currentMax = Math.max(img.width, img.height);
+        const scaleFactor = maxDimension / currentMax;
+        
+        canvas.width = Math.round(img.width * scaleFactor);
+        canvas.height = Math.round(img.height * scaleFactor);
         
         const ctx = canvas.getContext('2d');
         if (ctx) {
@@ -470,7 +473,7 @@ Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và '
   }
 };
 
-export const editProductImage = async (base64Image: string, prompt: string, modelName: string = 'imagen-3.0-generate-002', imageSize: string = '1K'): Promise<string> => {
+export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
   const mimeTypeMatch = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -487,26 +490,10 @@ export const editProductImage = async (base64Image: string, prompt: string, mode
   ];
 
   try {
-    let finalModelName = modelName;
     let imageConfig: any = {};
+    imageConfig.imageSize = imageSize === '4K' ? '2K' : imageSize;
 
-    if (finalModelName === 'gemini-3.1-flash-image') {
-      imageConfig.imageSize = imageSize;
-    } else if (finalModelName === 'imagen-3.0-generate-002' || imageSize === '2K' || imageSize === '4K') {
-      finalModelName = 'imagen-3.0-generate-002';
-      imageConfig.imageSize = imageSize === '4K' ? '2K' : imageSize;
-    }
-
-    let fallbackModel: string = finalModelName;
-    // Bắt buộc dùng Gemini cho Chỉnh sửa hình ảnh (có input base64Image)
-    if (finalModelName === 'gemini-3.1-flash-image') {
-        fallbackModel = 'gemini-3.1-flash-image';
-    } else if (finalModelName.startsWith('imagen-3.0-generate-002') || finalModelName.startsWith('gemini-3.1-flash-image-preview')) {
-        fallbackModel = 'gemini-3.1-flash-image';
-        imageConfig.imageSize = imageSize; // Nâng cấp lên native 4K
-    } else if (finalModelName.startsWith('imagen')) {
-        fallbackModel = 'gemini-2.5-flash-image';
-    }
+    const fallbackModel = 'gemini-3.1-flash-image';
 
     const response = await ai.models.generateContent({
       model: fallbackModel,
@@ -518,7 +505,11 @@ export const editProductImage = async (base64Image: string, prompt: string, mode
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
         trackImagenUsage(fallbackModel, 1, "Chỉnh sửa ảnh", imageSize);
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        if (imageSize === '4K') {
+          return await upscaleImageTo4K(base64Data);
+        }
+        return base64Data;
       }
     }
     throw new Error("Không có ảnh.");  } catch (error: any) {
@@ -918,81 +909,33 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
   }
 
   try {
-    let modelName = settings.aiModel;
+    const modelName = 'gemini-3.1-flash-image';
     let imageConfig: any = { aspectRatio: settings.aspectRatio };
+    
+    // imageSize handling (API supports native 1K, 2K but we upscale to 4K manually if requested)
+    imageConfig.imageSize = settings.imageSize === '4K' ? '2K' : settings.imageSize;
 
-    // Nếu model được chọn là Gemini 3.1 Flash Image (mô hình chất lượng cao mới)
-    if (modelName === 'gemini-3.1-flash-image') {
-      imageConfig.imageSize = settings.imageSize; // Hỗ trợ 1K, 2K, 4K gốc trực tiếp từ API!
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image',
-        contents: { parts },
-        config: { imageConfig }
-      });
-      if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          trackImagenUsage('gemini-3.1-flash-image', 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: { parts },
+      config: { imageConfig }
+    });
+    if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        trackImagenUsage(modelName, 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
+        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        if (settings.imageSize === '4K') {
+          return await upscaleImageTo4K(base64Data);
         }
+        return base64Data;
       }
-      throw new Error("Không có ảnh.");
     }
-
-    if (modelName === 'imagen-3.0-generate-002' || settings.imageSize === '2K' || settings.imageSize === '4K' || settings.aspectRatio === '1:4' || settings.aspectRatio === '4:1') {
-      modelName = 'imagen-3.0-generate-002';
-      imageConfig.imageSize = settings.imageSize === '4K' ? '2K' : settings.imageSize;
-    }
-    let responseBase64 = "";
-
-    // Imagen 3.0 ONLY supports: '1:1', '3:4', '4:3', '9:16', '16:9'
-    const standardAspectRatios = ['1:1', '3:4', '4:3', '9:16', '16:9'];
-    const isStandardRatio = standardAspectRatios.includes(settings.aspectRatio);
-
-    // Nếu model là Imagen 3.0, tỉ lệ được hỗ trợ bởi Imagen, và KHÔNG CÓ input images nào (parts.length === 1)
-    if (modelName.startsWith('imagen') && parts.length === 1 && isStandardRatio) {
-      const response = await ai.models.generateImages({
-        model: modelName,
-        prompt: parts[0].text,
-        config: {
-          numberOfImages: 1,
-          outputMimeType: 'image/jpeg',
-          aspectRatio: settings.aspectRatio as any || '1:1',
-        }
-      });
-      if (!response.generatedImages?.[0]?.image?.imageBytes) throw new Error("AI không phản hồi.");
-      trackImagenUsage(modelName, 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
-      const base64Data = `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
-      if (settings.imageSize === '4K') {
-        return await upscaleImageTo4K(base64Data);
-      }
-      return base64Data;
-    } else {
-      // Fallback cho việc edit hình / sử dụng input images với Gemini, hoặc khi tỉ lệ khung hình là tùy chỉnh (ví dụ 1:4, 4:1)
-      let fallbackModel: string = modelName;
-      if (modelName.startsWith('imagen-3.0-generate-002') || modelName.startsWith('imagen')) {
-          // Gemini-3.1-flash-image hỗ trợ tỉ lệ tùy chọn và ảnh 4K gốc trực tiếp cực kỳ đẹp!
-          fallbackModel = 'gemini-3.1-flash-image';
-          imageConfig.imageSize = settings.imageSize;
-      }
-
-      const response = await ai.models.generateContent({
-        model: fallbackModel,
-        contents: { parts },
-        config: { imageConfig }
-      });
-      if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          trackImagenUsage(fallbackModel, 1, settings.productName || "Tạo ảnh sản phẩm (Gemini)", settings.imageSize);
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-      }
-      throw new Error("Không có ảnh.");
-    }  } catch (error: any) { throw error; }
+    throw new Error("Không có ảnh.");
+  } catch (error: any) { throw error; }
 };
 
-export const generateImageForChat = async (prompt: string, modelName: string = 'imagen-3.0-generate-002', aspectRatio: string = "1:1", imageBase64?: string): Promise<string> => {
+export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image', aspectRatio: string = "1:1", imageBase64?: string, imageSize: string = '1K'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const parts: any[] = [{ text: prompt }];
@@ -1013,7 +956,8 @@ export const generateImageForChat = async (prompt: string, modelName: string = '
       contents: { parts },
       config: {
         imageConfig: {
-          aspectRatio: aspectRatio as any
+          aspectRatio: aspectRatio as any,
+          imageSize: imageSize === '4K' ? '2K' : imageSize,
         }
       }
     });
@@ -1022,8 +966,12 @@ export const generateImageForChat = async (prompt: string, modelName: string = '
     if (resParts) {
       for (const part of resParts) {
         if (part.inlineData) {
-          trackImagenUsage(modelName, 1, "Tạo ảnh trong Chat");
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          trackImagenUsage(modelName, 1, "Tạo ảnh trong Chat", imageSize);
+          const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          if (imageSize === '4K') {
+            return await upscaleImageTo4K(base64Data);
+          }
+          return base64Data;
         }
       }
     }
