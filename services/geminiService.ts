@@ -37,7 +37,7 @@ import designPackagingMockup from '../Design_Packaging_Mockup.md?raw';
 import designWhiteBGRetouch from '../Design_WhiteBG_Retouch.md?raw';
 import designTechEffects from '../Design_Tech_Effects.md?raw';
 
-const upscaleImageTo4K = (base64Data: string): Promise<string> => {
+const resizeImageToQuality = (base64Data: string, quality: '1K' | '2K' | '4K'): Promise<string> => {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       resolve(base64Data);
@@ -48,9 +48,18 @@ const upscaleImageTo4K = (base64Data: string): Promise<string> => {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        // Calculate scale factor to make the maximum dimension 4096 (4K)
-        const maxDimension = 4096;
+        let maxDimension = 1024;
+        if (quality === '2K') maxDimension = 2048;
+        if (quality === '4K') maxDimension = 4096;
+        
         const currentMax = Math.max(img.width, img.height);
+        
+        // If image is already close to the desired resolution, don't resize it unless it's too small
+        if (currentMax === maxDimension) {
+            resolve(base64Data);
+            return;
+        }
+
         const scaleFactor = maxDimension / currentMax;
         
         canvas.width = Math.round(img.width * scaleFactor);
@@ -67,7 +76,7 @@ const upscaleImageTo4K = (base64Data: string): Promise<string> => {
           resolve(base64Data);
         }
       } catch (err) {
-        console.error("Failed to upscale image to 4K:", err);
+        console.error("Failed to resize image:", err);
         resolve(base64Data);
       }
     };
@@ -566,10 +575,7 @@ export const editProductImage = async (base64Image: string, prompt: string, imag
       if (part.inlineData) {
         trackImagenUsage(fallbackModel, 1, "Chỉnh sửa ảnh", imageSize);
         const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        if (imageSize === '4K') {
-          return await upscaleImageTo4K(base64Data);
-        }
-        return base64Data;
+        return await resizeImageToQuality(base64Data, imageSize as '1K' | '2K' | '4K');
       }
     }
     throw new Error("Không có ảnh.");  } catch (error: any) {
@@ -1001,10 +1007,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       if (part.inlineData) {
         trackImagenUsage(modelName, 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
         const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        if (settings.imageSize === '4K') {
-          return await upscaleImageTo4K(base64Data);
-        }
-        return base64Data;
+        return await resizeImageToQuality(base64Data, settings.imageSize as '1K' | '2K' | '4K');
       }
     }
     throw new Error("Không có ảnh.");
@@ -1044,10 +1047,7 @@ export const generateImageForChat = async (prompt: string, modelName: string = '
         if (part.inlineData) {
           trackImagenUsage(modelName, 1, "Tạo ảnh trong Chat", imageSize);
           const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-          if (imageSize === '4K') {
-            return await upscaleImageTo4K(base64Data);
-          }
-          return base64Data;
+          return await resizeImageToQuality(base64Data, imageSize as '1K' | '2K' | '4K');
         }
       }
     }
