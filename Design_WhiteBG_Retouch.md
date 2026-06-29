@@ -30,6 +30,8 @@ To prevent AI from introducing unwanted organic curves or asymmetrical bloating 
 ## 3. Advanced Material Rendering Specifications
 
 ### 3.1. Brushed & Polished Metals (Stainless Steel, Chrome, Aluminum)
+- **Stainless Steel Cookware Specific Lighting (Bộ nồi inox):**
+  - *Engineering Prompt:* `"STRICT PRESERVATION: Keep the exact original product (no change in shape, angle, color, material, or texture). Do NOT duplicate or add objects. Do NOT change composition or camera perspective. Lighting: soft directional key light from upper-left at 45 degrees, clean studio lighting (premium commercial cookware photography style), highlight on upper rim and inner surface of the pan, subtle reflection on metal handle, smooth light gradient across curved surfaces, no overexposure."`
 - **Fresnel Physics:** Ensure strong, bright specular reflections along the high-curvature profile edges, fading to soft diffuse values on surfaces perpendicular to the camera angle.
 - **Structured Specular Highlights:** Cylindrical bodies must exhibit sharp, vertical highlights (longitudinal reflections) that outline the 3D form.
 - **Anisotropic Metal Luster:** Apply smooth, uniform anisotropic reflections characteristic of premium brushed stainless steel:
