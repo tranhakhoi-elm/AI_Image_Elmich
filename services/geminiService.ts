@@ -70,8 +70,8 @@ const resizeImageToQuality = (base64Data: string, quality: '1K' | '2K' | '4K'): 
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const mimeType = base64Data.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-          resolve(canvas.toDataURL(mimeType, 0.95));
+          // Luôn xuất định dạng PNG để giữ chất lượng cao nhất (lossless), giống phiên bản cũ
+          resolve(canvas.toDataURL('image/png'));
         } else {
           resolve(base64Data);
         }
