@@ -35,6 +35,7 @@ import designLineArt from '../Design_Line_Art.md?raw';
 import designColorEditing from '../Design_Color_Editing.md?raw';
 import designPackagingMockup from '../Design_Packaging_Mockup.md?raw';
 import designWhiteBGRetouch from '../Design_WhiteBG_Retouch.md?raw';
+import render3DToPhoto from '../3DRender_To_Photo.md?raw';
 import designTechEffects from '../Design_Tech_Effects.md?raw';
 
 const resizeImageToQuality = (base64Data: string, quality: '1K' | '2K' | '4K'): Promise<string> => {
@@ -738,6 +739,27 @@ CREATIVE WRAPPING & RECONSTRUCTION RULES (MANDATORY):
 
 Output style: Premium commercial packaging mockup, hyper-detailed rendering, photorealistic 8k.
     `;
+  } else if (settings.visualStyle === "3D_TO_REAL_WHITE_BG") {
+    const productName = settings.productName || "Product";
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+    
+    let stylePrompt = `Photorealistic commercial studio photography of ${productName}, transforming a 3D render into a hyper-realistic physical object.
+- **Material properties:** ${matDesc || "Highly realistic materials, microscopic details, and authentic surface imperfections"}. Micro-textures applied to eliminate CGI look.
+- **Environment:** Seamless pure white background (#FFFFFF).
+- **Grounding:** Soft, realistic contact shadow under the product base.
+- **Lighting & Camera:** High-key commercial studio lighting, large softbox, shot on 85mm lens, f/8, ultra-detailed, 8k.
+${settings.whiteBGPriorityAdjustments ? `- **Priority user adjustments:** ${settings.whiteBGPriorityAdjustments}` : ""}
+`;
+
+    finalPrompt = `
+Style Guide Requirements:
+${render3DToPhoto}
+
+${stylePrompt}
+
+CRITICAL: Keep the exact shape and perspective of the original image. Only upgrade the realism, lighting, and material shaders.
+DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible inside the frame.
+    `;
   } else if (settings.visualStyle === "WHITE_BG_RETOUCH") {
     let stylePrompt = "";
     const productName = settings.productName || "Product";
@@ -1038,9 +1060,9 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     });
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     if (settings.packagingDesignType === "FLAT_DESIGN" && settings.packagingFaces.flat) parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
-  } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
+  } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
     let finalRefImage = settings.referenceImage;
-    if (settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "LINE_ART" || settings.visualStyle === "TECH_EFFECTS") {
+    if (settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "LINE_ART" || settings.visualStyle === "TECH_EFFECTS") {
       finalRefImage = await padImageToAspectRatio(finalRefImage, settings.aspectRatio || "1:1", "#FFFFFF");
     }
     parts.push({ inlineData: { data: finalRefImage.split(',')[1], mimeType: 'image/png' } });
