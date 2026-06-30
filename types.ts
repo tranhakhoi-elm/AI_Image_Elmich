@@ -107,6 +107,7 @@ export interface GenerationSettings {
   whiteBGCategory?: 'METAL' | 'PLASTIC' | 'GLASS' | 'CERAMIC' | 'METAL_AND_PLASTIC';
   whiteBGSelectedCategories?: string[];
   whiteBGMaterialsDescription?: string;
+  whiteBGPriorityAdjustments?: string;
   whiteBGMetalConfig?: { type: string, highlight: string, shape: string };
   whiteBGPlasticConfig?: { type: string, color?: string, lighting: string };
   whiteBGGlassConfig?: { type: string, lighting: string, content: string };

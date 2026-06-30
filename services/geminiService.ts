@@ -55,7 +55,7 @@ const resizeImageToQuality = (base64Data: string, quality: '1K' | '2K' | '4K'): 
         const currentMax = Math.max(img.width, img.height);
         
         // If image is already close to the desired resolution, don't resize it unless it's too small
-        if (currentMax === maxDimension) {
+        if (currentMax === maxDimension && base64Data.startsWith('data:image/png')) {
             resolve(base64Data);
             return;
         }
@@ -116,7 +116,20 @@ const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor
           // Image is taller than target. Need to pad width.
           newWidth = Math.round(img.height * targetRatio);
         } else {
-          resolve(base64Data);
+          if (base64Data.startsWith('data:image/png')) {
+            resolve(base64Data);
+          } else {
+            const canvas = document.createElement('canvas');
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL('image/png'));
+            } else {
+              resolve(base64Data);
+            }
+          }
           return;
         }
 
@@ -132,8 +145,8 @@ const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor
           const offsetY = Math.round((newHeight - img.height) / 2);
           
           ctx.drawImage(img, offsetX, offsetY);
-          const mimeType = base64Data.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-          resolve(canvas.toDataURL(mimeType, 0.95));
+          // Luôn xuất định dạng PNG
+          resolve(canvas.toDataURL('image/png'));
         } else {
           resolve(base64Data);
         }
@@ -145,6 +158,56 @@ const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor
     img.onerror = () => resolve(base64Data);
     img.src = base64Data;
   });
+};
+
+// Tự động phân tích chất liệu từ ảnh
+export const analyzeProductMaterials = async (imageBase64: string): Promise<{ categories: string[], description: string }> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    const parts: any[] = [{
+      text: `Analyze the provided product image to determine its materials. 
+Please classify the materials into the following categories (return an array of IDs):
+- 'METAL' (for any metal, stainless steel, aluminum, chrome)
+- 'PLASTIC' (for plastic, polymer, silicone, ABS)
+- 'GLASS' (for glass, transparent materials)
+- 'CERAMIC' (for ceramic, non-stick coatings, enamel)
+
+Also provide a detailed description (in Vietnamese) of where these materials are located on the product and their exact visual properties (e.g., "Thân ấm làm từ inox xước (brushed stainless steel) mờ, nắp nhựa ABS đen bóng, viền mạ chrome bóng loáng (mirror-polished)"). This helps in generating highly realistic textures.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "categories": ["METAL", "PLASTIC"],
+  "description": "Mô tả chi tiết bằng tiếng Việt..."
+}`
+    }];
+    
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      });
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    trackGeminiUsage(response, "Phân tích chất liệu sản phẩm");
+    if (response.text) {
+      return JSON.parse(response.text);
+    }
+    return { categories: [], description: "" };
+  } catch (error) {
+    console.error("Lỗi phân tích chất liệu:", error);
+    return { categories: [], description: "" };
+  }
 };
 
 // --- CÁC HÀM CHO CÁC MODE CŨ ---
@@ -707,6 +770,8 @@ ${materialDirectives}
 USER MATERIAL LOCATION & DETAIL DESCRIPTION:
 "${matDesc || "Automated multi-material detection based on the input photograph."}"
 -> Use this specific material mapping to assign glossiness, metalness, transparency, or roughness to different parts of the product. Keep original contours and text.
+
+${settings.whiteBGPriorityAdjustments ? `PRIORITY USER ADJUSTMENTS (MUST APPLY / ƯU TIÊN SỐ 1):\n"${settings.whiteBGPriorityAdjustments}"\n-> You MUST execute these specific aesthetic and lighting adjustments exactly as described by the user.` : ""}
 
 LIGHTING & STUDIO PRESENTATION:
 - Light Source: Professional three-point studio lighting with high-end key and fill lights, displaying pristine product shape and beautiful gradients.

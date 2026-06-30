@@ -51,7 +51,8 @@ import {
   analyzeStagingScene,
   analyzeStudioConcept,
   chatWithAI,
-  generateImageForChat
+  generateImageForChat,
+  analyzeProductMaterials
 } from './services/geminiService';
 
 const initialSettings: GenerationSettings = {
@@ -201,6 +202,7 @@ const App: React.FC = () => {
   const [techStep, setTechStep] = useState<number>(1); 
   const [packagingStep, setPackagingStep] = useState<number>(1); 
   const [techEffectStep, setTechEffectStep] = useState<number>(1); 
+  const [isAnalyzingMaterial, setIsAnalyzingMaterial] = useState<boolean>(false);
   const [whiteBgStep, setWhiteBgStep] = useState<number>(1); 
   const [colorChangeStep, setColorChangeStep] = useState<number>(1); 
   const [whiteBgWebStep, setWhiteBgWebStep] = useState<number>(1); 
@@ -1384,7 +1386,31 @@ const App: React.FC = () => {
               </div>
               
               <button 
-                disabled={!settings.referenceImage || !settings.productName} 
+                disabled={!settings.referenceImage || appState !== AppState.READY || isAnalyzingMaterial} 
+                onClick={async () => {
+                  if (!settings.referenceImage) return;
+                  setIsAnalyzingMaterial(true);
+                  try {
+                    const result = await analyzeProductMaterials(settings.referenceImage);
+                    setSettings(s => ({
+                      ...s,
+                      whiteBGSelectedCategories: result.categories,
+                      whiteBGMaterialsDescription: result.description
+                    }));
+                  } catch (e) {
+                    console.error("Auto analyze failed:", e);
+                  } finally {
+                    setIsAnalyzingMaterial(false);
+                  }
+                }}
+                className="w-full py-2 bg-[#2A2B2C] border border-[#1877F2]/30 text-[#1877F2] font-bold rounded-xl text-xs hover:bg-[#1877F2]/10 transition-all flex items-center justify-center gap-2"
+              >
+                {isAnalyzingMaterial ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
+              </button>
+              
+              <button 
+                disabled={!settings.referenceImage || !settings.productName || isAnalyzingMaterial} 
                 onClick={() => setWhiteBgStep(2)} 
                 className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
               >
@@ -1406,6 +1432,16 @@ const App: React.FC = () => {
                     <option value="1:4" className="bg-[#242526]">1:4 Siêu dài</option>
                     <option value="4:1" className="bg-[#242526]">4:1 Siêu rộng</option>
                  </select>
+              </div>
+
+              <div>
+                <label className="block text-[9px] font-bold text-white uppercase mb-2">Các chỉnh sửa ưu tiên (Tùy chọn)</label>
+                <textarea 
+                  placeholder="Ví dụ: Làm sáng phần tay cầm inox, xử lý bề mặt nồi sáng bóng hơn..." 
+                  className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors resize-none h-20" 
+                  value={settings.whiteBGPriorityAdjustments || ''} 
+                  onChange={e => setSettings({...settings, whiteBGPriorityAdjustments: e.target.value})} 
+                />
               </div>
 
               {renderModelSelection()}
