@@ -15,7 +15,8 @@ export const BarcodeGenerator = () => {
   const eanSvgRef = useRef<SVGSVGElement>(null);
 
   // QR State
-  const [qrInput, setQrInput] = useState('');
+  const [qrBaseUrl, setQrBaseUrl] = useState('https://elmich.vn/san-pham/');
+  const [qrSku, setQrSku] = useState('');
   const [qrSvgString, setQrSvgString] = useState('');
 
   // Calculate EAN-13 Check Digit
@@ -88,10 +89,11 @@ export const BarcodeGenerator = () => {
   // Generate QR
   useEffect(() => {
     if (activeTab === 'QR') {
-      if (qrInput) {
+      const combinedUrl = `${qrBaseUrl}${qrSku}`;
+      if (combinedUrl) {
         try {
           const qrcode = new QRCode({
-            content: qrInput,
+            content: combinedUrl,
             padding: 4,
             width: 256,
             height: 256,
@@ -107,7 +109,7 @@ export const BarcodeGenerator = () => {
         setQrSvgString('');
       }
     }
-  }, [qrInput, activeTab]);
+  }, [qrBaseUrl, qrSku, activeTab]);
 
   const downloadSVG = (svgElement: SVGSVGElement | null, filename: string) => {
     if (!svgElement) return;
@@ -130,13 +132,17 @@ export const BarcodeGenerator = () => {
     document.body.removeChild(downloadLink);
   };
 
+  const sanitizeFilename = (str: string) => str.replace(/[^a-zA-Z0-9]/gi, '_').substring(0, 30);
+
   const downloadQR = () => {
     if (!qrSvgString) return;
     const source = '<?xml version="1.0" standalone="no"?>\r\n' + qrSvgString;
     const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
     const downloadLink = document.createElement("a");
     downloadLink.href = url;
-    downloadLink.download = 'qrcode.svg';
+    const combinedUrl = `${qrBaseUrl}${qrSku}`;
+    const filename = combinedUrl ? `qrcode_${sanitizeFilename(combinedUrl)}.svg` : 'qrcode.svg';
+    downloadLink.download = filename;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
@@ -183,7 +189,7 @@ export const BarcodeGenerator = () => {
             <div className="bg-[#18191A] min-h-[150px] rounded-xl border border-[#3E4042] flex flex-col items-center justify-center p-6 gap-6">
                <svg ref={code128SvgRef} className="max-w-full bg-white rounded-md"></svg>
                {code128Input && (
-                 <button onClick={() => downloadSVG(code128SvgRef.current, 'code128.svg')} className="flex items-center gap-2 px-6 py-2.5 bg-[#1877F2] hover:bg-blue-600 text-white font-bold rounded-lg text-sm transition-colors">
+                 <button onClick={() => downloadSVG(code128SvgRef.current, `code128_${sanitizeFilename(code128Input)}.svg`)} className="flex items-center gap-2 px-6 py-2.5 bg-[#1877F2] hover:bg-blue-600 text-white font-bold rounded-lg text-sm transition-colors">
                    <Download size={16} /> Tải xuống SVG
                  </button>
                )}
@@ -210,7 +216,7 @@ export const BarcodeGenerator = () => {
             <div className="bg-[#18191A] min-h-[150px] rounded-xl border border-[#3E4042] flex flex-col items-center justify-center p-6 gap-6">
                <svg ref={eanSvgRef} className="max-w-full bg-white rounded-md"></svg>
                {(eanInput.length === 12 || eanInput.length === 13) && (
-                 <button onClick={() => downloadSVG(eanSvgRef.current, 'ean13.svg')} className="flex items-center gap-2 px-6 py-2.5 bg-[#1877F2] hover:bg-blue-600 text-white font-bold rounded-lg text-sm transition-colors">
+                 <button onClick={() => downloadSVG(eanSvgRef.current, `ean13_${sanitizeFilename(eanInput)}.svg`)} className="flex items-center gap-2 px-6 py-2.5 bg-[#1877F2] hover:bg-blue-600 text-white font-bold rounded-lg text-sm transition-colors">
                    <Download size={16} /> Tải xuống SVG
                  </button>
                )}
@@ -221,15 +227,34 @@ export const BarcodeGenerator = () => {
         {activeTab === 'QR' && (
           <div className="space-y-6">
             <div>
-              <label className="block text-xs font-bold text-gray-300 uppercase mb-2">Nhập nội dung (URL, Văn bản...)</label>
-              <textarea 
-                rows={3}
-                placeholder="Ví dụ: https://example.com" 
-                className="w-full bg-[#18191A] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors resize-none"
-                value={qrInput}
-                onChange={e => setQrInput(e.target.value)}
+              <label className="block text-xs font-bold text-gray-300 uppercase mb-2">Đường dẫn cơ bản (Base URL)</label>
+              <input 
+                type="text" 
+                placeholder="Ví dụ: https://elmich.vn/san-pham/" 
+                className="w-full bg-[#18191A] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors"
+                value={qrBaseUrl}
+                onChange={e => setQrBaseUrl(e.target.value)}
               />
             </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-300 uppercase mb-2">Mã SKU (Tùy chọn)</label>
+              <input 
+                type="text" 
+                placeholder="Nhập mã SKU..." 
+                className="w-full bg-[#18191A] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors"
+                value={qrSku}
+                onChange={e => setQrSku(e.target.value)}
+              />
+            </div>
+            
+            <div className="bg-[#18191A] p-4 rounded-xl border border-[#3E4042]">
+               <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Kết quả Link QR</label>
+               <div className="text-sm text-[#1877F2] break-all">
+                 {qrBaseUrl}{qrSku}
+                 {(!qrBaseUrl && !qrSku) && <span className="text-gray-500">Chưa có nội dung</span>}
+               </div>
+            </div>
+
             <div className="bg-[#18191A] min-h-[250px] rounded-xl border border-[#3E4042] flex flex-col items-center justify-center p-6 gap-6">
                {qrSvgString ? (
                  <>
