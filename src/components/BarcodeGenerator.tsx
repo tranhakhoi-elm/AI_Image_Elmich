@@ -136,12 +136,10 @@ export const BarcodeGenerator = () => {
 
   const downloadQR = () => {
     if (!qrSvgString) return;
-    const source = '<?xml version="1.0" standalone="no"?>\r\n' + qrSvgString;
-    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(qrSvgString);
     const downloadLink = document.createElement("a");
     downloadLink.href = url;
-    const combinedUrl = `${qrBaseUrl}${qrSku}`;
-    const filename = combinedUrl ? `qrcode_${sanitizeFilename(combinedUrl)}.svg` : 'qrcode.svg';
+    const filename = qrSku ? `qrcode_${sanitizeFilename(qrSku)}.svg` : 'qrcode.svg';
     downloadLink.download = filename;
     document.body.appendChild(downloadLink);
     downloadLink.click();
