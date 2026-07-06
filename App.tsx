@@ -31,9 +31,11 @@ import {
   Send,
   X,
   ChevronDown,
-  Trash2
+  Trash2,
+  QrCode
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
+import { BarcodeGenerator } from './src/components/BarcodeGenerator';
 import { 
   CAMERA_APERTURES, 
   CAMERA_ISO, 
@@ -2009,6 +2011,25 @@ const renderTrackSocketWorkflow = () => (
     );
   };
 
+  const renderBarcodeQrSidebar = () => (
+    <div className="space-y-6">
+      <div className="bg-[#242526] p-6 rounded-2xl border border-[#3E4042]">
+        <h3 className="text-white font-bold text-lg mb-2">Tạo Mã Vạch & QR Code</h3>
+        <p className="text-gray-400 text-sm mb-4">
+          Sử dụng công cụ ở phần màn hình chính để tạo:
+        </p>
+        <ul className="space-y-3 text-sm text-gray-300">
+          <li className="flex items-center gap-2"><Check size={16} className="text-[#1877F2]"/> Code 128 (Ký tự + Số)</li>
+          <li className="flex items-center gap-2"><Check size={16} className="text-[#1877F2]"/> EAN-13 & EAN-14</li>
+          <li className="flex items-center gap-2"><Check size={16} className="text-[#1877F2]"/> QR Code chuẩn Vector</li>
+        </ul>
+      </div>
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setCurrentStep(1)} className="w-full py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526]">Quay lại Menu</button>
+      </div>
+    </div>
+  );
+
   const renderSidebar = () => {
     if (currentStep === 1) {
       const modes = [
@@ -2019,6 +2040,7 @@ const renderTrackSocketWorkflow = () => (
         { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'bg-cyan-50 text-cyan-400', hover: 'hover:bg-cyan-100' },
         { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'bg-emerald-50 text-emerald-400', hover: 'hover:bg-emerald-100' },
         { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'bg-orange-50 text-orange-400', hover: 'hover:bg-orange-100' },
+        { id: 'BARCODE_QR_GENERATOR', icon: <QrCode size={20} />, title: 'Tạo QR & Barcode', desc: 'Tạo SVG cho Code 128, EAN, QR.', color: 'bg-teal-50 text-teal-400', hover: 'hover:bg-teal-100' },
       ];
 
       return (
@@ -2103,6 +2125,7 @@ const renderTrackSocketWorkflow = () => (
                {settings.visualStyle === 'LINE_ART' && renderLineArtWorkflow()}
                {settings.visualStyle === 'STUDIO' && renderStudioWorkflow()}
                {settings.visualStyle === 'TRACK_SOCKET_STAGING' && renderTrackSocketWorkflow()}
+               {settings.visualStyle === 'BARCODE_QR_GENERATOR' && renderBarcodeQrSidebar()}
              </motion.div>
            </AnimatePresence>
          </div>
@@ -2452,11 +2475,14 @@ const renderTrackSocketWorkflow = () => (
         {/* Center Feed Layout */}
         <section className="flex-1 max-w-[880px] w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0 xl:h-full xl:overflow-y-auto custom-scrollbar xl:pt-4 bg-[#18191A] xl:bg-transparent">
           
-          <div className="bg-[#242526] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#3E4042]">
-             <div className="border-b border-[#3E4042] p-4 font-semibold text-[17px] text-white flex justify-between items-center">
-                 Trạng thái làm việc
-             </div>
-             {/* Feed / Main Image section */}
+          {settings.visualStyle === 'BARCODE_QR_GENERATOR' ? (
+            <BarcodeGenerator />
+          ) : (
+            <div className="bg-[#242526] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#3E4042]">
+               <div className="border-b border-[#3E4042] p-4 font-semibold text-[17px] text-white flex justify-between items-center">
+                   Trạng thái làm việc
+               </div>
+               {/* Feed / Main Image section */}
              {appState === AppState.GENERATING || appState === AppState.ANALYZING ? (
                <div className="w-full min-h-[400px] bg-[#242526] p-8 flex flex-col items-center justify-center">
                  <div className="w-10 h-10 border-[3px] border-[#18191A] border-t-[#1877F2] rounded-full animate-spin"></div>
@@ -2531,11 +2557,13 @@ const renderTrackSocketWorkflow = () => (
                 </div>
              )}
           </div>
+          )}
 
           </section>
         </div>
 
       {/* Footer Gallery Rail */}
+      {settings.visualStyle !== 'BARCODE_QR_GENERATOR' && (
       <div className="w-full shrink-0 border-t border-[#3E4042] bg-[#18191A] xl:bg-[#242526] z-10 flex flex-col h-[260px]">
         <div className="p-4 flex items-center justify-between shrink-0">
           <span className="font-semibold text-white text-[17px]">Bộ sưu tập</span>
@@ -2567,6 +2595,7 @@ const renderTrackSocketWorkflow = () => (
           )}
         </div>
       </div>
+      )}
   
       </main>
       ) : renderChatView()}
