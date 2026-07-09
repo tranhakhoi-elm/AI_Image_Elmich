@@ -795,8 +795,10 @@ const App: React.FC = () => {
               </div>
 
               <button 
+                type="button"
                 disabled={settings.productImages.length === 0 || isAnalyzingMaterial} 
-                onClick={async () => {
+                onClick={async (e) => {
+                  e.preventDefault();
                   if (settings.productImages.length === 0) return;
                   setIsAnalyzingMaterial(true);
                   try {
@@ -806,8 +808,9 @@ const App: React.FC = () => {
                       whiteBGSelectedCategories: result.categories,
                       whiteBGMaterialsDescription: result.description
                     }));
-                  } catch (e) {
-                    console.error("Auto analyze failed:", e);
+                  } catch (err) {
+                    console.error("Auto analyze failed:", err);
+                    setAlertMessage("Lỗi phân tích chất liệu. Vui lòng thử lại.");
                   } finally {
                     setIsAnalyzingMaterial(false);
                   }
@@ -818,7 +821,7 @@ const App: React.FC = () => {
                 {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
               </button>
 
-              <button onClick={handleConceptAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:brightness-110 transition-all">Tiếp tục</button>
+              <button type="button" onClick={handleConceptAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:brightness-110 transition-all">Tiếp tục</button>
             </div>
           )}
 
@@ -845,8 +848,8 @@ const App: React.FC = () => {
                </div>
 
                <div className="flex gap-2 pt-2">
-                  <button onClick={() => setConceptStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                  <button onClick={handlePropSuggestion} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                  <button type="button" onClick={() => setConceptStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
+                  <button type="button" onClick={handlePropSuggestion} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                </div>
             </div>
           )}
@@ -881,13 +884,13 @@ const App: React.FC = () => {
                  <label className="block text-[9px] font-bold text-white uppercase">Thêm đạo cụ khác</label>
                  <div className="flex gap-2">
                     <input type="text" placeholder="Nhập tên đạo cụ..." className="flex-1 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 text-xs text-white outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                    <button onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
+                    <button type="button" onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
                  </div>
               </div>
 
               <div className="flex gap-2">
-                  <button onClick={() => setConceptStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                  <button onClick={() => setConceptStep(4)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                  <button type="button" onClick={() => setConceptStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
+                  <button type="button" onClick={() => setConceptStep(4)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
               </div>
             </div>
           )}
@@ -928,9 +931,48 @@ const App: React.FC = () => {
                         {settings.productImages[0] ? <img src={settings.productImages[0]} className="w-full h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Ảnh thực tế</span>}
                     </div>
                     <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
+
+                    <div>
+                      <label className="block text-[9px] font-bold text-white uppercase mb-2">Mô tả đặc tính vật liệu (Quan trọng để khử CGI)</label>
+                      <textarea 
+                        rows={3}
+                        placeholder="Ví dụ: Inox xước hairline mờ, tay cầm nhựa nhám, nắp kính cường lực..."
+                        className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#1877F2] resize-none transition-all placeholder:text-gray-500"
+                        value={settings.whiteBGMaterialsDescription || ''}
+                        onChange={e => setSettings({...settings, whiteBGMaterialsDescription: e.target.value})}
+                      />
+                    </div>
+
+                    <button 
+                      type="button"
+                      disabled={settings.productImages.length === 0 || isAnalyzingMaterial} 
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        if (settings.productImages.length === 0) return;
+                        setIsAnalyzingMaterial(true);
+                        try {
+                          const result = await analyzeProductMaterials(settings.productImages[0]);
+                          setSettings(s => ({
+                            ...s,
+                            whiteBGSelectedCategories: result.categories,
+                            whiteBGMaterialsDescription: result.description
+                          }));
+                        } catch (err) {
+                          console.error("Auto analyze failed:", err);
+                          setAlertMessage("Lỗi phân tích chất liệu. Vui lòng thử lại.");
+                        } finally {
+                          setIsAnalyzingMaterial(false);
+                        }
+                      }}
+                      className="w-full py-2 bg-[#2A2B2C] border border-[#1877F2]/30 text-[#1877F2] font-bold rounded-xl text-xs hover:bg-[#1877F2]/10 transition-all flex items-center justify-center gap-2"
+                    >
+                      {isAnalyzingMaterial ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                      {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
+                    </button>
+
                     <div className="flex gap-2">
-                      <button onClick={() => setStagingStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                      <button onClick={() => settings.productImages[0] ? setStagingStep(3) : setAlertMessage("Thiếu ảnh!")} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
+                      <button type="button" onClick={() => setStagingStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
+                      <button type="button" onClick={() => settings.productImages[0] ? setStagingStep(3) : setAlertMessage("Thiếu ảnh!")} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
                     </div>
                 </div>
             )}
@@ -957,7 +999,7 @@ const App: React.FC = () => {
                     </div>
                     <div className="flex gap-2 mt-4 pt-4 border-t border-[#3E4042]">
                        <input type="text" placeholder="Thêm vật phẩm khác..." className="flex-1 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 text-xs text-white outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                       <button onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
+                       <button type="button" onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
                     </div>
                     <div className="flex gap-2 mt-4">
                       <button onClick={() => setStagingStep(3)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
@@ -1068,7 +1110,7 @@ const App: React.FC = () => {
               <div className="pt-4 border-t border-[#3E4042] space-y-2">
                  <div className="flex gap-2">
                     <input type="text" placeholder="Thêm visual element..." className="flex-1 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 text-xs text-white outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                    <button onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
+                    <button type="button" onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
                  </div>
               </div>
               <div className="flex gap-2">
@@ -1424,8 +1466,10 @@ const App: React.FC = () => {
               </div>
               
               <button 
+                type="button"
                 disabled={!settings.referenceImage || appState !== AppState.READY || isAnalyzingMaterial} 
-                onClick={async () => {
+                onClick={async (e) => {
+                  e.preventDefault();
                   if (!settings.referenceImage) return;
                   setIsAnalyzingMaterial(true);
                   try {
@@ -1435,8 +1479,9 @@ const App: React.FC = () => {
                       whiteBGSelectedCategories: result.categories,
                       whiteBGMaterialsDescription: result.description
                     }));
-                  } catch (e) {
-                    console.error("Auto analyze failed:", e);
+                  } catch (err) {
+                    console.error("Auto analyze failed:", err);
+                    setAlertMessage("Lỗi phân tích chất liệu. Vui lòng thử lại.");
                   } finally {
                     setIsAnalyzingMaterial(false);
                   }
@@ -1448,6 +1493,7 @@ const App: React.FC = () => {
               </button>
               
               <button 
+                type="button"
                 disabled={!settings.referenceImage || !settings.productName || isAnalyzingMaterial} 
                 onClick={() => setWhiteBgStep(2)} 
                 className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
@@ -1539,8 +1585,36 @@ const App: React.FC = () => {
                 </div>
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
+
+              <button 
+                type="button"
+                disabled={!settings.referenceImage || isAnalyzingMaterial} 
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (!settings.referenceImage) return;
+                  setIsAnalyzingMaterial(true);
+                  try {
+                    const result = await analyzeProductMaterials(settings.referenceImage);
+                    setSettings(s => ({
+                      ...s,
+                      whiteBGSelectedCategories: result.categories,
+                      whiteBGMaterialsDescription: result.description
+                    }));
+                  } catch (err) {
+                    console.error("Auto analyze failed:", err);
+                    setAlertMessage("Lỗi phân tích chất liệu. Vui lòng thử lại.");
+                  } finally {
+                    setIsAnalyzingMaterial(false);
+                  }
+                }}
+                className="w-full py-2 bg-[#2A2B2C] border border-[#1877F2]/30 text-[#1877F2] font-bold rounded-xl text-xs hover:bg-[#1877F2]/10 transition-all flex items-center justify-center gap-2"
+              >
+                {isAnalyzingMaterial ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
+              </button>
               
               <button 
+                type="button"
                 disabled={!settings.referenceImage || !settings.productName} 
                 onClick={() => setRender3DStep(2)} 
                 className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
@@ -1690,8 +1764,10 @@ const App: React.FC = () => {
               </div>
 
               <button 
+                type="button"
                 disabled={settings.productImages.length === 0 || isAnalyzingMaterial} 
-                onClick={async () => {
+                onClick={async (e) => {
+                  e.preventDefault();
                   if (settings.productImages.length === 0) return;
                   setIsAnalyzingMaterial(true);
                   try {
@@ -1701,8 +1777,9 @@ const App: React.FC = () => {
                       whiteBGSelectedCategories: result.categories,
                       whiteBGMaterialsDescription: result.description
                     }));
-                  } catch (e) {
-                    console.error("Auto analyze failed:", e);
+                  } catch (err) {
+                    console.error("Auto analyze failed:", err);
+                    setAlertMessage("Lỗi phân tích chất liệu. Vui lòng thử lại.");
                   } finally {
                     setIsAnalyzingMaterial(false);
                   }
@@ -1713,7 +1790,7 @@ const App: React.FC = () => {
                 {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
               </button>
 
-              <button onClick={handleStudioAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Tiếp tục</button>
+              <button type="button" onClick={handleStudioAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Tiếp tục</button>
             </div>
           )}
 
@@ -1808,7 +1885,7 @@ const App: React.FC = () => {
                  <label className="block text-[9px] font-bold text-white uppercase">Thêm đạo cụ khác</label>
                  <div className="flex gap-2">
                     <input type="text" placeholder="Nhập tên đạo cụ..." className="flex-1 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 text-xs text-white outline-none focus:border-[#1877F2]" value={customProp} onChange={e => setCustomProp(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomPropToList()} />
-                <button onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
+                <button type="button" onClick={addCustomPropToList} className="px-5 bg-[#3A3B3C] rounded-xl text-white font-bold hover:bg-[#242526]/20 transition-all">+</button>
              </div>
           </div>
 
