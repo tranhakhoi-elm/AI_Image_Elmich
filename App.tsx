@@ -783,6 +783,41 @@ const App: React.FC = () => {
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
 
+              <div>
+                <label className="block text-[9px] font-bold text-white uppercase mb-2">Mô tả đặc tính vật liệu (Quan trọng để khử CGI)</label>
+                <textarea 
+                  rows={3}
+                  placeholder="Ví dụ: Inox xước hairline mờ, tay cầm nhựa nhám, nắp kính cường lực..."
+                  className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#1877F2] resize-none transition-all placeholder:text-gray-500"
+                  value={settings.whiteBGMaterialsDescription || ''}
+                  onChange={e => setSettings({...settings, whiteBGMaterialsDescription: e.target.value})}
+                />
+              </div>
+
+              <button 
+                disabled={settings.productImages.length === 0 || isAnalyzingMaterial} 
+                onClick={async () => {
+                  if (settings.productImages.length === 0) return;
+                  setIsAnalyzingMaterial(true);
+                  try {
+                    const result = await analyzeProductMaterials(settings.productImages[0]);
+                    setSettings(s => ({
+                      ...s,
+                      whiteBGSelectedCategories: result.categories,
+                      whiteBGMaterialsDescription: result.description
+                    }));
+                  } catch (e) {
+                    console.error("Auto analyze failed:", e);
+                  } finally {
+                    setIsAnalyzingMaterial(false);
+                  }
+                }}
+                className="w-full py-2 bg-[#2A2B2C] border border-[#1877F2]/30 text-[#1877F2] font-bold rounded-xl text-xs hover:bg-[#1877F2]/10 transition-all flex items-center justify-center gap-2"
+              >
+                {isAnalyzingMaterial ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
+              </button>
+
               <button onClick={handleConceptAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:brightness-110 transition-all">Tiếp tục</button>
             </div>
           )}
@@ -1642,6 +1677,41 @@ const App: React.FC = () => {
                 </div>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
               </div>
+
+              <div>
+                <label className="block text-[9px] font-bold text-white uppercase mb-2">Mô tả đặc tính vật liệu (Quan trọng để khử CGI)</label>
+                <textarea 
+                  rows={3}
+                  placeholder="Ví dụ: Inox xước hairline mờ, tay cầm nhựa nhám, nắp kính cường lực..."
+                  className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#1877F2] resize-none transition-all placeholder:text-gray-500"
+                  value={settings.whiteBGMaterialsDescription || ''}
+                  onChange={e => setSettings({...settings, whiteBGMaterialsDescription: e.target.value})}
+                />
+              </div>
+
+              <button 
+                disabled={settings.productImages.length === 0 || isAnalyzingMaterial} 
+                onClick={async () => {
+                  if (settings.productImages.length === 0) return;
+                  setIsAnalyzingMaterial(true);
+                  try {
+                    const result = await analyzeProductMaterials(settings.productImages[0]);
+                    setSettings(s => ({
+                      ...s,
+                      whiteBGSelectedCategories: result.categories,
+                      whiteBGMaterialsDescription: result.description
+                    }));
+                  } catch (e) {
+                    console.error("Auto analyze failed:", e);
+                  } finally {
+                    setIsAnalyzingMaterial(false);
+                  }
+                }}
+                className="w-full py-2 bg-[#2A2B2C] border border-[#1877F2]/30 text-[#1877F2] font-bold rounded-xl text-xs hover:bg-[#1877F2]/10 transition-all flex items-center justify-center gap-2"
+              >
+                {isAnalyzingMaterial ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
+              </button>
 
               <button onClick={handleStudioAnalysis} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all">Tiếp tục</button>
             </div>

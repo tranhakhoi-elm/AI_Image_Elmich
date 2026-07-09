@@ -909,6 +909,12 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       selectedStyleGuide = designTechEffects;
     }
 
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+    let materialInstruction = "";
+    if (matDesc) {
+      materialInstruction = `\n      CRITICAL MATERIAL REQUIREMENT: ${matDesc}\n      You must explicitly describe these materials in the generated prompt, enforcing correct specular highlights, roughness, and physically based rendering (PBR) properties to match this description.`;
+    }
+
     const thinkingPrompt = `
       Act as Elmich's Head of Creative, a senior commercial product photographer and expert prompt engineer. You must read and strictly adhere to the following three master styling manuals of Elmich AI Image Studio to write the absolute best prompt:
       
@@ -933,7 +939,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       ${isStudio ? "Background: Plain paper background that is EXACTLY the same color as the product's primary color (tone-on-tone monochromatic look)." : ""}
       Empty Space Requirement: ${spaceInstruction}
       Composition: The product and props must be neatly arranged and fit entirely within the frame.
-      Camera & Lighting Setup: ${cameraDetails}
+      Camera & Lighting Setup: ${cameraDetails}${materialInstruction}
       
       CORE PHOTOGRAPHY AND DESIGN PRINCIPLES (STRICTLY ENFORCE):
       1. Strict Geometry Preservation (Geometry Control Protocol): 
