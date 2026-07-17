@@ -1,0 +1,19 @@
+const fs = require('fs');
+let content = fs.readFileSync('services/geminiService.ts', 'utf8');
+
+const startStr = "LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:";
+const endStr = "- Mọi nội dung trả về trong 'notes' LUÔN LUÔN phải viết bằng tiếng Việt.";
+
+const startIdx = content.indexOf(startStr);
+const endIdx = content.indexOf(endStr);
+
+if (startIdx !== -1 && endIdx !== -1) {
+    const oldSegment = content.substring(startIdx, endIdx + endStr.length);
+    const newSegment = `LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:\\n- Nếu Tên thông số là 'Mã vạch EAN13' và giá trị chuẩn có 12 số, thiết kế có 13 số thì chỉ cần khớp 12 số đầu là tính MATCH.\\n- Đối với 'Đơn vị sản xuất' (Manufacturer) và 'Địa chỉ' (Address): NHỮNG THÔNG TIN NÀY CHẮC CHẮN CÓ TRÊN THIẾT KẾ. Chúng có thể nằm ở các phần như 'NSX', 'Nhà nhập khẩu', 'Sản xuất bởi', 'Nhập khẩu bởi', 'NK&PP', hoặc ở dòng 'Khác', và có thể được viết bằng tiếng Anh (ví dụ: 'Manufactured by...', 'Address...', 'Add:', 'Zhongshan...', 'Guangdong...', 'China', 'P.R.C') hoặc xen kẽ giữa các ngôn ngữ. Bạn PHẢI TÌM KỸ TẤT CẢ CÁC GÓC trên toàn bộ file và TRÍCH XUẤT toàn bộ dòng địa chỉ / tên công ty bằng tiếng Anh hoặc tiếng Trung/Việt trên bản vẽ để điền vào trường 'actual'. Dù giá trị chuẩn là tiếng Việt nhưng trên bao bì là tiếng Anh/Trung tương đương, hãy vẫn đánh giá là MATCH = true.\\n- KHÔNG được lười biếng bỏ qua Đơn vị sản xuất và Địa chỉ.\\n- Đối với 'Mã QR' (QR Code): Nếu trong BẢNG THÔNG SỐ CHUẨN có yêu cầu kiểm tra Mã QR, bạn PHẢI TỰ QUÉT MÃ QR CÓ TRONG HÌNH ẢNH thiết kế để đọc nội dung mã hóa bên trong nó (tuyệt đối không chỉ đọc dòng chữ in bên cạnh/bên dưới mã). Lấy nội dung giải mã gốc (raw text/URL) để điền vào 'actual'. Khi so sánh với giá trị chuẩn (thường là dạng 'www.elmich.vn/san-pham/<mã>'), nếu kết quả quét raw từ ảnh CHỨA giá trị chuẩn (có thể thừa 'http://', 'https://' ở đầu hoặc '/' ở cuối), thì coi như MATCH = true (ví dụ: raw là 'https://www.elmich.vn/san-pham/4021617/' khớp với chuẩn 'www.elmich.vn/san-pham/4021617'). Tuyệt đối không truy cập link thực tế.\\n- Mọi nội dung trả về trong 'notes' LUÔN LUÔN phải viết bằng tiếng Việt.`;
+    
+    content = content.replace(oldSegment, newSegment);
+    fs.writeFileSync('services/geminiService.ts', content);
+    console.log("Success");
+} else {
+    console.log("Could not find start or end string.");
+}

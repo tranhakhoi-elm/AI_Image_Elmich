@@ -275,7 +275,8 @@ YÊU CẦU ĐỀ XUẤT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
    - [Mô tả không gian bối cảnh, khoảng trống không gian âm]
    - [Mô tả cách đánh sáng tự nhiên chân thực]
    - [Mô tả cảm giác, màu sắc chủ đạo trẻ trung]
-   (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
+   (Lưu ý: Sử dụng ký tự xuống dòng 
+ giữa các tiêu chí để định dạng)
 3. Đề xuất bộ thông số Camera (Góc chụp lệc nhẹ 1/3, tiêu cự 50mm hoặc 85mm, khẩu độ lớn) lý tưởng nhất dựa trên Quy Chuẩn Phối Cảnh Đời Sống.
 
 Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
@@ -346,7 +347,8 @@ Dựa TRÊN QUY CHUẨN TRÊN, hãy thực hiện phân tích kỹ thuật:
 Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}. 
 
 Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
-YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
+), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
 - [Mô tả phong cách hiệu năng công nghệ]
 - [Mô tả không gian hiển thị, bối cảnh tối sang trọng]
 - [Mô tả cách đánh sáng phát quang tinh tế]
@@ -471,7 +473,8 @@ ${designTechEffects}
 
 Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm theo đúng Quy Chuẩn Hiệu ứng Công nghệ.
 JSON array với 'title' (tiếng Việt) và 'prompt'.
-YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \\n), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
+), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
 - [Mô tả phong cách và cấu trúc hiệu ứng của sóng nước đại dương rực rỡ]
 - [Mô tả nền mặt biển ẩm mượt, tinh khôi]
 - [Mô tả cách đánh sáng phát quang, ánh neon phản chiếu xanh lam/ngọc bích]
@@ -549,7 +552,8 @@ YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN
    - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
    - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights)]
    - [Mô tả cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
-   (Lưu ý: Sử dụng ký tự xuống dòng \n giữa các tiêu chí để định dạng)
+   (Lưu ý: Sử dụng ký tự xuống dòng 
+ giữa các tiêu chí để định dạng)
 3. RÀNG BUỘC BẮT BUỘC:
    - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
    - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
@@ -654,7 +658,8 @@ export const generateProductImage = async (settings: GenerationSettings, variant
   
   // Optional: Use history to optimize the generation
   const optimizedHistoryNote = history && history.length > 0 
-    ? `\nNote: Please align with the style of these previously successful concepts: ${history.map(h => h.imageSettings.concept || h.imageSettings.visualStyle).slice(-3).join(', ')}`
+    ? `
+Note: Please align with the style of these previously successful concepts: ${history.map(h => h.imageSettings.concept || h.imageSettings.visualStyle).slice(-3).join(', ')}`
     : "";
   
   const formatProps = (props: PropConfig[]) => {
@@ -768,16 +773,20 @@ DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible insid
 
     let materialDirectives = "";
     if (selectedCats.includes("METAL")) {
-      materialDirectives += `\n- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, clean, flawless, and pristine.`;
+      materialDirectives += `
+- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, clean, flawless, and pristine.`;
     }
     if (selectedCats.includes("PLASTIC")) {
-      materialDirectives += `\n- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely clean, uniform, smooth, and pristine.`;
+      materialDirectives += `
+- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely clean, uniform, smooth, and pristine.`;
     }
     if (selectedCats.includes("GLASS")) {
-      materialDirectives += `\n- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, uniform, and crystal clear.`;
+      materialDirectives += `
+- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, uniform, and crystal clear.`;
     }
     if (selectedCats.includes("CERAMIC")) {
-      materialDirectives += `\n- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely smooth, uniform, flawless, and pristine.`;
+      materialDirectives += `
+- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely smooth, uniform, flawless, and pristine.`;
     }
     if (materialDirectives === "") {
       materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, completely clean and pristine.";
@@ -793,7 +802,9 @@ USER MATERIAL LOCATION & DETAIL DESCRIPTION:
 "${matDesc || "Automated multi-material detection based on the input photograph."}"
 -> Use this specific material mapping to assign glossiness, metalness, transparency, or roughness to different parts of the product. Keep original contours and text.
 
-${settings.whiteBGPriorityAdjustments ? `PRIORITY USER ADJUSTMENTS (MUST APPLY / ƯU TIÊN SỐ 1):\n"${settings.whiteBGPriorityAdjustments}"\n-> You MUST execute these specific aesthetic and lighting adjustments exactly as described by the user.` : ""}
+${settings.whiteBGPriorityAdjustments ? `PRIORITY USER ADJUSTMENTS (MUST APPLY / ƯU TIÊN SỐ 1):
+"${settings.whiteBGPriorityAdjustments}"
+-> You MUST execute these specific aesthetic and lighting adjustments exactly as described by the user.` : ""}
 
 LIGHTING & STUDIO PRESENTATION:
 - Light Source: Professional three-point studio lighting with high-end key and fill lights, displaying pristine product shape and beautiful gradients.
@@ -912,7 +923,9 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     const matDesc = settings.whiteBGMaterialsDescription || "";
     let materialInstruction = "";
     if (matDesc) {
-      materialInstruction = `\n      CRITICAL MATERIAL REQUIREMENT: ${matDesc}\n      You must explicitly describe these materials in the generated prompt, enforcing correct specular highlights, roughness, and physically based rendering (PBR) properties to match this description.`;
+      materialInstruction = `
+      CRITICAL MATERIAL REQUIREMENT: ${matDesc}
+      You must explicitly describe these materials in the generated prompt, enforcing correct specular highlights, roughness, and physically based rendering (PBR) properties to match this description.`;
     }
 
     const thinkingPrompt = `
@@ -1183,5 +1196,127 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
   } catch (error) {
     console.error("Chat generation failed:", error);
     throw error;
+  }
+};
+export const analyzePackagingContent = async (
+  designFiles: {name: string, data: string}[],
+  standardParams: {key: string, value: string}[]
+): Promise<{params: any[]}> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `Bạn là chuyên gia kiểm duyệt nội dung bao bì (QA/QC). Bạn được cung cấp các tài liệu thiết kế. Mỗi tài liệu đều được đi kèm với tên file của nó.
+
+Hãy so sánh nội dung văn bản có trên CÁC thiết kế (được cung cấp qua file đính kèm) với BẢNG THÔNG SỐ CHUẨN sau đây:
+
+BẢNG THÔNG SỐ CHUẨN:
+${JSON.stringify(standardParams.filter(p => p.value.trim() !== ''), null, 2)}
+
+NHIỆM VỤ CỦA BẠN:
+1. Đọc tất cả các chữ (văn bản) trên CÁC tài liệu thiết kế.
+2. Đối chiếu từng thông số trong BẢNG THÔNG SỐ CHUẨN với nội dung bạn đọc được trên thiết kế.
+LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:\n- Nếu Tên thông số là 'Mã vạch EAN13' và giá trị chuẩn có 12 số, thiết kế có 13 số thì chỉ cần khớp 12 số đầu là tính MATCH.\n- Đối với 'Đơn vị sản xuất' (Manufacturer) và 'Địa chỉ' (Address): NHỮNG THÔNG TIN NÀY CHẮC CHẮN CÓ TRÊN THIẾT KẾ. Chúng có thể nằm ở các phần như 'NSX', 'Nhà nhập khẩu', 'Sản xuất bởi', 'Nhập khẩu bởi', 'NK&PP', hoặc ở dòng 'Khác', và có thể được viết bằng tiếng Anh (ví dụ: 'Manufactured by...', 'Address...', 'Add:', 'Zhongshan...', 'Guangdong...', 'China', 'P.R.C') hoặc xen kẽ giữa các ngôn ngữ. Bạn PHẢI TÌM KỸ TẤT CẢ CÁC GÓC trên toàn bộ file và TRÍCH XUẤT toàn bộ dòng địa chỉ / tên công ty bằng tiếng Anh hoặc tiếng Trung/Việt trên bản vẽ để điền vào trường 'actual'. Dù giá trị chuẩn là tiếng Việt nhưng trên bao bì là tiếng Anh/Trung tương đương, hãy vẫn đánh giá là MATCH = true.\n- KHÔNG được lười biếng bỏ qua Đơn vị sản xuất và Địa chỉ.\n- Đối với 'Mã QR' (QR Code): Nếu trong BẢNG THÔNG SỐ CHUẨN có yêu cầu kiểm tra Mã QR, bạn PHẢI TỰ QUÉT MÃ QR CÓ TRONG HÌNH ẢNH thiết kế để đọc nội dung mã hóa bên trong nó (tuyệt đối không chỉ đọc dòng chữ in bên cạnh/bên dưới mã). Lấy nội dung giải mã gốc (raw text/URL) để điền vào 'actual' CHÍNH XÁC NHƯ NHỮNG GÌ BẠN QUÉT ĐƯỢC (bao gồm cả http://, https:// nếu có). Khi so sánh với giá trị chuẩn, nếu kết quả quét raw từ ảnh CHỨA giá trị chuẩn (có thể thừa 'http://', 'https://' ở đầu hoặc '/' ở cuối), thì coi như MATCH = true (ví dụ: raw là 'https://www.elmich.vn/san-pham/4021617/' khớp với chuẩn 'www.elmich.vn/san-pham/4021617'). TUYỆT ĐỐI KHÔNG tự ý suy diễn hay truy cập link thực tế.\n- Mọi nội dung trả về trong 'notes' LUÔN LUÔN phải viết bằng tiếng Việt.
+- Trong phần 'notes' (ghi chú), đối với bất kỳ thông số nào, bạn PHẢI ghi rõ thông tin đó được tìm thấy (hoặc bị sai/thiếu) trên file thiết kế có TÊN FILE LÀ GÌ (dựa vào tên file được cung cấp ngay trước mỗi hình ảnh). Ví dụ: 'Trên file hop-mau.pdf: thông tin bị sai...'. Việc ghi rõ tên file là BẮT BUỘC để người dùng dễ kiểm tra và sửa.
+3. KIỂM TRA TOÀN DIỆN VÀ CHI TIẾT TỪNG TÀI LIỆU: Với mỗi thông số trong BẢNG THÔNG SỐ CHUẨN, bạn phải kiểm tra và báo cáo kết quả RIÊNG BIỆT cho TỪNG file thiết kế được cung cấp.\n- 'match' tổng thể: true nếu khớp hoàn toàn trên TẤT CẢ các file có thông số đó, false nếu có ít nhất 1 file sai/khác biệt.\n- 'fileResults': mảng chứa kết quả chi tiết cho từng file thiết kế. Với mỗi file, ghi CHÍNH XÁC tên file (fileName) giống y hệt như đã được cung cấp (ví dụ: 'hop-mau.pdf', 'tem.png'), nội dung thực tế đọc được trên file đó (actual), kết quả đối chiếu với chuẩn (match: true/false), và ghi chú thật ngắn gọn (notes) nếu sai (ví dụ: 'Sai model', 'Thiếu điện áp'). Nếu file không chứa thông tin của thông số này (và điều đó là bình thường), ghi 'actual': 'Không có', 'match': true.\n\nTrả về ĐÚNG định dạng JSON sau:\n{\n  "params": [\n    { \n      "key": "...", \n      "expected": "...", \n      "match": true/false,\n      "fileResults": [\n        { "fileName": "...", "actual": "...", "match": true/false, "notes": "..." }\n      ]\n    }\n  ]\n}`;
+
+    const parts: any[] = [
+      { text: prompt },
+    ];
+    
+    designFiles.forEach(file => {
+      const commaIdx = file.data.indexOf(',');
+      if (commaIdx !== -1) {
+        const header = file.data.substring(0, commaIdx);
+        const data = file.data.substring(commaIdx + 1);
+        const mimeMatch = header.match(/data:([^;]+)/);
+        if (mimeMatch && mimeMatch[1]) {
+          parts.push({ text: `Tài liệu thiết kế, Tên file: ${file.name}` });
+          parts.push({ inlineData: { mimeType: mimeMatch[1], data: data } });
+        }
+      }
+    });
+
+    if (parts.length === 1) throw new Error("Invalid files");
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: {
+        parts: parts
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            params: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  key: { type: Type.STRING },
+                  expected: { type: Type.STRING },
+                  match: { type: Type.BOOLEAN },
+                  fileResults: {
+                    type: Type.ARRAY,
+                    items: {
+                       type: Type.OBJECT,
+                       properties: {
+                          fileName: { type: Type.STRING },
+                          actual: { type: Type.STRING },
+                          match: { type: Type.BOOLEAN },
+                          notes: { type: Type.STRING }
+                       },
+                       required: ["fileName", "actual", "match"]
+                    }
+                  }
+                },
+                required: ["key", "expected", "match", "fileResults"]
+              }
+            }
+          }
+        }
+      }
+    });
+
+    trackGeminiUsage(response, "Kiểm tra bao bì");
+    return JSON.parse(response.text || '{"params": []}');
+  } catch (error) {
+    console.error("Lỗi kiểm tra bao bì:", error);
+    return { params: [] };
+  }
+};
+
+
+export const extractStandardParamsWithAI = async (textData: string): Promise<{key: string, value: string}[]> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `Bạn là chuyên gia phân tích dữ liệu sản phẩm. Hãy trích xuất các thông số kỹ thuật quan trọng từ văn bản thô (thường được copy từ file Excel) dưới đây.\nVăn bản thô:\n${textData}\n\nHãy trích xuất và trả về MỘT mảng JSON các thông số quan trọng (như Tên sản phẩm, Model, Mã sản phẩm, Công suất, Điện áp, Tần số, Kích thước, Trọng lượng, Định lượng, Dung tích, Chất liệu, Xuất xứ, Năm sản xuất, Đơn vị sản xuất, Địa chỉ, Mã vạch EAN13, Mã vạch code 128, Mã QR...).\nNếu Mã QR không có sẵn, hãy tự tạo ra từ Mã sản phẩm theo định dạng: www.elmich.vn/san-pham/<mã sản phẩm viết thường>.\nĐịnh dạng JSON:\n{\n  "params": [\n    { "key": "Tên thông số", "value": "Giá trị" }\n  ]\n}\n`;
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            params: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  key: { type: Type.STRING },
+                  value: { type: Type.STRING }
+                },
+                required: ["key", "value"]
+              }
+            }
+          }
+        }
+      }
+    });
+    const res = JSON.parse(response.text || '{"params": []}');
+    return res.params || [];
+  } catch (error) {
+    console.error("Lỗi trích xuất thông số:", error);
+    return [];
   }
 };

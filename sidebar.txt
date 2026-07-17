@@ -1,0 +1,16 @@
+  const renderPackagingCheckSidebar = () => (
+    <div className="space-y-6">
+      <div className="bg-[#242526] p-6 rounded-2xl border border-[#3E4042]">
+        <h3 className="text-white font-bold text-lg mb-2">Kiểm tra Bao Bì</h3>
+        <p className="text-gray-400 text-sm mb-4">
+          Sử dụng phần màn hình chính để:
+        </p>
+        <ul className="text-gray-400 text-sm space-y-2 list-disc pl-4">
+          <li>Tải lên dữ liệu chuẩn từ file Excel.</li>
+          <li>Xem và chỉnh sửa các thông số chuẩn.</li>
+          <li>Tải lên file thiết kế dạng ảnh.</li>
+          <li>AI sẽ đối chiếu dữ liệu thiết kế với bảng chuẩn và kiểm tra mã QR.</li>
+        </ul>
+      </div>
+    </div>
+  );

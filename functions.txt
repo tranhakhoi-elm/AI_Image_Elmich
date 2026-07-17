@@ -1,0 +1,96 @@
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+      
+      // Assume first row is header or key-value pairs (column 0 = key, column 1 = value)
+      const extractedParams: {key: string, value: string}[] = [];
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        if (row.length >= 2 && row[0] && row[1]) {
+          extractedParams.push({ key: String(row[0]), value: String(row[1]) });
+        }
+      }
+      if (extractedParams.length > 0) {
+        setStandardParams(extractedParams);
+        setAlertMessage(`Đã trích xuất ${extractedParams.length} thông số thành công.`);
+      } else {
+        setAlertMessage("Không tìm thấy dữ liệu hợp lệ trong file Excel. Vui lòng định dạng Cột A (Tên thông số), Cột B (Giá trị).");
+      }
+    } catch (err) {
+      console.error(err);
+      setAlertMessage("Lỗi khi đọc file Excel.");
+    }
+    e.target.value = '';
+  };
+
+  const addStandardParam = () => setStandardParams([...standardParams, { key: '', value: '' }]);
+  const updateStandardParam = (index: number, field: 'key' | 'value', val: string) => {
+    const newParams = [...standardParams];
+    newParams[index][field] = val;
+    setStandardParams(newParams);
+  };
+  const removeStandardParam = (index: number) => {
+    setStandardParams(standardParams.filter((_, i) => i !== index));
+  };
+
+  const runPackagingCheck = async () => {
+    if (!packagingDesignImage) return;
+    setAppState(AppState.ANALYZING);
+    setLoadingMessage("AI đang quét thiết kế và đối chiếu thông số...");
+    
+    try {
+      // Decode QR if possible
+      let detectedUrl = '';
+      try {
+        const img = new window.Image();
+        img.src = packagingDesignImage;
+        await new Promise(res => { img.onload = res; });
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+          if (code) detectedUrl = code.data;
+        }
+      } catch (err) { console.error("QR decode error:", err); }
+
+      const expectedSkuParam = standardParams.find(p => p.key.toLowerCase().includes('sku') || p.key.toLowerCase().includes('mã sản phẩm'));
+      const expectedSku = expectedSkuParam ? expectedSkuParam.value : 'UNKNOWN_SKU';
+      
+      let isValidQr = false;
+      if (detectedUrl) {
+        // Validate URL like www.elmich.vn/san-pham/<sku> or https://www.elmich.vn/san-pham/<sku>
+        const cleanUrl = detectedUrl.trim().toLowerCase();
+        const expectedPattern = `elmich.vn/san-pham/${expectedSku.toLowerCase()}`;
+        isValidQr = cleanUrl.includes(expectedPattern);
+      }
+
+      // Run AI Text Check
+      const result = await analyzePackagingContent(packagingDesignImage, standardParams);
+      
+      setPackagingCheckResult({
+        params: result.params || [],
+        qr: {
+          detectedUrl,
+          isValid: isValidQr,
+          expectedSku
+        }
+      });
+      setPackagingCheckStep(3);
+    } catch (e) {
+      console.error(e);
+      setAlertMessage("Lỗi trong quá trình kiểm tra. Vui lòng thử lại.");
+    } finally {
+      setAppState(AppState.READY);
+    }
+  };

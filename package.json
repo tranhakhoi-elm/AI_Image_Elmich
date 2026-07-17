@@ -15,12 +15,14 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsbarcode": "^3.12.3",
+    "jsqr": "^1.4.0",
     "localforage": "^1.10.0",
     "lucide-react": "^0.577.0",
     "motion": "^12.38.0",
     "qrcode-svg": "^1.1.0",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
