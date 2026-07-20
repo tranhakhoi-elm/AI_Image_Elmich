@@ -891,6 +891,44 @@ const App: React.FC = () => {
     setStandardParams(standardParams.filter((_, i) => i !== index));
   };
 
+  
+  const exportPackagingReport = () => {
+    if (!packagingCheckResult || !packagingCheckResult.params) return;
+
+    const data: any[] = [];
+    
+    packagingCheckResult.params.forEach((res: any) => {
+        const row: any = {
+            'Thông số': res.key,
+            'Giá trị chuẩn': res.expected || '-',
+            'Khớp (Tổng thể)': res.match ? 'ĐẠT' : 'KHÔNG ĐẠT',
+        };
+
+        packagingFiles.forEach((file, fIdx) => {
+            let fileResult = (res.fileResults || []).find((fr: any) => {
+                if (!fr.fileName) return false;
+                const cleanFr = fr.fileName.toLowerCase().trim();
+                const cleanF = file.name.toLowerCase().trim();
+                return cleanFr === cleanF || cleanFr.includes(cleanF) || cleanF.includes(cleanFr);
+            });
+            if (!fileResult && (res.fileResults || []).length === packagingFiles.length) {
+                fileResult = (res.fileResults || [])[fIdx];
+            }
+
+            row[`File: ${file.name} (Thực tế)`] = fileResult ? (fileResult.actual || 'Không tìm thấy') : 'Không có dữ liệu';
+            row[`File: ${file.name} (Ghi chú)`] = fileResult ? (fileResult.notes || '') : '';
+            row[`File: ${file.name} (Đánh giá)`] = fileResult ? (fileResult.match ? 'ĐẠT' : 'KHÔNG ĐẠT') : '-';
+        });
+
+        data.push(row);
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "BaoCaoKiemTra");
+    XLSX.writeFile(workbook, `BaoCao_KiemTraBaoBi_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
   const runPackagingCheck = async () => {
     if (packagingFiles.length === 0) return;
     setAppState(AppState.ANALYZING);
@@ -2687,7 +2725,13 @@ const renderTrackSocketWorkflow = () => (
             )}
             {packagingCheckStep === 3 && packagingCheckResult && (
               <div className="space-y-4">
-                <h3 className="text-white font-bold text-sm uppercase">Kết quả kiểm tra AI</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-bold text-sm uppercase">Kết quả kiểm tra AI</h3>
+                  <button onClick={exportPackagingReport} className="flex items-center gap-2 bg-[#2E7D32] hover:bg-[#1B5E20] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                    <Download size={14} />
+                    Xuất báo cáo
+                  </button>
+                </div>
                 
                 {/* Check Results */}
                 <div className="overflow-x-auto custom-scrollbar mt-4 border border-[#3E4042] rounded-xl bg-[#1A1A1C] max-h-[500px]">
