@@ -1,0 +1,2 @@
+1. **Overlay Chặn Thao Tác (Loading Modal):** Thêm một lớp phủ toàn màn hình (`bg-black/80 backdrop-blur-sm`) hiển thị thông báo tiến trình xử lý của AI ở giữa màn hình. Lớp phủ này có `z-index` cao (`z-[200]`), chặn toàn bộ tương tác và không thể tắt, đảm bảo người dùng chờ đến khi có kết quả.
+2. **Tối ưu Không Gian (UI Cleanup):** Xoá bỏ vòng xoay chờ (loading indicator) cũ nằm trong phần "Trạng thái làm việc" để tránh việc hiển thị trạng thái chờ ở 2 nơi cùng lúc, dồn toàn bộ sự chú ý vào overlay thông báo chính.

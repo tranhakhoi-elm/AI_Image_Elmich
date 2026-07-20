@@ -3061,6 +3061,38 @@ const renderTrackSocketWorkflow = () => (
           </motion.div>
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {(appState === AppState.GENERATING || appState === AppState.ANALYZING) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-[#000000]/80 backdrop-blur-md pointer-events-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#242526] border border-[#3E4042] rounded-3xl p-8 max-w-sm w-full mx-4 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col items-center text-center relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#1877F2] to-transparent animate-pulse"></div>
+              <div className="relative mb-6">
+                <div className="w-16 h-16 border-[4px] border-[#18191A] border-t-[#1877F2] rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Sparkles size={20} className="text-[#1877F2] animate-pulse" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Đang xử lý</h3>
+              <p className="text-[#B0B3B8] font-medium">{loadingMessage || "AI đang làm việc, vui lòng chờ..."}</p>
+              <div className="mt-8 w-full">
+                <div className="h-1.5 w-full bg-[#18191A] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#1877F2] w-full animate-pulse"></div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
 
       {viewMode === 'studio' ? (
@@ -3068,7 +3100,7 @@ const renderTrackSocketWorkflow = () => (
         <div className="flex-1 flex flex-col xl:flex-row overflow-hidden min-h-0">
         {/* Left Sidebar Layout */}
         {settings.visualStyle !== 'PACKAGING_CHECK' && (
-        <aside className="w-full xl:w-[640px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mb-8 xl:mb-0 xl:pt-4 xl:border-r xl:border-[#3E4042] bg-[#242526] xl:bg-transparent flex flex-col">
+        <aside className="w-full xl:w-[480px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mb-8 xl:mb-0 xl:pt-4 xl:border-r xl:border-[#3E4042] bg-[#242526] xl:bg-transparent flex flex-col">
           <div className="space-y-1">
              <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#3A3B3C] text-left transition-colors" onClick={() => setCurrentStep(1)}>
                 <div className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
@@ -3086,7 +3118,7 @@ const renderTrackSocketWorkflow = () => (
         )}
 
         {/* Center Feed Layout */}
-        <section className={`flex-1 w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0 xl:h-full xl:overflow-y-auto custom-scrollbar xl:pt-4 bg-[#18191A] xl:bg-transparent ${settings.visualStyle === 'PACKAGING_CHECK' ? 'max-w-[1400px]' : 'max-w-[880px]'}`}>
+        <section className={`flex-1 w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0 xl:h-full xl:overflow-y-auto custom-scrollbar xl:pt-4 bg-[#18191A] xl:bg-transparent ${settings.visualStyle === 'PACKAGING_CHECK' ? 'max-w-[1400px]' : 'max-w-[1000px]'}`}>
           
           {settings.visualStyle === 'BARCODE_QR_GENERATOR' ? (
             <BarcodeGenerator />
@@ -3100,14 +3132,7 @@ const renderTrackSocketWorkflow = () => (
                    Trạng thái làm việc
                </div>
                {/* Feed / Main Image section */}
-             {appState === AppState.GENERATING || appState === AppState.ANALYZING ? (
-               <div className="w-full min-h-[400px] bg-[#242526] p-8 flex flex-col items-center justify-center">
-                 <div className="w-10 h-10 border-[3px] border-[#18191A] border-t-[#1877F2] rounded-full animate-spin"></div>
-                 <p className="mt-4 text-white font-semibold block">{loadingMessage}</p>
-                 <div className="h-6 w-1/3 bg-[#18191A] rounded mt-4 animate-pulse"></div>
-                 <div className="h-4 w-1/4 bg-[#18191A] rounded mt-2 animate-pulse"></div>
-               </div>
-             ) : activeImage ? (
+             {activeImage ? (
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between p-4 px-4">
                      <div className="flex items-center gap-2">

@@ -1214,7 +1214,9 @@ ${JSON.stringify(standardParams.filter(p => p.value.trim() !== ''), null, 2)}
 NHIỆM VỤ CỦA BẠN:
 1. Đọc tất cả các chữ (văn bản) trên CÁC tài liệu thiết kế.
 2. Đối chiếu từng thông số trong BẢNG THÔNG SỐ CHUẨN với nội dung bạn đọc được trên thiết kế.
-LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:\n- Nếu Tên thông số là 'Mã vạch EAN13' và giá trị chuẩn có 12 số, thiết kế có 13 số thì chỉ cần khớp 12 số đầu là tính MATCH.\n- Đối với 'Đơn vị sản xuất' (Manufacturer) và 'Địa chỉ' (Address): NHỮNG THÔNG TIN NÀY CHẮC CHẮN CÓ TRÊN THIẾT KẾ. Chúng có thể nằm ở các phần như 'NSX', 'Nhà nhập khẩu', 'Sản xuất bởi', 'Nhập khẩu bởi', 'NK&PP', hoặc ở dòng 'Khác', và có thể được viết bằng tiếng Anh (ví dụ: 'Manufactured by...', 'Address...', 'Add:', 'Zhongshan...', 'Guangdong...', 'China', 'P.R.C') hoặc xen kẽ giữa các ngôn ngữ. Bạn PHẢI TÌM KỸ TẤT CẢ CÁC GÓC trên toàn bộ file và TRÍCH XUẤT toàn bộ dòng địa chỉ / tên công ty bằng tiếng Anh hoặc tiếng Trung/Việt trên bản vẽ để điền vào trường 'actual'. Dù giá trị chuẩn là tiếng Việt nhưng trên bao bì là tiếng Anh/Trung tương đương, hãy vẫn đánh giá là MATCH = true.\n- KHÔNG được lười biếng bỏ qua Đơn vị sản xuất và Địa chỉ.\n- Đối với 'Mã QR' (QR Code): Nếu trong BẢNG THÔNG SỐ CHUẨN có yêu cầu kiểm tra Mã QR, bạn PHẢI TỰ QUÉT MÃ QR CÓ TRONG HÌNH ẢNH thiết kế để đọc nội dung mã hóa bên trong nó (tuyệt đối không chỉ đọc dòng chữ in bên cạnh/bên dưới mã). Lấy nội dung giải mã gốc (raw text/URL) để điền vào 'actual' CHÍNH XÁC NHƯ NHỮNG GÌ BẠN QUÉT ĐƯỢC (bao gồm cả http://, https:// nếu có). Khi so sánh với giá trị chuẩn, nếu kết quả quét raw từ ảnh CHỨA giá trị chuẩn (có thể thừa 'http://', 'https://' ở đầu hoặc '/' ở cuối), thì coi như MATCH = true (ví dụ: raw là 'https://www.elmich.vn/san-pham/4021617/' khớp với chuẩn 'www.elmich.vn/san-pham/4021617'). TUYỆT ĐỐI KHÔNG tự ý suy diễn hay truy cập link thực tế.\n- Mọi nội dung trả về trong 'notes' LUÔN LUÔN phải viết bằng tiếng Việt.
+LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:
+- KIỂM TRA ĐỒNG NHẤT: Nếu một thông số xuất hiện ở nhiều nơi trên cùng một file thiết kế (ví dụ tên sản phẩm, công suất...), bạn PHẢI kiểm tra tất cả các vị trí đó. Chúng đều phải trùng khớp với nhau và trùng với tiêu chuẩn. Nếu có bất kỳ sự không đồng nhất nào (ví dụ: mặt trước ghi 500W, mặt sau ghi 600W), hãy tính là MATCH = false và ghi rõ cảnh báo trong phần 'notes'.
+- Nếu Tên thông số là 'Mã vạch EAN13' và giá trị chuẩn có 12 số, thiết kế có 13 số thì chỉ cần khớp 12 số đầu là tính MATCH.\n- Đối với 'Đơn vị sản xuất' (Manufacturer) và 'Địa chỉ' (Address): NHỮNG THÔNG TIN NÀY CHẮC CHẮN CÓ TRÊN THIẾT KẾ. Chúng có thể nằm ở các phần như 'NSX', 'Nhà nhập khẩu', 'Sản xuất bởi', 'Nhập khẩu bởi', 'NK&PP', hoặc ở dòng 'Khác', và có thể được viết bằng tiếng Anh (ví dụ: 'Manufactured by...', 'Address...', 'Add:', 'Zhongshan...', 'Guangdong...', 'China', 'P.R.C') hoặc xen kẽ giữa các ngôn ngữ. Bạn PHẢI TÌM KỸ TẤT CẢ CÁC GÓC trên toàn bộ file và TRÍCH XUẤT toàn bộ dòng địa chỉ / tên công ty bằng tiếng Anh hoặc tiếng Trung/Việt trên bản vẽ để điền vào trường 'actual'. Dù giá trị chuẩn là tiếng Việt nhưng trên bao bì là tiếng Anh/Trung tương đương, hãy vẫn đánh giá là MATCH = true.\n- KHÔNG được lười biếng bỏ qua Đơn vị sản xuất và Địa chỉ.\n- Đối với 'Mã QR' (QR Code): Nếu trong BẢNG THÔNG SỐ CHUẨN có yêu cầu kiểm tra Mã QR, bạn PHẢI TỰ QUÉT MÃ QR CÓ TRONG HÌNH ẢNH thiết kế để đọc nội dung mã hóa bên trong nó (tuyệt đối không chỉ đọc dòng chữ in bên cạnh/bên dưới mã). Lấy nội dung giải mã gốc (raw text/URL) để điền vào 'actual' CHÍNH XÁC NHƯ NHỮNG GÌ BẠN QUÉT ĐƯỢC (bao gồm cả http://, https:// nếu có). Khi so sánh với giá trị chuẩn, nếu kết quả quét raw từ ảnh CHỨA giá trị chuẩn (có thể thừa 'http://', 'https://' ở đầu hoặc '/' ở cuối), thì coi như MATCH = true (ví dụ: raw là 'https://www.elmich.vn/san-pham/4021617/' khớp với chuẩn 'www.elmich.vn/san-pham/4021617'). TUYỆT ĐỐI KHÔNG tự ý suy diễn hay truy cập link thực tế.\n- Mọi nội dung trả về trong 'notes' LUÔN LUÔN phải viết bằng tiếng Việt.
 - Trong phần 'notes' (ghi chú), đối với bất kỳ thông số nào, bạn PHẢI ghi rõ thông tin đó được tìm thấy (hoặc bị sai/thiếu) trên file thiết kế có TÊN FILE LÀ GÌ (dựa vào tên file được cung cấp ngay trước mỗi hình ảnh). Ví dụ: 'Trên file hop-mau.pdf: thông tin bị sai...'. Việc ghi rõ tên file là BẮT BUỘC để người dùng dễ kiểm tra và sửa.
 3. KIỂM TRA TOÀN DIỆN VÀ CHI TIẾT TỪNG TÀI LIỆU: Với mỗi thông số trong BẢNG THÔNG SỐ CHUẨN, bạn phải kiểm tra và báo cáo kết quả RIÊNG BIỆT cho TỪNG file thiết kế được cung cấp.\n- 'match' tổng thể: true nếu khớp hoàn toàn trên TẤT CẢ các file có thông số đó, false nếu có ít nhất 1 file sai/khác biệt.\n- 'fileResults': mảng chứa kết quả chi tiết cho từng file thiết kế. Với mỗi file, ghi CHÍNH XÁC tên file (fileName) giống y hệt như đã được cung cấp (ví dụ: 'hop-mau.pdf', 'tem.png'), nội dung thực tế đọc được trên file đó (actual), kết quả đối chiếu với chuẩn (match: true/false), và ghi chú thật ngắn gọn (notes) nếu sai (ví dụ: 'Sai model', 'Thiếu điện áp'). Nếu file không chứa thông tin của thông số này (và điều đó là bình thường), ghi 'actual': 'Không có', 'match': true.\n\nTrả về ĐÚNG định dạng JSON sau:\n{\n  "params": [\n    { \n      "key": "...", \n      "expected": "...", \n      "match": true/false,\n      "fileResults": [\n        { "fileName": "...", "actual": "...", "match": true/false, "notes": "..." }\n      ]\n    }\n  ]\n}`;
 
@@ -1289,7 +1291,39 @@ LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:\n- Nếu Tên thông số là 'Mã vạch
 export const extractStandardParamsWithAI = async (textData: string): Promise<{key: string, value: string}[]> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const prompt = `Bạn là chuyên gia phân tích dữ liệu sản phẩm. Hãy trích xuất các thông số kỹ thuật quan trọng từ văn bản thô (thường được copy từ file Excel) dưới đây.\nVăn bản thô:\n${textData}\n\nHãy trích xuất và trả về MỘT mảng JSON các thông số quan trọng (như Tên sản phẩm, Model, Mã sản phẩm, Công suất, Điện áp, Tần số, Kích thước, Trọng lượng, Định lượng, Dung tích, Chất liệu, Xuất xứ, Năm sản xuất, Đơn vị sản xuất, Địa chỉ, Mã vạch EAN13, Mã vạch code 128, Mã QR...).\nNếu Mã QR không có sẵn, hãy tự tạo ra từ Mã sản phẩm theo định dạng: www.elmich.vn/san-pham/<mã sản phẩm viết thường>.\nĐịnh dạng JSON:\n{\n  "params": [\n    { "key": "Tên thông số", "value": "Giá trị" }\n  ]\n}\n`;
+    const prompt = `Bạn là chuyên gia phân tích dữ liệu sản phẩm. Hãy trích xuất các thông số kỹ thuật quan trọng từ văn bản thô (thường được copy từ file Excel) dưới đây.
+Văn bản thô:
+${textData}
+
+Hãy trích xuất và trả về MỘT mảng JSON các thông số sau ĐÚNG VỚI DANH SÁCH BÊN DƯỚI (chỉ bao gồm 15 thông số này):
+1: Tên sản phẩm
+2: Model
+3: Mã sản phẩm
+4: Dung tích
+5: Công suất
+6: Điện áp
+7: Tần số
+8: Khối lượng
+9: Định lượng / hộp màu
+10: Định lượng / thùng carton
+11: Số Serial
+12: Các thông tin kỹ thuật khác nếu có
+13: Mã QR
+14: Barcode 128
+15: Barcode EAN13
+
+LƯU Ý: 
+- Nếu có thông tin kỹ thuật khác ngoài các mục trên, hãy gom chung vào mục "Các thông tin kỹ thuật khác nếu có".
+- Nếu Mã QR không có sẵn, hãy tự tạo ra từ Mã sản phẩm theo định dạng: www.elmich.vn/san-pham/<mã sản phẩm viết thường>.
+- Trả về danh sách đầy đủ 15 thông số trên, nếu thông số nào không có dữ liệu hãy để giá trị là "".
+
+Định dạng JSON:
+{
+  "params": [
+    { "key": "Tên thông số", "value": "Giá trị" }
+  ]
+}
+`;
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
