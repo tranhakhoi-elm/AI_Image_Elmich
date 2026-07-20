@@ -44,7 +44,7 @@ import {
   CAMERA_ISO, 
   TONE_STYLES 
 } from './constants';
-import { analyzePackagingContent, extractStandardParamsWithAI } from './services/geminiService';
+import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
 
 const initialSettings: GenerationSettings = {
   productName: '',
@@ -174,6 +174,40 @@ const TypingEffect = ({ text }: { text: string }) => {
         </React.Fragment>
       ))}
     </span>
+  );
+};
+
+const FileDropzone: React.FC<React.HTMLAttributes<HTMLDivElement> & { onFilesDrop: (files: FileList) => void }> = ({ onFilesDrop, className, children, ...props }) => {
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFilesDrop(e.dataTransfer.files);
+    }
+  };
+
+  return (
+    <div
+      {...props}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`${className || ''} ${isDragActive ? '!border-[#1877F2] !bg-[#1877F2]/10 transition-all' : ''}`}
+    >
+      {children}
+    </div>
   );
 };
 
@@ -383,8 +417,9 @@ const App: React.FC = () => {
     }
   };
 
-  const handleImageUploadToChat = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageUploadToChat = (filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList) => {
+    const files = 'target' in filesOrEvent ? filesOrEvent.target.files : filesOrEvent;
+    const file = files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -455,8 +490,8 @@ const App: React.FC = () => {
     });
   };
 
-  const onImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'reference' | 'color_sample' | 'packaging' | 'track' | 'socket') => {
-    const files = e.target.files;
+  const onImageUpload = async (filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList, type: 'product' | 'reference' | 'color_sample' | 'packaging' | 'track' | 'socket') => {
+    const files = 'target' in filesOrEvent ? filesOrEvent.target.files : filesOrEvent;
     if (!files || files.length === 0) return;
     try {
       if (type === 'packaging') {
@@ -791,8 +826,17 @@ const App: React.FC = () => {
   };
 
   
-  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handlePackagingFilesUpload = (filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList) => {
+    const filesList = 'target' in filesOrEvent ? filesOrEvent.target.files : filesOrEvent;
+    const files = Array.from(filesList || []) as File[];
+    if (files.length > 0) {
+      setPackagingFiles(prev => [...prev, ...files]);
+    }
+  };
+
+  const handleExcelUpload = async (filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList) => {
+    const files = 'target' in filesOrEvent ? filesOrEvent.target.files : filesOrEvent;
+    const file = files?.[0];
     if (!file) return;
     setLoadingMessage("AI đang phân tích dữ liệu Excel...");
     setAppState(AppState.ANALYZING);
@@ -934,7 +978,7 @@ const App: React.FC = () => {
                      </div>
                    ))}
                    {settings.productImages.length < 5 && (
-                     <button onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-[#3E4042] rounded-lg text-white/40 flex items-center justify-center hover:border-[#1877F2] hover:text-[#1877F2] transition-all">+</button>
+                     <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-[#3E4042] rounded-lg text-white/40 flex items-center justify-center hover:border-[#1877F2] hover:text-[#1877F2] transition-all">+</FileDropzone>
                    )}
                 </div>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
@@ -942,9 +986,9 @@ const App: React.FC = () => {
 
               <div>
                 <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh mẫu style tham khảo</label>
-                <div onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer hover:border-[#1877F2] transition-all overflow-hidden group">
+                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer hover:border-[#1877F2] transition-all overflow-hidden group">
                    {settings.referenceImage ? <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white text-[10px] font-bold uppercase group-hover:text-[#1877F2]">+ Thêm ảnh mẫu style</span>}
-                </div>
+                </FileDropzone>
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
 
@@ -1092,9 +1136,9 @@ const App: React.FC = () => {
             {stagingStep === 2 && (
                 <div className="space-y-4">
                     <label className="block text-[9px] font-bold text-white uppercase">Tải lên ảnh hiện trạng</label>
-                    <div onClick={() => productFilesRef.current?.click()} className="aspect-video w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
+                    <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="aspect-video w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
                         {settings.productImages[0] ? <img src={settings.productImages[0]} className="w-full h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Ảnh thực tế</span>}
-                    </div>
+                    </FileDropzone>
                     <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
 
                     <div>
@@ -1144,9 +1188,9 @@ const App: React.FC = () => {
             {stagingStep === 3 && (
                 <div className="space-y-4">
                     <label className="block text-[9px] font-bold text-white uppercase">Ảnh mẫu phong cách tham khảo</label>
-                    <div onClick={() => refFileRef.current?.click()} className="aspect-video w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
+                    <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="aspect-video w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
                         {settings.referenceImage ? <img src={settings.referenceImage} className="w-full h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Ảnh mẫu phong cách</span>}
-                    </div>
+                    </FileDropzone>
                     <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
                     <div className="flex gap-2">
                       <button onClick={() => setStagingStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
@@ -1209,9 +1253,9 @@ const App: React.FC = () => {
                 <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
               </div>
               <textarea placeholder="Mô tả tính năng kỹ thuật..." className="w-full h-24 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white resize-none outline-none focus:border-[#1877F2] transition-colors custom-scrollbar" value={settings.techDescription} onChange={e => setSettings({...settings, techDescription: e.target.value})} />
-              <div onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+              <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
                 {settings.productImages.length > 0 ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Ảnh SP</span>}
-              </div>
+              </FileDropzone>
               <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
               <button onClick={() => (settings.productName && settings.techDescription) ? setTechStep(2) : setAlertMessage("Thiếu thông tin")} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
             </div>
@@ -1311,9 +1355,9 @@ const App: React.FC = () => {
               
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold text-white uppercase">Ảnh sản phẩm gốc</label>
-                <div onClick={() => productFilesRef.current?.click()} className="h-40 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="h-40 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
                   {settings.productImages[0] ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white font-bold text-xs uppercase group-hover:text-[#1877F2]">+ Ảnh gốc</span>}
-                </div>
+                </FileDropzone>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
               </div>
               <button disabled={!settings.productImages[0]} onClick={() => setColorChangeStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
@@ -1350,9 +1394,9 @@ const App: React.FC = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="block text-[8px] font-bold text-white uppercase">Ảnh mẫu màu</label>
-                          <div onClick={() => colorSampleRef.current?.click()} className="h-[38px] w-full bg-[#242526] shadow-sm border border-[#3E4042] border border-dashed border-[#3E4042] rounded-lg flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                          <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'color_sample')} onClick={() => colorSampleRef.current?.click()} className="h-[38px] w-full bg-[#242526] shadow-sm border border-[#3E4042] border border-dashed border-[#3E4042] rounded-lg flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
                             {currentSampleImage ? <img src={currentSampleImage} className="h-full object-cover w-full" referrerPolicy="no-referrer" /> : <span className="text-[8px] text-white uppercase group-hover:text-[#1877F2]">+ Tải ảnh</span>}
-                          </div>
+                          </FileDropzone>
                           <input type="file" hidden ref={colorSampleRef} accept="image/*" onChange={e => onImageUpload(e, 'color_sample')} />
                         </div>
                       </div>
@@ -1446,9 +1490,9 @@ const App: React.FC = () => {
           {packagingStep === 2 && (
             <div className="space-y-4">
                <label className="block text-[9px] font-bold text-white uppercase">File thiết kế phẳng</label>
-               <div onClick={() => { pendingPackagingFace.current = 'flat'; packagingFileRef.current?.click(); }} className="h-40 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+               <FileDropzone onFilesDrop={(f) => { pendingPackagingFace.current = 'flat'; onImageUpload(f, 'packaging'); }} onClick={() => { pendingPackagingFace.current = 'flat'; packagingFileRef.current?.click(); }} className="h-40 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
                  {settings.packagingFaces.flat ? <img src={settings.packagingFaces.flat} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ File thiết kế phẳng</span>}
-               </div>
+               </FileDropzone>
                <input type="file" hidden ref={packagingFileRef} onChange={e => onImageUpload(e, 'packaging')} />
                <div className="flex gap-2">
                  <button onClick={() => setPackagingStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
@@ -1504,9 +1548,9 @@ const App: React.FC = () => {
               {settings.techEffectType === 'REMOVE_SIGNATURE' ? (
                 <div className="space-y-4">
                    <label className="block text-[10px] font-bold text-white uppercase">Ảnh cần xử lý</label>
-                   <div onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                   <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
                      {settings.referenceImage ? <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh</span>}
-                   </div>
+                   </FileDropzone>
                    <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
                    {renderModelSelection()}
                    <div className="flex gap-2">
@@ -1619,14 +1663,14 @@ const App: React.FC = () => {
 
               <div>
                 <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh sản phẩm gốc</label>
-                <div onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
+                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
                    {settings.referenceImage ? (
                      <>
                        <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
                        <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
                      </>
                    ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh SP gốc</span>}
-                </div>
+                </FileDropzone>
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
               
@@ -1740,14 +1784,14 @@ const App: React.FC = () => {
 
               <div>
                 <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh 3D Render gốc</label>
-                <div onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
+                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
                    {settings.referenceImage ? (
                      <>
                        <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
                        <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
                      </>
                    ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh 3D gốc</span>}
-                </div>
+                </FileDropzone>
                 <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
               </div>
 
@@ -1839,14 +1883,14 @@ const App: React.FC = () => {
 
         <div>
           <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh sản phẩm gốc (Nền trắng)</label>
-          <div onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
+          <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
              {settings.referenceImage ? (
                <>
                  <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
                  <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
                </>
              ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh SP gốc</span>}
-          </div>
+          </FileDropzone>
           <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
         </div>
 
@@ -1866,7 +1910,10 @@ const App: React.FC = () => {
         {renderModelSelection()}
 
         <div className="flex gap-2 pt-2">
-          <button disabled={!settings.referenceImage} onClick={() => startGeneration()} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50">Tạo ảnh Line Art</button>
+          <button disabled={appState !== AppState.READY} onClick={() => { if (!settings.referenceImage) { setAlertMessage("Vui lòng tải ảnh sản phẩm gốc (nền trắng) trước khi tạo ảnh Line Art."); } else { startGeneration(); } }} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50 flex justify-center items-center gap-2">
+            {appState === AppState.GENERATING ? <Loader2 size={16} className="animate-spin" /> : null}
+            Tạo ảnh Line Art
+          </button>
         </div>
       </div>
     </div>
@@ -1911,7 +1958,7 @@ const App: React.FC = () => {
                      </div>
                    ))}
                    {settings.productImages.length < 5 && (
-                     <button onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-[#3E4042] rounded-lg text-white flex items-center justify-center hover:border-[#1877F2] transition-all">+</button>
+                     <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="aspect-square border-2 border-dashed border-[#3E4042] rounded-lg text-white flex items-center justify-center hover:border-[#1877F2] transition-all">+</FileDropzone>
                    )}
                 </div>
                 <input type="file" hidden ref={productFilesRef} accept="image/*" multiple onChange={e => onImageUpload(e, 'product')} />
@@ -2091,16 +2138,16 @@ const renderTrackSocketWorkflow = () => (
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="block text-[9px] font-bold text-white uppercase">Ảnh Thanh ray (Cố định gắn tường)</label>
-              <div onClick={() => trackFileRef.current?.click()} className="h-24 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
+              <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'track')} onClick={() => trackFileRef.current?.click()} className="h-24 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
                 {settings.trackImage ? <img src={settings.trackImage} className="w-full h-full object-contain" /> : <span className="text-blue-400 font-bold text-[10px] uppercase">+ Tải ảnh Thanh ray</span>}
-              </div>
+              </FileDropzone>
               <input type="file" hidden ref={trackFileRef} accept="image/*" onChange={e => onImageUpload(e, 'track')} />
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <label className="block text-[9px] font-bold text-white uppercase">Danh sách Ổ cắm</label>
-                <button onClick={() => socketFileRef.current?.click()} className="text-[10px] text-blue-400 font-bold uppercase hover:text-blue-300">+ Thêm Ổ cắm</button>
+                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'socket')} onClick={() => socketFileRef.current?.click()} className="text-[10px] text-blue-400 font-bold uppercase hover:text-blue-300">+ Thêm Ổ cắm</FileDropzone>
               </div>
               <input type="file" hidden ref={socketFileRef} accept="image/*" onChange={e => onImageUpload(e, 'socket')} />
               
@@ -2143,9 +2190,9 @@ const renderTrackSocketWorkflow = () => (
           {settings.trackSocketMode === 'REFERENCE' && (
             <div className="space-y-2">
               <label className="block text-[9px] font-bold text-white uppercase">Ảnh Mẫu (Reference Image)</label>
-              <div onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
+              <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-24 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden">
                 {settings.referenceImage ? <img src={settings.referenceImage} className="w-full h-full object-contain" /> : <span className="text-blue-400 font-bold text-[10px] uppercase">+ Tải ảnh mẫu</span>}
-              </div>
+              </FileDropzone>
               <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
             </div>
           )}
@@ -2588,9 +2635,9 @@ const renderTrackSocketWorkflow = () => (
             {packagingCheckStep === 2 && (
               <div className="space-y-4">
                 <label className="block text-[9px] font-bold text-white uppercase mt-4">Tải lên các file thiết kế bao bì (Ảnh hoặc PDF)</label>
-                <div onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
+                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
                   <span className="text-white font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Chọn file thiết kế (Hộp màu, Tem phụ, Thùng carton...)</span>
-                </div>
+                </FileDropzone>
                 <input type="file" hidden multiple ref={productFilesRef} accept="image/*, application/pdf" onChange={e => {
                   const files = Array.from(e.target.files || []) as File[];
                   if (files.length > 0) {
@@ -2958,7 +3005,7 @@ const renderTrackSocketWorkflow = () => (
         </div>
 
         <div className="p-4 md:p-6 lg:px-24 xl:px-48 border-t border-[#3E4042] bg-[#242526] shrink-0">
-          <div className="flex flex-col gap-3 bg-[#18191A] p-3 rounded-2xl border border-[#3E4042] focus-within:border-[#1877F2] focus-within:ring-1 focus-within:ring-[#1877F2] transition-colors shadow-sm">
+          <FileDropzone onFilesDrop={handleImageUploadToChat} className="flex flex-col gap-3 bg-[#18191A] p-3 rounded-2xl border border-[#3E4042] focus-within:border-[#1877F2] focus-within:ring-1 focus-within:ring-[#1877F2] transition-colors shadow-sm">
             {chatInputImageBase64 && (
               <div className="relative inline-block w-20 h-20 bg-[#242526] rounded-lg border border-[#3E4042] p-1 shadow-sm">
                 <img src={chatInputImageBase64} alt="Upload preview" className="w-full h-full object-contain rounded-md" />
@@ -2997,7 +3044,7 @@ const renderTrackSocketWorkflow = () => (
                 <Send size={24} className={(chatInput.trim() || chatInputImageBase64) ? "fill-[#1877F2]" : ""} />
               </button>
             </div>
-          </div>
+          </FileDropzone>
           <div className="text-center mt-3 text-xs text-white">Gemini AI có thể mắc lỗi. Vui lòng kiểm tra lại những thông tin quan trọng.</div>
         </div>
       </div>
