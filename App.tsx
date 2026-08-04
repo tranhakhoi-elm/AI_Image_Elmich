@@ -1908,6 +1908,62 @@ const App: React.FC = () => {
   );
 
   // 7.6 Chuyển thành Line Art
+  
+  const renderTracingAssistantWorkflow = () => (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div>
+          <label className="block text-[9px] font-bold text-white uppercase mb-2">Thông tin logo/hình ảnh</label>
+          <div className="grid grid-cols-1 gap-2">
+            <input type="text" placeholder="Tên logo hoặc mô tả ngắn gọn..." className="col-span-1 bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh mờ / Logo cần làm nét</label>
+          <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
+             {settings.referenceImage ? (
+               <>
+                 <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                 <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
+               </>
+             ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh lên</span>}
+          </FileDropzone>
+          <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
+        </div>
+
+        <div>
+          <label className="block text-[9px] font-bold text-white uppercase mb-2">Yêu cầu chi tiết (Phong cách, Màu sắc...)</label>
+          <textarea 
+            placeholder="Ví dụ: Làm nét, đồ lại mượt mà thành dạng vector phẳng đen trắng, giữ nguyên bố cục..." 
+            className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors resize-none h-20"
+            value={settings.techDescription}
+            onChange={e => setSettings({...settings, techDescription: e.target.value})}
+          />
+        </div>
+
+        <div>
+           <label className="block text-[9px] font-bold text-white uppercase mb-2">Tỷ lệ khung hình</label>
+           <select className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+              <option value="1:1" className="bg-[#242526]">1:1 Vuông</option>
+              <option value="4:3" className="bg-[#242526]">4:3</option>
+              <option value="3:4" className="bg-[#242526]">3:4</option>
+              <option value="16:9" className="bg-[#242526]">16:9 HD</option>
+           </select>
+        </div>
+
+        {renderModelSelection()}
+
+        <div className="flex gap-2 pt-2">
+          <button disabled={appState !== AppState.READY} onClick={() => { if (!settings.referenceImage) { setAlertMessage("Vui lòng tải ảnh mờ / logo gốc cần làm nét trước khi tạo."); } else { startGeneration(); } }} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50 flex justify-center items-center gap-2">
+            {appState === AppState.GENERATING ? <Loader2 size={16} className="animate-spin" /> : null}
+            Tạo ảnh sắc nét 4K
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderLineArtWorkflow = () => (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -2292,6 +2348,14 @@ const renderTrackSocketWorkflow = () => (
     let steps: string[] = [];
 
     switch (settings.visualStyle) {
+      case 'TRACING_ASSISTANT':
+        title = "Hướng dẫn: Trợ lý Tracing";
+        steps = [
+          "Tải lên hình ảnh logo hoặc hình vẽ chất lượng thấp.",
+          "Cấu hình mức độ chi tiết và màu sắc mong muốn.",
+          "Hệ thống sẽ tái tạo hình ảnh thành phiên bản 4K sắc nét để dễ dàng tracing trong Illustrator."
+        ];
+        break;
       case 'COLOR_CHANGE':
         title = "Hướng dẫn: Làm màu sản phẩm";
         steps = [
@@ -2446,6 +2510,7 @@ const renderTrackSocketWorkflow = () => (
   const renderSidebar = () => {
     if (currentStep === 1) {
       const modes = [
+        { id: 'TRACING_ASSISTANT', icon: <PenTool size={20} />, title: 'Trợ lý Tracing', desc: 'Làm nét logo/ảnh mờ để vẽ lại vector.', color: 'bg-yellow-50 text-yellow-500', hover: 'hover:bg-yellow-100' },
         { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={20} />, title: '3D Render sang Ảnh Thật', desc: 'Chuyển ảnh 3D thành ảnh chụp thật nền trắng.', color: 'bg-indigo-50 text-indigo-400', hover: 'hover:bg-indigo-100' },
         { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'bg-purple-50 text-purple-400', hover: 'hover:bg-purple-100' },
         { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'bg-blue-50 text-blue-400', hover: 'hover:bg-blue-100' },
@@ -2541,6 +2606,7 @@ const renderTrackSocketWorkflow = () => (
                {settings.visualStyle === 'TRACK_SOCKET_STAGING' && renderTrackSocketWorkflow()}
                {settings.visualStyle === 'BARCODE_QR_GENERATOR' && renderBarcodeQrSidebar()}
                {settings.visualStyle === 'PACKAGING_CHECK' && renderPackagingCheckSidebar()}
+               {settings.visualStyle === 'TRACING_ASSISTANT' && renderTracingAssistantWorkflow()}
              </motion.div>
            </AnimatePresence>
          </div>

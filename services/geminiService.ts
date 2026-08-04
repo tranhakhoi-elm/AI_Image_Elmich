@@ -690,6 +690,15 @@ Style Guide Requirements:
 ${designLifestyleConcept}
 
 Staging professional: Add ${formatProps(settings.props)} into the real scene image following style "${settings.concept}". Keep original furniture. Camera & Lighting: ${formatCameraSettings(settings.camera)}. 8k, realistic.`;
+    } else if (settings.visualStyle === "TRACING_ASSISTANT") {
+    finalPrompt = `Professional vector tracing assistant prompt: 
+    Convert this low-quality, blurry, or sketch logo/image into a clean, ultra-sharp 4K graphic suitable for vector tracing.
+    Rules: 
+    - Maintain the exact shape, proportions, and original concept of the logo/drawing.
+    - Output must have completely flat, solid colors (or pure black and white if specified), with crisp and smooth edges.
+    - Remove any noise, blur, compression artifacts, gradients, or shadows that would interfere with auto-tracing in Illustrator.
+    - ${settings.techDescription ? "User specific requirements: " + settings.techDescription : "Style: clean vector graphic, solid colors, pure white background."}
+    - Keep it minimalist and perfectly geometric.`;
   } else if (settings.visualStyle === "TECH_EFFECTS") {
     if (settings.techEffectType === "REMOVE_SIGNATURE") {
       finalPrompt = `Remove watermark/text from this image. Keep high quality, clear, bright.`;
@@ -1079,9 +1088,9 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     });
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
     if (settings.packagingDesignType === "FLAT_DESIGN" && settings.packagingFaces.flat) parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
-  } else if (settings.referenceImage && (settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
+  } else if (settings.referenceImage && (settings.visualStyle === "TRACING_ASSISTANT" || settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
     let finalRefImage = settings.referenceImage;
-    if (settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "LINE_ART" || settings.visualStyle === "TECH_EFFECTS") {
+    if (settings.visualStyle === "TRACING_ASSISTANT" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "LINE_ART" || settings.visualStyle === "TECH_EFFECTS") {
       finalRefImage = await padImageToAspectRatio(finalRefImage, settings.aspectRatio || "1:1", "#FFFFFF");
     }
     parts.push({ inlineData: { data: finalRefImage.split(',')[1], mimeType: 'image/png' } });
