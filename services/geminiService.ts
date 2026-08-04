@@ -402,16 +402,20 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Sản phẩm: ${productName}. Concept hoặc bối cảnh: "${concept}".
-YÊU CẦU:
-1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm trong khung hình (cách đặt sản phẩm, tương tác với ánh sáng).
-2. Liệt kê 10 đạo cụ (props) trang trí ĐỘC ĐÁO, CÓ TÍNH NGHỆ THUẬT VÀ LIÊN QUAN MẬT THIẾT đến ${productName}.
+      model: "gemini-2.5-pro",
+      contents: `Sản phẩm thực tế: ${productName}. 
+Bối cảnh/Concept thiết kế: "${concept}".
+
+YÊU CẦU PHÂN TÍCH:
+1. Đọc kỹ tên sản phẩm và hiểu rõ chức năng, cách sử dụng thực tế của nó.
+2. Suy luận sâu để đề xuất 'placement': Vị trí, góc đặt sản phẩm, và cách ánh sáng tương tác tôn lên vẻ đẹp của sản phẩm.
+3. Đề xuất 10 đạo cụ (props) đi kèm. Các đạo cụ này PHẢI cực kỳ logic với công năng của sản phẩm và bối cảnh được chọn. KHÔNG liệt kê các đạo cụ nghệ thuật chung chung (như lăng kính, khối mica, v.v.) nếu nó không thực sự liên quan đến sản phẩm.
+
 ${mode === 'STUDIO' 
-  ? 'LƯU Ý CHO ẢNH STUDIO: Chụp trên phông nền giấy trơn. Đạo cụ phải TỐI GIẢN, TẬP TRUNG VÀO CHI TIẾT (VD: khối hình học mica mờ, bục đá marble cẩm thạch nguyên khối cắt xéo, nhành bạch đàn khô, vụn lá trà đen, hiệu ứng bóng đổ sắc nét từ rèm cửa, viên đá lạnh phay xước, tia nước bắn lên tĩnh vật...). TRÁNH TẠO RA CẢ MỘT CĂN PHÒNG, bàn ghế hay cây cối cồng kềnh.' 
-  : 'LƯU Ý CHO ẢNH PHỐI CẢNH (LIFESTYLE): Tạo bầu không khí chân thực sống động. Tránh dùng hoa lá đá chung chung. Hãy dùng các đạo cụ cụ thể: Bóng cây đổ qua ô cửa kính lúc 4h chiều sọc ngang, khói bốc lên từ tách espresso, ánh sáng khúc xạ qua khối lăng kính, giọt sương đọng trên thớt gỗ sồi, các nguyên liệu phụ tùng đang dùng dở (vụn bánh mì, hạt muối ngầm Himalaya...).'
+  ? 'LƯU Ý STUDIO: Phông nền đơn sắc. Đạo cụ tập trung làm nổi bật chất liệu và kiểu dáng sản phẩm, ví dụ bục đỡ phù hợp kiểu dáng, các nguyên liệu liên quan trực tiếp đến tính năng sản phẩm (ví dụ: máy xay thì có hạt cafe, nồi chảo thì có rau củ quả tươi), và hiệu ứng bóng đổ tự nhiên.' 
+  : 'LƯU Ý LIFESTYLE (Phối cảnh): Đạo cụ phải thuộc về môi trường tự nhiên của sản phẩm. Ví dụ: Nếu là đồ gia dụng nhà bếp, đạo cụ phải là nguyên liệu nấu nướng, gia vị, thớt gỗ, bếp... Nếu là bình giữ nhiệt, đạo cụ là balo, góc làm việc, hoặc đồ thể thao... Tập trung vào tính thực tế, chân thực, tránh những đạo cụ "thơ mộng" hoặc "trừu tượng" không ăn nhập với công năng.'
 }
-Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
+Trả về định dạng JSON với 'placement' (string) và 'props' (mảng 10 chuỗi, mỗi chuỗi miêu tả ngắn gọn một đạo cụ hoặc yếu tố môi trường cụ thể).`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {

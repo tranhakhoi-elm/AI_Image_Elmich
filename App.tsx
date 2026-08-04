@@ -518,7 +518,7 @@ const App: React.FC = () => {
         }));
       }
     } catch (error) { setAlertMessage("Lỗi khi tải ảnh."); }
-    e.target.value = '';
+    if ('target' in filesOrEvent) filesOrEvent.target.value = '';
   };
 
   // --- LOGIC CONCEPT WORKFLOW (STRICT 4 STEPS) ---
@@ -861,7 +861,7 @@ const App: React.FC = () => {
       setAlertMessage("Lỗi khi đọc file Excel: " + err.message);
       setAppState(AppState.READY);
     }
-    e.target.value = '';
+    if ('target' in filesOrEvent) filesOrEvent.target.value = '';
   };
 
   const handlePastedExcelData = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
