@@ -3303,6 +3303,20 @@ const renderTrackSocketWorkflow = () => (
                          <option value="4K">4K Ultra</option>
                        </select>
                     </div>
+
+                    <div className="mb-2">
+                        <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'edit_reference')} onClick={() => editRefFileRef.current?.click()} className="h-20 w-full bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
+                           {editReferenceImage ? (
+                             <>
+                               <img src={editReferenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                               <div className="absolute inset-0 bg-[#242526]/80 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold text-white z-10">Thay ảnh đính kèm</div>
+                               <button onClick={(e) => { e.stopPropagation(); setEditReferenceImage(null); }} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-20 hover:bg-red-600">×</button>
+                             </>
+                           ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh tham chiếu (Tùy chọn)</span>}
+                        </FileDropzone>
+                        <input type="file" hidden ref={editRefFileRef} accept="image/*" onChange={e => onImageUpload(e, 'edit_reference')} />
+                    </div>
+
                     <textarea value={editPrompt} onChange={e => setEditPrompt(e.target.value)} disabled={isEditingImage} placeholder="Viết yêu cầu chỉnh sửa..." className="w-full bg-[#242526] border border-[#3E4042] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2] resize-none h-16" />
                     <button onClick={handleEditImage} disabled={!editPrompt.trim() || isEditingImage} className="w-full py-2 bg-[#1877F2] text-white font-semibold rounded-lg hover:bg-[#166FE5] disabled:opacity-50">
                        {isEditingImage ? 'Đang xử lý...' : 'Chỉnh sửa'}
