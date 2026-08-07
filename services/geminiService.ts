@@ -828,10 +828,12 @@ ${settings.whiteBGPriorityAdjustments ? `PRIORITY USER ADJUSTMENTS (MUST APPLY /
 "${settings.whiteBGPriorityAdjustments}"
 -> You MUST execute these specific aesthetic and lighting adjustments exactly as described by the user.` : ""}
 
-LIGHTING & STUDIO PRESENTATION:
-- Light Source: Professional three-point studio lighting with high-end key and fill lights, displaying pristine product shape and beautiful gradients.
-- Grounding: A very delicate, clean, and tight contact shadow must sit precisely underneath the base contact points. No floating, no artificial halo.
-- Quality: Superb clarity, high contrast, clean noise-free colors, commercial catalog style, photorealistic.`;
+LIGHTING & STUDIO PRESENTATION (Áp dụng tiêu chuẩn nhiếp ảnh cao cấp):
+- Ánh sáng tổng thể (Overall Lighting): Softbox cỡ lớn tạo ánh sáng mềm mại, khuếch tán đều (highly diffused, soft light), loại bỏ hoàn toàn bóng râm gắt trên thân sản phẩm.
+- Chi tiết vật liệu (Material Rendering): Xử lý hoàn hảo độ tương phản bề mặt: thân nồi/sản phẩm có độ nhám mịn (matte pastel finish) cực kỳ cao cấp, trong khi quai cầm và núm kim loại (nếu có) phải có độ sáng bóng, phản quang sắc nét (high-contrast metallic reflections) giống như ảnh chụp thực tế.
+- Đánh sáng đa điểm (Multi-Point Strobe System): BẮT BUỘC sử dụng 1 đèn Key light chéo góc, 1 đèn Fill light để làm sáng vùng tối, và cực kỳ quan trọng là 2 đèn Rim/Kicker lights đánh từ phía sau để tạo 2 viền sáng mỏng, sắc nét (crisp glowing edge highlights) dọc theo đường viền sản phẩm, giúp sản phẩm nổi bật hoàn toàn khỏi nền.
+- Grounding (Bóng đổ chân thực): Chỉ duy nhất một bóng đổ tiếp xúc (ambient occlusion/contact shadow) mỏng, mềm, tụ đậm ngay dưới đáy sản phẩm để neo giữ sản phẩm xuống sàn. Tuyệt đối không tạo bóng đổ dài hoặc đổ bóng sai hướng ánh sáng chính.
+- Quality: Superb clarity, high contrast on metal parts, completely smooth and even matte finishes, pure #FFFFFF background, photorealistic 8k.`;
 
     finalPrompt = `
 Style Guide Requirements:
