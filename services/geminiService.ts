@@ -550,19 +550,21 @@ Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy thực hiện
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
 
 YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
-1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
-2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
-   - [Mô tả phong cách studio cao cấp]
-   - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
-   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights)]
+1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú và khác biệt hoàn toàn nhau (Ví dụ: Concept 1: Tối giản sang trọng, Concept 2: Ánh sáng kịch tính/chuyển động, Concept 3: Hình khối hình học, Concept 4: Nghệ thuật sắp đặt, Concept 5: Macro đặc tả chất liệu...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
+2. Đạo cụ (Props) BẮT BUỘC phải đặc thù, liên quan trực tiếp đến CÔNG NĂNG của riêng sản phẩm này (không dùng chung chung như hình khối mica cho mọi sản phẩm).
+3. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+   - [Mô tả phong cách và tinh thần/mood riêng biệt của concept này]
+   - [Màu sắc nền tone-sur-tone BẮT BUỘC, chi tiết chất liệu giấy trơn]
+   - [Đạo cụ trang trí cụ thể phù hợp với tính năng sản phẩm ${productName}]
+   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights) THAY ĐỔI THEO TỪNG CONCEPT (ví dụ: gắt/mềm/chiếu xiên/hắt sáng từ dưới)]
    - [Mô tả cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
    (Lưu ý: Sử dụng ký tự xuống dòng 
  giữa các tiêu chí để định dạng)
-3. RÀNG BUỘC BẮT BUỘC:
+4. RÀNG BUỘC BẮT BUỘC (TUYỆT ĐỐI TUÂN THỦ):
    - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
    - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
    - Sản phẩm và đạo cụ nằm gọn trong khung hình, chừa khoảng trống trên nền để chèn chữ (Text) theo đúng Quy chuẩn.
-4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
+5. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
 
 Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
 `;
