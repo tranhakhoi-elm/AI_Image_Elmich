@@ -614,7 +614,7 @@ Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và '
   }
 };
 
-export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K'): Promise<string> => {
+export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K', referenceImage?: string | null): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
   const mimeTypeMatch = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -629,6 +629,13 @@ export const editProductImage = async (base64Image: string, prompt: string, imag
     { inlineData: { data, mimeType } },
     { text: prompt }
   ];
+
+  if (referenceImage) {
+    const refMatch = referenceImage.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (refMatch && refMatch.length === 3) {
+      parts.push({ inlineData: { data: refMatch[2], mimeType: refMatch[1] } });
+    }
+  }
 
   try {
     let imageConfig: any = {};

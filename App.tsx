@@ -293,6 +293,8 @@ const App: React.FC = () => {
 
   const [activeImage, setActiveImage] = useState<GeneratedImage | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
+  const [editReferenceImage, setEditReferenceImage] = useState<string | null>(null);
+  const editRefFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     localStorage.setItem('elmich_ai_successful_prompts', JSON.stringify(successfulPrompts));
@@ -490,7 +492,7 @@ const App: React.FC = () => {
     });
   };
 
-  const onImageUpload = async (filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList, type: 'product' | 'reference' | 'color_sample' | 'packaging' | 'track' | 'socket') => {
+  const onImageUpload = async (filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList, type: 'product' | 'reference' | 'color_sample' | 'packaging' | 'track' | 'socket' | 'edit_reference') => {
     const files = 'target' in filesOrEvent ? filesOrEvent.target.files : filesOrEvent;
     if (!files || files.length === 0) return;
     try {
@@ -516,6 +518,9 @@ const App: React.FC = () => {
           ...prev, 
           sockets: [...(prev.sockets || []), { id: Date.now().toString(), image: base64, quantity: 1, applianceNote: '' }] 
         }));
+      } else if (type === 'edit_reference') {
+        const base64 = await resizeImage(files[0]);
+        setEditReferenceImage(base64);
       }
     } catch (error) { setAlertMessage("Lỗi khi tải ảnh."); }
     if ('target' in filesOrEvent) filesOrEvent.target.value = '';
@@ -687,7 +692,7 @@ const App: React.FC = () => {
     if (!activeImage || !editPrompt.trim()) return;
     setIsEditingImage(true);
     try {
-      const newUrl = await editProductImage(activeImage.url, editPrompt, editQuality);
+      const newUrl = await editProductImage(activeImage.url, editPrompt, editQuality, editReferenceImage);
       const time = Date.now();
       const newImage: GeneratedImage = {
         id: `${time}-edited`,
@@ -700,6 +705,7 @@ const App: React.FC = () => {
       setGallery(prev => [newImage, ...prev]);
       setActiveImage(newImage);
       setEditPrompt("");
+      setEditReferenceImage(null);
     } catch (error: any) {
       console.error(error);
       setAlertMessage("Lỗi chỉnh sửa ảnh.");
