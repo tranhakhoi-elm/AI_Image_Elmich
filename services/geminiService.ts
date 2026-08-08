@@ -550,21 +550,19 @@ Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy thực hiện
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
 
 YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
-1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú và khác biệt hoàn toàn nhau (Ví dụ: Concept 1: Tối giản sang trọng, Concept 2: Ánh sáng kịch tính/chuyển động, Concept 3: Hình khối hình học, Concept 4: Nghệ thuật sắp đặt, Concept 5: Macro đặc tả chất liệu...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
-2. Đạo cụ (Props) BẮT BUỘC phải đặc thù, liên quan trực tiếp đến CÔNG NĂNG của riêng sản phẩm này (không dùng chung chung như hình khối mica cho mọi sản phẩm).
-3. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
-   - [Mô tả phong cách và tinh thần/mood riêng biệt của concept này]
-   - [Màu sắc nền tone-sur-tone BẮT BUỘC, chi tiết chất liệu giấy trơn]
-   - [Đạo cụ trang trí cụ thể phù hợp với tính năng sản phẩm ${productName}]
-   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights) THAY ĐỔI THEO TỪNG CONCEPT (ví dụ: gắt/mềm/chiếu xiên/hắt sáng từ dưới)]
+1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
+2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+   - [Mô tả phong cách studio cao cấp]
+   - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
+   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights)]
    - [Mô tả cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
    (Lưu ý: Sử dụng ký tự xuống dòng 
  giữa các tiêu chí để định dạng)
-4. RÀNG BUỘC BẮT BUỘC (TUYỆT ĐỐI TUÂN THỦ):
+3. RÀNG BUỘC BẮT BUỘC:
    - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
    - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
    - Sản phẩm và đạo cụ nằm gọn trong khung hình, chừa khoảng trống trên nền để chèn chữ (Text) theo đúng Quy chuẩn.
-5. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
+4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
 
 Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
 `;
@@ -771,11 +769,91 @@ Output style: Premium commercial packaging mockup, hyper-detailed rendering, pho
     const matDesc = settings.whiteBGMaterialsDescription || "";
     
     let stylePrompt = `Photorealistic commercial studio photography of ${productName}, transforming a 3D render into a hyper-realistic physical object.
-- **Material properties:** ${matDesc || "Highly realistic materials, microscopic details, and authentic surface imperfections"}. Thân sản phẩm có chất liệu chân thực. Các phần kim loại (quai, núm) phải có độ phản quang bóng bẩy, sắc nét (high-contrast metallic reflections) như kim loại thật.
-- **Environment:** Tuyệt đối KHÔNG có bàn (no table), KHÔNG có phòng (no room). Phông nền trơn vô cực (seamless background) BẮT BUỘC CÙNG TONE MÀU với màu chủ đạo của sản phẩm (Tone-sur-tone, ví dụ nồi màu hồng thì nền cũng phải màu hồng). Bề mặt đặt sản phẩm là mặt phẳng bóng tạo ra hình bóng mờ phản chiếu sản phẩm (soft reflection) bên dưới, giống như mẫu studio cao cấp. Không được có bất kỳ đạo cụ (props) nào khác ngoài sản phẩm chính.
-- **Grounding:** Bóng đổ tiếp xúc chân thực kết hợp hình bóng phản chiếu (reflection) nhẹ dưới đáy sản phẩm.
-- **Lighting & Camera:** Đánh sáng đa điểm chuyên nghiệp (1 Key light chéo góc, 1 Fill light, và đặc biệt 2 Rim/Kicker lights đánh từ phía sau tạo viền sáng mỏng sắc nét dọc theo thân sản phẩm để tách khối hoàn toàn khỏi nền). High-key commercial studio lighting, large softbox, shot on 85mm lens, f/8, photorealistic 8k.
-${settings.whiteBGPriorityAdjustments ? `- **Priority user adjustments:** ${settings.whiteBGPriorityAdjustments}` : ""}`;
+- **Material properties:** ${matDesc || "Highly realistic materials, microscopic details, and authentic surface imperfections"}. Micro-textures applied to eliminate CGI look.
+- **Environment:** Seamless pure white background (#FFFFFF).
+- **Grounding:** Soft, realistic contact shadow under the product base.
+- **Lighting & Camera:** High-key commercial studio lighting, large softbox, shot on 85mm lens, f/8, ultra-detailed, 8k.
+${settings.whiteBGPriorityAdjustments ? `- **Priority user adjustments:** ${settings.whiteBGPriorityAdjustments}` : ""}
+`;
+
+    finalPrompt = `
+Style Guide Requirements:
+${render3DToPhoto}
+
+${stylePrompt}
+
+CRITICAL: Keep the exact shape and perspective of the original image. Only upgrade the realism, lighting, and material shaders.
+DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible inside the frame.
+    `;
+  } else if (settings.visualStyle === "WHITE_BG_RETOUCH") {
+    let stylePrompt = "";
+    const productName = settings.productName || "Product";
+    const selectedCats = settings.whiteBGSelectedCategories || [];
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+
+    let materialDirectives = "";
+    if (selectedCats.includes("METAL")) {
+      materialDirectives += `
+- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, clean, flawless, and pristine.`;
+    }
+    if (selectedCats.includes("PLASTIC")) {
+      materialDirectives += `
+- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely clean, uniform, smooth, and pristine.`;
+    }
+    if (selectedCats.includes("GLASS")) {
+      materialDirectives += `
+- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, uniform, and crystal clear.`;
+    }
+    if (selectedCats.includes("CERAMIC")) {
+      materialDirectives += `
+- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely smooth, uniform, flawless, and pristine.`;
+    }
+    if (materialDirectives === "") {
+      materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, completely clean and pristine.";
+    }
+
+    stylePrompt = `High-detail, professional commercial studio product photography of the product "${productName}", meticulously isolated on a pure, solid white background (#FFFFFF).
+    
+MATERIAL SEPARATION & PROPERTY DIRECTIVES:
+The product contains the following material compositions: [${selectedCats.join(', ')}].
+${materialDirectives}
+
+USER MATERIAL LOCATION & DETAIL DESCRIPTION:
+"${matDesc || "Automated multi-material detection based on the input photograph."}"
+-> Use this specific material mapping to assign glossiness, metalness, transparency, or roughness to different parts of the product. Keep original contours and text.
+
+${settings.whiteBGPriorityAdjustments ? `PRIORITY USER ADJUSTMENTS (MUST APPLY / ƯU TIÊN SỐ 1):
+"${settings.whiteBGPriorityAdjustments}"
+-> You MUST execute these specific aesthetic and lighting adjustments exactly as described by the user.` : ""}
+
+LIGHTING & STUDIO PRESENTATION:
+- Light Source: Professional three-point studio lighting with high-end key and fill lights, displaying pristine product shape and beautiful gradients.
+- Grounding: A very delicate, clean, and tight contact shadow must sit precisely underneath the base contact points. No floating, no artificial halo.
+- Quality: Superb clarity, high contrast, clean noise-free colors, commercial catalog style, photorealistic.`;
+
+    finalPrompt = `
+Style Guide Requirements:
+${designWhiteBGRetouch}
+
+${stylePrompt}
+ 
+CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product itself must remain exactly as it appears in the reference image.
+DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible inside the frame. Do NOT cut off any edges, handles, lids, or parts of the product. If the requested aspect ratio is different from the original image, you MUST pad the extra space with the pure white background. The product should be centered and completely contained within the image boundaries without any cropping.
+
+BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY / YÊU CẦU BẮT BUỘC):
+- WIPE OUT THE OLD BACKGROUND: You must completely remove, erase, and replace 100% of the original background, old room environment, countertop, floor, walls, and reflections from the input image.
+- Flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND.
+- The background is completely blank, plain, clean, pristine, and 100% empty white digital canvas from edge to edge.
+- Every single background pixel at the top, bottom, left, right borders, and corners must be absolute, seamless flat pure white (#FFFFFF) (RGB: 255, 255, 255).
+- ABSOLUTELY NO other objects, NO vertical pillars, NO vertical stripes, NO grey patches, NO shadows from the room, and NO environmental reflections are allowed to leak into the background.
+- ABSOLUTELY NO gray areas, NO vignetting, NO gradients, NO shading, NO noise, NO dust, NO specks, NO spots, and NO dirty smudges are allowed anywhere in the image.
+- NỀN TRẮNG PHẢI SẠCH TUYỆT ĐỐI: Bạn phải LOẠI BỎ HOÀN TOÀN phông nền cũ và thay thế bằng màu trắng tinh khiết hoàn hảo (#FFFFFF). Không được có bóng xám dơ, không có cột đứng, không có vết bẩn, không có hạt nhiễu (noise), không có hiệu ứng tối góc (vignette), không có chuyển màu (gradient). Toàn bộ vùng nền xung quanh sản phẩm phải là màu trắng tinh khiết hoàn hảo #FFFFFF từ tâm ra đến tận rìa và bốn góc ảnh.
+- VERY TIGHT GROUND SHADOW ONLY: The only shadow allowed is a very tight, clean, localized contact shadow (ambient occlusion) directly beneath the physical touchpoints of the product. It must be extremely minimal and must rapidly fade to absolute pure white (#FFFFFF) within a few millimeters.
+- KHÔNG CÓ BÓNG ĐỔ RỘNG: Tuyệt đối không vẽ bóng đổ lan rộng ra nền nhà, không tạo bóng mờ xám to làm bẩn nền. Bóng đổ phải cực kỳ gọn, nhỏ, sắc nét và ôm sát ngay dưới chân đế của sản phẩm rồi tan biến hoàn toàn vào nền trắng tinh #FFFFFF.
+
+All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
+Additional Instructions: ${settings.concept || 'None'}
+Camera Setup: ${formatCameraSettings(settings.camera)}`;
   } else if (settings.visualStyle === "LINE_ART") {
     finalPrompt = `
 Style Guide Requirements:
@@ -911,7 +989,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       
       ASPECT RATIO SPECIFIC COMPOSITION DIRECTIVES:
       - Current Aspect Ratio: ${settings.aspectRatio}
-      - For extremely wide aspect ratios (such as '4:1' or '16:9'), do NOT center a single tiny product in an empty void. ${isStudio ? "Describe how the seamless paper backdrop extends horizontally across the ultra-wide frame." : "Instead, design a breathtaking wide panoramic landscape/tabletop composition. Describe how the countertop, stone slabs, paper backdrop, or floor continuously extend horizontally from left to right."} Place the main product strictly once, ideally offset to the left or right third (rule of thirds), and let the ambient scenery or soft matching props flow elegantly along the horizontal axis.
+      - For extremely wide aspect ratios (such as '4:1' or '16:9'), do NOT center a single tiny product in an empty void. Instead, design a breathtaking wide panoramic landscape/tabletop composition. Describe how the countertop, stone slabs, paper backdrop, or floor continuously extend horizontally from left to right across the ultra-wide frame. Place the main product strictly once, ideally offset to the left or right third (rule of thirds), and let the gorgeous ambient scenery or soft matching props (such as scattered ingredients, plants, glassware) flow elegantly along the horizontal axis, forming beautiful negative space.
       - For extremely tall aspect ratios (such as '1:4' or '9:16'), design a vertical cascading composition where elements stack elegantly vertically.
       
       STRICT AVOIDANCE (NEGATIVE PROMPT EQUIVS):
@@ -924,7 +1002,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       Instructions for the prompt:
       - Describe the product's placement (MANDATORY: you must explicitly describe placing the product as described in "${placementDetails}"), lighting, shadows, and reflections in vivid technical detail based on the core principles.
       - Describe the background and environment based on the concept and color palette rules. Make sure the props (${propDetails}) are present.
-      - ${isStudio ? "Ensure minimalist, clean, extremely neat layout. CRITICAL: The background MUST be a plain seamless paper backdrop. ABSOLUTELY NO wooden tables, NO room interiors, NO walls with corners, NO windows, and NO countertops. Even if props are present, they must be placed directly on the seamless paper or geometric plinths, NOT on a realistic table." : "Follow the rule of thirds for composition. Use an elegant, harmonious color palette."}
+      - ${isStudio ? "Ensure minimalist, clean, extremely neat layout." : "Follow the rule of thirds for composition. Use an elegant, harmonious color palette."}
       - Ensure the prompt emphasizes photorealism, 8k resolution, and high-end commercial aesthetic.
       - ONLY output the final prompt text (in English), no explanations.
     `;

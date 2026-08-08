@@ -2517,7 +2517,7 @@ const renderTrackSocketWorkflow = () => (
     if (currentStep === 1) {
       const modes = [
         { id: 'TRACING_ASSISTANT', icon: <PenTool size={20} />, title: 'Trợ lý Tracing', desc: 'Làm nét logo/ảnh mờ để vẽ lại vector.', color: 'bg-yellow-50 text-yellow-500', hover: 'hover:bg-yellow-100' },
-        { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={20} />, title: '3D Render sang Ảnh Thật', desc: 'Chuyển ảnh 3D thành ảnh thật tone-sur-tone.', color: 'bg-indigo-50 text-indigo-400', hover: 'hover:bg-indigo-100' },
+        { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={20} />, title: '3D Render sang Ảnh Thật', desc: 'Chuyển ảnh 3D thành ảnh chụp thật nền trắng.', color: 'bg-indigo-50 text-indigo-400', hover: 'hover:bg-indigo-100' },
         { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'bg-purple-50 text-purple-400', hover: 'hover:bg-purple-100' },
         { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'bg-blue-50 text-blue-400', hover: 'hover:bg-blue-100' },
         { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ.', color: 'bg-gray-100 text-gray-300', hover: 'hover:bg-gray-200' },

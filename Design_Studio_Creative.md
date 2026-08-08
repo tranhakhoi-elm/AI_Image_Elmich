@@ -83,7 +83,7 @@ When adding kitchen props (such as cutting boards, fresh herbs, splash effects, 
 ## 7. Defect Prevention Checklist (Negative Guidelines)
 
 - **Product Shape Mutation:** Never warp, stretch, or alter the physical design, dimensions, or aspect ratios of the original appliance or the Elmich logo.
-- **Environmental Clutter:** Only use clean, seamless studio paper backdrops. BẮT BUỘC KHÔNG ĐƯỢC VẼ BÀN GỖ (NO WOODEN TABLES), KHÔNG VẼ TƯỜNG (NO WALLS), KHÔNG VẼ PHÒNG (NO ROOM INTERIORS). Do not insert chaotic outdoor horizons, skies, trees, or messy domestic backgrounds. If props are used, place them directly on the paper backdrop or geometric plinths.
+- **Environmental Clutter:** Only use clean, seamless studio paper backdrops or stone plinths. Do not insert chaotic outdoor horizons, skies, trees, or messy domestic backgrounds.
 - **Conflicting Shadows (Cross-Shadowing):** Prevent multiple sharp shadows stretching in opposite directions, which ruins lighting logic.
 - **Flat Glass or Metallic Glare:** Do not cover the product's textures in solid white overexposed reflections. Highlights should be elegant and structured.
 - **Soft Edge Bleeds (Blurry Silhouettes):** The outer metal or plastic silhouette edges of the main product must remain crisp and sharp against the background, even when depth-of-field blur is applied to surrounding props.
