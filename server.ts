@@ -12,93 +12,81 @@ const PORT = 3000;
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// Lark Bitable integration API
-app.post("/api/lark/report", async (req: any, res: any) => {
-  const { appToken, tableId: requestedTableId, fields } = req.body;
-  const appId = process.env.LARK_APP_ID;
-  const appSecret = process.env.LARK_APP_SECRET;
+// Google Sheets integration API using Service Account
+import { google } from "googleapis";
 
-  if (!appId || !appSecret) {
-    console.warn("Lark credentials not set in environment variables");
-    return res.status(200).json({ 
-      success: false, 
-      error: "Lark credentials (LARK_APP_ID/LARK_APP_SECRET) local configuration is missing." 
-    });
+app.post("/api/sheets/report", async (req: any, res: any) => {
+  const { values } = req.body;
+  
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  if (!sheetId) {
+    return res.status(200).json({ success: false, error: "GOOGLE_SHEET_ID is missing in environment variables." });
   }
 
+  let auth: any;
+
   try {
-    // 1. Get tenant token
-    const tokenRes = await fetch("https://open.larksuite.com/open-apis/auth/v3/tenant_access_token/internal", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
-    });
+    // PREFERRED WAY: Read the entire JSON file content from a single env variable
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     
-    const tokenData: any = await tokenRes.json();
-    if (tokenData.code !== 0) {
-      throw new Error(`Failed to get Lark access token: ${tokenData.msg}`);
-    }
-    const token = tokenData.tenant_access_token;
-
-    let tableId = requestedTableId;
-
-    if (!tableId) {
-      // 2. Get first table ID of the Base
-      const tablesRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${appToken}/tables`, {
-        method: "GET",
-        headers: { "Authorization": `Bearer ${token}` }
+    if (serviceAccountJson) {
+      const credentials = JSON.parse(serviceAccountJson);
+      auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
       });
-      const tablesData: any = await tablesRes.json();
-      if (tablesData.code !== 0 || !tablesData.data?.items || tablesData.data.items.length === 0) {
-        const errorMsg = tablesData.msg || "Unknown error";
-        if (errorMsg.includes("Access denied") || errorMsg.includes("scope") || errorMsg.includes("permission") || tablesData.code === 99991663 || tablesData.code === 99991661) {
-          throw new Error(`Cấp quyền Bitable bị từ chối (${errorMsg}). Vui lòng vào Lark Developer Console -> Permissions & Scopes -> tìm kiếm và Bật các quyền: 'bitable:app' và 'bitable:app:readonly'. Sau đó, tạo và phát hành phiên bản mới (Version Management & Release) để áp dụng quyền.`);
-        }
-        throw new Error(`Failed to list Lark tables: ${errorMsg}`);
-      }
-      tableId = tablesData.data.items[0].table_id;
-    }
-
-    // 3. Post the record to the Bitable table
-    const recordRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/records`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json; charset=utf-8"
-      },
-      body: JSON.stringify({ fields })
-    });
-    
-    const recordData: any = await recordRes.json();
-    if (recordData.code !== 0) {
-      const errorMsg = recordData.msg || "Unknown error";
-      if (errorMsg.includes("Access denied") || errorMsg.includes("scope") || errorMsg.includes("permission") || recordData.code === 99991663 || recordData.code === 99991661) {
-        throw new Error(`Cấp quyền ghi Bitable bị từ chối (${errorMsg}). Vui lòng bật quyền 'bitable:app' trong Permissions & Scopes của Lark App và phát hành phiên bản mới.`);
-      }
+    } else {
+      // FALLBACK WAY: Parse from separate email and private_key variables
+      const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+      let privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
       
-      if (errorMsg.includes("FieldNameNotFound")) {
-        // Query fields API to see what fields actually exist
-        try {
-          const fieldsRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/fields`, {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          const fieldsData: any = await fieldsRes.json();
-          if (fieldsData.code === 0 && fieldsData.data?.items) {
-            const actualFields = fieldsData.data.items.map((item: any) => `"${item.field_name}" (${item.type})`).join(", ");
-            throw new Error(`Bảng hiện tại không có các cột được yêu cầu. Các cột hiện có trên Bitable của bạn là: [ ${actualFields} ]. Vui lòng tạo đúng các cột: "Mã sản phẩm" (Văn bản), "Tên sản phẩm" (Văn bản), "Số lượng Token" (Con số), "Chi phí" (Con số) hoặc cập nhật cấu trúc bảng.`);
-          }
-        } catch (fieldsErr: any) {
-          console.error("Failed to query fields mapping:", fieldsErr.message);
-        }
+      if (!clientEmail || !privateKey) {
+         return res.status(200).json({ 
+           success: false, 
+           error: "Google Sheets credentials (GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY) are missing." 
+         });
       }
 
-      throw new Error(`Failed to insert Lark record: ${errorMsg}`);
+      // Cleanup fallback key (in case of copy-paste formatting issues)
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.replace(/^"|"$/g, '');
+      }
+      privateKey = privateKey.replace(/\\n/g, '\n');
+
+      auth = new google.auth.JWT({
+        email: clientEmail,
+        key: privateKey,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      });
     }
 
-    res.json({ success: true, tableId, record: recordData.data?.record });
+    const sheets = google.sheets({ version: 'v4', auth });
+    
+    // Dynamically fetch the name of the first sheet to avoid "Unable to parse range: Sheet1" errors
+    // (e.g. if the user's Google Sheets is in Vietnamese, it defaults to "Trang tính1")
+    let targetRange = 'Sheet1!A:A';
+    try {
+      const meta = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
+      if (meta.data.sheets && meta.data.sheets.length > 0) {
+        const sheetTitle = meta.data.sheets[0].properties?.title || 'Sheet1';
+        targetRange = `${sheetTitle}!A:A`;
+      }
+    } catch (metaError: any) {
+      console.warn("Could not fetch spreadsheet metadata. Using default 'Sheet1'.", metaError.message);
+    }
+    
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId,
+      range: targetRange,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: values
+      }
+    });
+
+    res.json({ success: true, data: response.data });
   } catch (error: any) {
-    console.error("Error reporting to Lark Base:", error.message);
+    console.error("Error reporting to Google Sheets:", error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });

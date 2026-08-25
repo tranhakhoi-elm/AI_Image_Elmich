@@ -1,16 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig, ConceptSuggestion } from "../types";
-import { reportToLark, calculateGeminiCost, calculateImagenCost } from "./larkService";
+import { reportToLark, calculateGeminiCost, calculateImagenCost } from "./metricsService";
 
-const trackGeminiUsage = async (response: any, taskName: string) => {
+const trackGeminiUsage = async (response: any, taskName: string, modelName: string = "gemini-2.5-flash") => {
   try {
     const usage = response?.usageMetadata;
     if (usage) {
       const { promptTokenCount = 0, candidatesTokenCount = 0 } = usage;
-      const { tokens, costUSD } = calculateGeminiCost(promptTokenCount, candidatesTokenCount);
+      const { tokens, costUSD } = calculateGeminiCost(modelName, promptTokenCount, candidatesTokenCount);
       const productCode = localStorage.getItem('elmich_ai_product_code') || 'N/A';
-      const productName = localStorage.getItem('elmich_ai_product_name') || taskName || 'Nhiệm vụ AI';
-      reportToLark(productCode, productName, tokens, costUSD);
+      const productName = localStorage.getItem('elmich_ai_product_name') || 'Nhiệm vụ AI';
+      reportToLark(productCode, productName, tokens, costUSD, taskName);
     }
   } catch (error) {
     console.error("Failed to track Gemini usage:", error);
@@ -21,8 +21,8 @@ const trackImagenUsage = async (modelName: string, numImages: number, taskName: 
   try {
     const { costUSD } = calculateImagenCost(modelName, numImages, imageSize);
     const productCode = localStorage.getItem('elmich_ai_product_code') || 'N/A';
-    const productName = localStorage.getItem('elmich_ai_product_name') || taskName || 'Tạo ảnh AI';
-    reportToLark(productCode, productName, 0, costUSD);
+    const productName = localStorage.getItem('elmich_ai_product_name') || 'Tạo ảnh AI';
+    reportToLark(productCode, productName, 0, costUSD, taskName);
   } catch (error) {
     console.error("Failed to track Imagen usage:", error);
   }
@@ -427,7 +427,7 @@ Trả về định dạng JSON với 'placement' (string) và 'props' (mảng 10
         }
       }
     });
-    trackGeminiUsage(response, productName || "Đạo cụ Concept");
+    trackGeminiUsage(response, productName || "Đạo cụ Concept", "gemini-2.5-pro");
     return JSON.parse(response.text || "{}");
   } catch (error) { return { props: [], placement: "" }; }
 };
@@ -696,11 +696,17 @@ Note: Please align with the style of these previously successful concepts: ${his
   };
   
   if (settings.visualStyle === "SCENE_STAGING") {
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+    let materialInstruction = "";
+    if (matDesc) {
+      materialInstruction = `\nCRITICAL MATERIAL REQUIREMENT: ${matDesc}\nYou must explicitly describe these materials in the generated image, enforcing correct specular highlights, roughness, and physically based rendering (PBR) properties to match this description.`;
+    }
+
     finalPrompt = `
 Style Guide Requirements:
 ${designLifestyleConcept}
 
-Staging professional: Add ${formatProps(settings.props)} into the real scene image following style "${settings.concept}". Keep original furniture. Camera & Lighting: ${formatCameraSettings(settings.camera)}. 8k, realistic.`;
+Staging professional: Add ${formatProps(settings.props)} into the real scene image following style "${settings.concept}". Keep original furniture.${materialInstruction} Camera & Lighting: ${formatCameraSettings(settings.camera)}. 8k, realistic.`;
     } else if (settings.visualStyle === "TRACING_ASSISTANT") {
     finalPrompt = `Professional vector tracing assistant prompt: 
     Convert this low-quality, blurry, or sketch logo/image into a clean, ultra-sharp 4K graphic suitable for vector tracing.
@@ -1011,6 +1017,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       model: "gemini-2.5-pro",
       contents: thinkingPrompt
     });
+    trackGeminiUsage(thinkingResponse, "Suy luận Prompt ảnh", "gemini-2.5-pro");
     finalPrompt = thinkingResponse.text || "";
   } else if (settings.visualStyle === "TRACK_SOCKET_STAGING") {
     const socketDetails = settings.sockets?.map((s, idx) => {
@@ -1131,7 +1138,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
-        trackImagenUsage(modelName, 1, settings.productName || "Tạo ảnh sản phẩm", settings.imageSize);
+        trackImagenUsage(modelName, 1, `Tạo ảnh: ${settings.visualStyle || "N/A"}`, settings.imageSize);
         const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         return await resizeImageToQuality(base64Data, settings.imageSize as '1K' | '2K' | '4K');
       }
@@ -1211,7 +1218,7 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
         systemInstruction: "Bạn là một trợ lý AI tư vấn và lên ý tưởng hình ảnh sản phẩm. Luôn ưu tiên trả lời bằng tiếng Việt, trừ khi người dùng yêu cầu ngôn ngữ khác.",
       }
     });
-    trackGeminiUsage(response, "Trò chuyện trợ lý");
+    trackGeminiUsage(response, "Trò chuyện trợ lý", modelName);
     return response.text || "No response generated.";
   } catch (error) {
     console.error("Chat generation failed:", error);
