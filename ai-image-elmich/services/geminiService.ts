@@ -1,0 +1,1432 @@
+import { GoogleGenAI, Type } from "@google/genai";
+import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig, ConceptSuggestion } from "../types";
+import { reportToLark, calculateGeminiCost, calculateImagenCost } from "./metricsService";
+
+const trackGeminiUsage = async (response: any, taskName: string, modelName: string = "gemini-2.5-flash") => {
+  try {
+    const usage = response?.usageMetadata;
+    if (usage) {
+      const { promptTokenCount = 0, candidatesTokenCount = 0 } = usage;
+      const { tokens, costUSD } = calculateGeminiCost(modelName, promptTokenCount, candidatesTokenCount);
+      const productCode = localStorage.getItem('elmich_ai_product_code') || 'N/A';
+      const productName = localStorage.getItem('elmich_ai_product_name') || 'Nhiệm vụ AI';
+      reportToLark(productCode, productName, tokens, costUSD, taskName);
+    }
+  } catch (error) {
+    console.error("Failed to track Gemini usage:", error);
+  }
+};
+
+const trackImagenUsage = async (modelName: string, numImages: number, taskName: string, imageSize?: string) => {
+  try {
+    const { costUSD } = calculateImagenCost(modelName, numImages, imageSize);
+    const productCode = localStorage.getItem('elmich_ai_product_code') || 'N/A';
+    const productName = localStorage.getItem('elmich_ai_product_name') || 'Tạo ảnh AI';
+    reportToLark(productCode, productName, 0, costUSD, taskName);
+  } catch (error) {
+    console.error("Failed to track Imagen usage:", error);
+  }
+};
+
+
+import designLifestyleConcept from '../Design_Lifestyle_Concept.md?raw';
+import designStudioCreative from '../Design_Studio_Creative.md?raw';
+import designLineArt from '../Design_Line_Art.md?raw';
+import designColorEditing from '../Design_Color_Editing.md?raw';
+import designPackagingMockup from '../Design_Packaging_Mockup.md?raw';
+import designWhiteBGRetouch from '../Design_WhiteBG_Retouch.md?raw';
+import render3DToPhoto from '../3DRender_To_Photo.md?raw';
+import designTechEffects from '../Design_Tech_Effects.md?raw';
+
+const resizeImageToQuality = (base64Data: string, quality: '1K' | '2K' | '4K'): Promise<string> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      resolve(base64Data);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        let maxDimension = 1024;
+        if (quality === '2K') maxDimension = 2048;
+        if (quality === '4K') maxDimension = 4096;
+        
+        const currentMax = Math.max(img.width, img.height);
+        
+        // If image is already close to the desired resolution, don't resize it unless it's too small
+        if (currentMax === maxDimension && base64Data.startsWith('data:image/png')) {
+            resolve(base64Data);
+            return;
+        }
+
+        const scaleFactor = maxDimension / currentMax;
+        
+        canvas.width = Math.round(img.width * scaleFactor);
+        canvas.height = Math.round(img.height * scaleFactor);
+        
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          // Luôn xuất định dạng PNG để giữ chất lượng cao nhất (lossless), giống phiên bản cũ
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          resolve(base64Data);
+        }
+      } catch (err) {
+        console.error("Failed to resize image:", err);
+        resolve(base64Data);
+      }
+    };
+    img.onerror = () => {
+      resolve(base64Data);
+    };
+    img.src = base64Data;
+  });
+};
+
+const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor: string = '#FFFFFF'): Promise<string> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      resolve(base64Data);
+      return;
+    }
+    const [wRatio, hRatio] = aspectRatio.split(':').map(Number);
+    if (!wRatio || !hRatio) {
+      resolve(base64Data);
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const targetRatio = wRatio / hRatio;
+        const currentRatio = img.width / img.height;
+        
+        let newWidth = img.width;
+        let newHeight = img.height;
+
+        if (currentRatio > targetRatio + 0.01) {
+          // Image is wider than target. Need to pad height.
+          newHeight = Math.round(img.width / targetRatio);
+        } else if (currentRatio < targetRatio - 0.01) {
+          // Image is taller than target. Need to pad width.
+          newWidth = Math.round(img.height * targetRatio);
+        } else {
+          if (base64Data.startsWith('data:image/png')) {
+            resolve(base64Data);
+          } else {
+            const canvas = document.createElement('canvas');
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL('image/png'));
+            } else {
+              resolve(base64Data);
+            }
+          }
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = padColor;
+          ctx.fillRect(0, 0, newWidth, newHeight);
+          
+          const offsetX = Math.round((newWidth - img.width) / 2);
+          const offsetY = Math.round((newHeight - img.height) / 2);
+          
+          ctx.drawImage(img, offsetX, offsetY);
+          // Luôn xuất định dạng PNG
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          resolve(base64Data);
+        }
+      } catch (error) {
+        console.error("Padding error:", error);
+        resolve(base64Data);
+      }
+    };
+    img.onerror = () => resolve(base64Data);
+    img.src = base64Data;
+  });
+};
+
+// Tự động phân tích chất liệu từ ảnh
+export const analyzeProductMaterials = async (imageBase64: string): Promise<{ categories: string[], description: string }> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    const parts: any[] = [{
+      text: `Analyze the provided product image to determine its materials. 
+Please classify the materials into the following categories (return an array of IDs):
+- 'METAL' (for any metal, stainless steel, aluminum, chrome)
+- 'PLASTIC' (for plastic, polymer, silicone, ABS)
+- 'GLASS' (for glass, transparent materials)
+- 'CERAMIC' (for ceramic, non-stick coatings, enamel)
+
+Also provide a detailed description (in Vietnamese) of where these materials are located on the product and their exact visual properties (e.g., "Thân ấm làm từ inox xước (brushed stainless steel) mờ, nắp nhựa ABS đen bóng, viền mạ chrome bóng loáng (mirror-polished)"). This helps in generating highly realistic textures.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "categories": ["METAL", "PLASTIC"],
+  "description": "Mô tả chi tiết bằng tiếng Việt..."
+}`
+    }];
+    
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      });
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    trackGeminiUsage(response, "Phân tích chất liệu sản phẩm");
+    if (response.text) {
+      return JSON.parse(response.text);
+    }
+    return { categories: [], description: "" };
+  } catch (error) {
+    console.error("Lỗi phân tích chất liệu:", error);
+    return { categories: [], description: "" };
+  }
+};
+
+// --- CÁC HÀM CHO CÁC MODE CŨ ---
+export const getAiSuggestions = async (settings: { productName: string, visualStyle: string, techDescription?: string }): Promise<AISuggestions> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  let styleContext = settings.visualStyle === "TECH_PS" ? `Phong cách "Ảnh USP Kỹ thuật".` : `Phong cách cơ bản.`;
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Gợi ý cho: "${settings.productName}". ${styleContext}`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
+            locations: { type: Type.ARRAY, items: { type: Type.STRING } },
+            props: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ["concepts", "locations", "props"]
+        }
+      }
+    });
+    trackGeminiUsage(response, settings.productName || "Gợi ý AI");
+    const result = JSON.parse(response.text || "{}");
+    return {
+      concepts: result.concepts || [],
+      locations: result.locations || [],
+      props: result.props || []
+    };
+  } catch (e) { return { concepts: [], locations: [], props: [] }; }
+};
+
+// 1. Phân tích Concept (Lifestyle) - CẬP NHẬT ĐỂ NHẬN ẢNH THAM KHẢO
+export const analyzeConceptAndCamera = async (productName: string, dimensions: string, images: string[], refImage: string | null): Promise<AIConceptAnalysis> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và các lỗi cần tránh của phong cách này:
+${designLifestyleConcept}
+========================================
+
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich. 
+Dựa vào quy chuẩn phong cách thiết kế phía trên, hãy đề xuất ý tưởng Lifestyle:
+Sản phẩm: "${productName}". Kích thước: ${dimensions}.
+${refImage ? "Tôi có gửi kèm một ảnh mẫu phong cách (Style Reference). Hãy dựa vào style của ảnh này để đề xuất." : ""}
+
+YÊU CẦU ĐỀ XUẤT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
+1. Đề xuất 5 Ý tưởng (Concept) phối cảnh chụp ảnh Lifestyle. Tên của concept (title) BẮT BUỘC phải là tiếng Việt. Bố cục decor phải luôn duy trì sự ngăn nắp, hiện đại, trẻ trung, gọn gàng, tránh bừa bộn quá mức đời thường.
+2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+   - [Mô tả phong cách hiện đại, gọn gàng]
+   - [Mô tả không gian bối cảnh, khoảng trống không gian âm]
+   - [Mô tả cách đánh sáng tự nhiên chân thực]
+   - [Mô tả cảm giác, màu sắc chủ đạo trẻ trung]
+   (Lưu ý: Sử dụng ký tự xuống dòng 
+ giữa các tiêu chí để định dạng)
+3. Đề xuất bộ thông số Camera (Góc chụp lệc nhẹ 1/3, tiêu cự 50mm hoặc 85mm, khẩu độ lớn) lý tưởng nhất dựa trên Quy Chuẩn Phối Cảnh Đời Sống.
+
+Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
+`;
+
+    const parts: any[] = [{ text: prompt }];
+    images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
+    if (refImage) {
+      parts.push({ inlineData: { data: refImage.split(',')[1], mimeType: 'image/png' } });
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash", 
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
+            suggestedCamera: {
+              type: Type.OBJECT,
+              properties: {
+                angle: { type: Type.NUMBER },
+                focalLength: { type: Type.NUMBER },
+                aperture: { type: Type.STRING },
+                iso: { type: Type.STRING },
+                isMacro: { type: Type.BOOLEAN }
+              },
+              required: ["angle", "focalLength", "aperture", "iso", "isMacro"]
+            }
+          },
+          required: ["concepts", "suggestedCamera"]
+        }
+      }
+    });
+
+    trackGeminiUsage(response, productName || "Phân tích Concept");
+    return JSON.parse(response.text || "{}") as AIConceptAnalysis;
+  } catch (error: any) {
+    if (error.message?.includes("Requested entity was not found")) throw new Error("AUTH_ERROR");
+    throw error;
+  }
+};
+
+// 2. Phân tích Tech USP
+export const analyzeTechConceptAndCamera = async (productName: string, techDesc: string, dimensions: string, images: string[]): Promise<AIConceptAnalysis> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và đặc tả kỹ năng cho tác vụ này:
+${designTechEffects}
+========================================
+
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich.
+Dựa TRÊN QUY CHUẨN TRÊN, hãy thực hiện phân tích kỹ thuật:
+Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}. 
+
+Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
+YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
+), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+- [Mô tả phong cách hiệu năng công nghệ]
+- [Mô tả không gian hiển thị, bối cảnh tối sang trọng]
+- [Mô tả cách đánh sáng phát quang tinh tế]
+- [Mô tả cảm giác, màu sắc của dải nhiệt/lạnh phù hợp]
+- [Quy chuẩn chống lòe loẹt, chống lỗi bóng mờ]`;
+    const parts: any[] = [{ text: prompt }];
+    images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
+            suggestedCamera: {
+              type: Type.OBJECT,
+              properties: {
+                angle: { type: Type.NUMBER }, focalLength: { type: Type.NUMBER }, aperture: { type: Type.STRING }, iso: { type: Type.STRING }, isMacro: { type: Type.BOOLEAN }
+              },
+              required: ["angle", "focalLength", "aperture", "iso", "isMacro"]
+            }
+          },
+          required: ["concepts", "suggestedCamera"]
+        }
+      }
+    });
+    trackGeminiUsage(response, productName || "Phân tích Tech/USP");
+    const result = JSON.parse(response.text || "{}");
+    return {
+      concepts: result.concepts || [],
+      suggestedCamera: result.suggestedCamera || { angle: 0, focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false }
+    };
+  } catch (error: any) { throw error; }
+};
+
+// 3. Gợi ý Props cho Concept Lifestyle
+export const suggestPropsForConcept = async (productName: string, concept: string, mode: 'STUDIO' | 'LIFESTYLE' = 'LIFESTYLE'): Promise<{props: string[], placement: string}> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: `Sản phẩm thực tế: ${productName}. 
+Bối cảnh/Concept thiết kế: "${concept}".
+
+YÊU CẦU PHÂN TÍCH:
+1. Đọc kỹ tên sản phẩm và hiểu rõ chức năng, cách sử dụng thực tế của nó.
+2. Suy luận sâu để đề xuất 'placement': Vị trí, góc đặt sản phẩm, và cách ánh sáng tương tác tôn lên vẻ đẹp của sản phẩm.
+3. Đề xuất 10 đạo cụ (props) đi kèm. Các đạo cụ này PHẢI cực kỳ logic với công năng của sản phẩm và bối cảnh được chọn. KHÔNG liệt kê các đạo cụ nghệ thuật chung chung (như lăng kính, khối mica, v.v.) nếu nó không thực sự liên quan đến sản phẩm.
+
+${mode === 'STUDIO' 
+  ? 'LƯU Ý STUDIO: Phông nền đơn sắc. Đạo cụ tập trung làm nổi bật chất liệu và kiểu dáng sản phẩm, ví dụ bục đỡ phù hợp kiểu dáng, các nguyên liệu liên quan trực tiếp đến tính năng sản phẩm (ví dụ: máy xay thì có hạt cafe, nồi chảo thì có rau củ quả tươi), và hiệu ứng bóng đổ tự nhiên.' 
+  : 'LƯU Ý LIFESTYLE (Phối cảnh): Đạo cụ phải thuộc về môi trường tự nhiên của sản phẩm. Ví dụ: Nếu là đồ gia dụng nhà bếp, đạo cụ phải là nguyên liệu nấu nướng, gia vị, thớt gỗ, bếp... Nếu là bình giữ nhiệt, đạo cụ là balo, góc làm việc, hoặc đồ thể thao... Tập trung vào tính thực tế, chân thực, tránh những đạo cụ "thơ mộng" hoặc "trừu tượng" không ăn nhập với công năng.'
+}
+Trả về định dạng JSON với 'placement' (string) và 'props' (mảng 10 chuỗi, mỗi chuỗi miêu tả ngắn gọn một đạo cụ hoặc yếu tố môi trường cụ thể).`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: { 
+            placement: { type: Type.STRING },
+            props: { type: Type.ARRAY, items: { type: Type.STRING } } 
+          }
+        }
+      }
+    });
+    trackGeminiUsage(response, productName || "Đạo cụ Concept", "gemini-2.5-pro");
+    return JSON.parse(response.text || "{}");
+  } catch (error) { return { props: [], placement: "" }; }
+};
+
+// 4. Gợi ý Visual Elements cho Tech USP
+export const suggestTechVisuals = async (productName: string, concept: string): Promise<{props: string[], placement: string}> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
+      YÊU CẦU:
+      1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
+      2. Liệt kê 10 hiệu ứng đồ họa/visual elements đi kèm phù hợp nhất.
+      Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: { 
+            placement: { type: Type.STRING },
+            props: { type: Type.ARRAY, items: { type: Type.STRING } } 
+          }
+        }
+      }
+    });
+    trackGeminiUsage(response, productName || "Hiệu ứng Tech");
+    const result = JSON.parse(response.text || "{}");
+    return {
+      props: result.props || [],
+      placement: result.placement || ""
+    };
+  } catch (error) { return { props: [], placement: "" }; }
+};
+
+// 5. Gợi ý Tech Concepts cho Hiệu ứng mặt biển
+export const suggestTechConcepts = async (productName: string, title: string): Promise<ConceptSuggestion[]> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và đặc tả kỹ năng cho tác vụ này:
+${designTechEffects}
+========================================
+
+Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm theo đúng Quy Chuẩn Hiệu ứng Công nghệ.
+JSON array với 'title' (tiếng Việt) và 'prompt'.
+YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
+), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+- [Mô tả phong cách và cấu trúc hiệu ứng của sóng nước đại dương rực rỡ]
+- [Mô tả nền mặt biển ẩm mượt, tinh khôi]
+- [Mô tả cách đánh sáng phát quang, ánh neon phản chiếu xanh lam/ngọc bích]
+- [Mô tả cảm giác, màu sắc chủ đạo, chất lượng hoàn hảo]`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: { 
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            } 
+          }
+        }
+      }
+    });
+    trackGeminiUsage(response, productName || "Gợi ý Tech");
+    const result = JSON.parse(response.text || "{}");
+    return result.concepts || [];
+  } catch (error) { return []; }
+};
+
+// 6. Phân tích phối cảnh staging
+export const analyzeStagingScene = async (concept: string, realSceneImg: string, refStyleImg: string): Promise<string[]> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `Phân tích trang trí phối cảnh. Concept: "${concept}". Trả về JSON 10 vật phẩm trang trí thêm vào phòng.`;
+    const parts: any[] = [
+      { text: prompt },
+      { inlineData: { data: realSceneImg.split(',')[1], mimeType: 'image/png' } },
+      { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
+    ];
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: { items: { type: Type.ARRAY, items: { type: Type.STRING } } }
+        }
+      }
+    });
+    trackGeminiUsage(response, "Phân tích Phối cảnh");
+    const result = JSON.parse(response.text || "{}");
+    return result.items || [];
+  } catch (error) { return []; }
+};
+
+// 7. Phân tích Concept Studio (Mới)
+export const analyzeStudioConcept = async (productName: string, dimensions: string, images: string[]): Promise<AIConceptAnalysis> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+${designStudioCreative}
+========================================
+
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm của Elmich.
+Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy thực hiện phân tích:
+Sản phẩm: "${productName}". Kích thước: ${dimensions}.
+
+YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
+1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
+2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+   - [Mô tả phong cách studio cao cấp]
+   - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
+   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights)]
+   - [Mô tả cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
+   (Lưu ý: Sử dụng ký tự xuống dòng 
+ giữa các tiêu chí để định dạng)
+3. RÀNG BUỘC BẮT BUỘC:
+   - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
+   - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
+   - Sản phẩm và đạo cụ nằm gọn trong khung hình, chừa khoảng trống trên nền để chèn chữ (Text) theo đúng Quy chuẩn.
+4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
+
+Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
+`;
+
+    const parts: any[] = [{ text: prompt }];
+    images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash", 
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            concepts: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  prompt: { type: Type.STRING }
+                },
+                required: ["title", "prompt"]
+              } 
+            },
+            suggestedCamera: {
+              type: Type.OBJECT,
+              properties: {
+                angle: { type: Type.NUMBER },
+                focalLength: { type: Type.NUMBER },
+                aperture: { type: Type.STRING },
+                iso: { type: Type.STRING },
+                isMacro: { type: Type.BOOLEAN }
+              },
+              required: ["angle", "focalLength", "aperture", "iso", "isMacro"]
+            }
+          },
+          required: ["concepts", "suggestedCamera"]
+        }
+      }
+    });
+
+    trackGeminiUsage(response, productName || "Phân tích Studio");
+    return JSON.parse(response.text || "{}") as AIConceptAnalysis;
+  } catch (error: any) {
+    if (error.message?.includes("Requested entity was not found")) throw new Error("AUTH_ERROR");
+    throw error;
+  }
+};
+
+export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K', referenceImage?: string | null): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  
+  const mimeTypeMatch = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!mimeTypeMatch || mimeTypeMatch.length !== 3) {
+    throw new Error("Invalid image format");
+  }
+  
+  const mimeType = mimeTypeMatch[1];
+  const data = mimeTypeMatch[2];
+
+  const parts: any[] = [
+    { inlineData: { data, mimeType } },
+    { text: prompt }
+  ];
+
+  if (referenceImage) {
+    const refMatch = referenceImage.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (refMatch && refMatch.length === 3) {
+      parts.push({ inlineData: { data: refMatch[2], mimeType: refMatch[1] } });
+    }
+  }
+
+  try {
+    let imageConfig: any = {};
+    imageConfig.imageSize = imageSize === '4K' ? '2K' : imageSize;
+
+    const fallbackModel = 'gemini-3.1-flash-image';
+
+    const response = await ai.models.generateContent({
+      model: fallbackModel,
+      contents: { parts },
+      config: { imageConfig }
+    });
+    
+    if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        trackImagenUsage(fallbackModel, 1, "Chỉnh sửa ảnh", imageSize);
+        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        return await resizeImageToQuality(base64Data, imageSize as '1K' | '2K' | '4K');
+      }
+    }
+    throw new Error("Không có ảnh.");  } catch (error: any) {
+    throw error;
+  }
+};
+
+// Bước cuối: Tạo Prompt và Tạo Ảnh
+export const generateProductImage = async (settings: GenerationSettings, variantSeed: number, history?: import('../types').SuccessfulPrompt[]): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  let finalPrompt = "";
+  
+  // Optional: Use history to optimize the generation
+  const optimizedHistoryNote = history && history.length > 0 
+    ? `
+Note: Please align with the style of these previously successful concepts: ${history.map(h => h.imageSettings.concept || h.imageSettings.visualStyle).slice(-3).join(', ')}`
+    : "";
+  
+  const formatProps = (props: PropConfig[]) => {
+    return props.map(p => {
+      let desc = p.name;
+      const details = [];
+      if (p.size && p.size !== 'auto') details.push(`size: ${p.size}`);
+      if (p.position && p.position !== 'auto') details.push(`position: ${p.position}`);
+      if (p.rotation && p.rotation !== 'auto') details.push(`rotation: ${p.rotation}`);
+      if (details.length > 0) desc += ` (${details.join(', ')})`;
+      return desc;
+    }).join(", ");
+  };
+
+  const formatCameraSettings = (camera: any) => {
+    const angleDesc = camera.angle === 0 ? "eye-level shot" :
+                      camera.angle > 0 ? `high angle shot (${camera.angle} degrees)` :
+                      `low angle shot (${Math.abs(camera.angle)} degrees)`;
+                      
+    const macroDesc = camera.isMacro ? "macro photography, extreme close-up details" : "standard product framing";
+    
+    return `Shot on ${camera.focalLength}mm lens, aperture ${camera.aperture}, ISO ${camera.iso}. ${angleDesc}. ${macroDesc}. Professional studio lighting, sharp focus, hyper-detailed, photorealistic.`;
+  };
+  
+  if (settings.visualStyle === "SCENE_STAGING") {
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+    let materialInstruction = "";
+    if (matDesc) {
+      materialInstruction = `\nCRITICAL MATERIAL REQUIREMENT: ${matDesc}\nYou must explicitly describe these materials in the generated image, enforcing correct specular highlights, roughness, and physically based rendering (PBR) properties to match this description.`;
+    }
+
+    finalPrompt = `
+Style Guide Requirements:
+${designLifestyleConcept}
+
+Staging professional: Add ${formatProps(settings.props)} into the real scene image following style "${settings.concept}". Keep original furniture.${materialInstruction} Camera & Lighting: ${formatCameraSettings(settings.camera)}. 8k, realistic.`;
+    } else if (settings.visualStyle === "TRACING_ASSISTANT") {
+    finalPrompt = `Professional vector tracing assistant prompt: 
+    Convert this low-quality, blurry, or sketch logo/image into a clean, ultra-sharp 4K graphic suitable for vector tracing.
+    Rules: 
+    - Maintain the exact shape, proportions, and original concept of the logo/drawing.
+    - Output must have completely flat, solid colors (or pure black and white if specified), with crisp and smooth edges.
+    - Remove any noise, blur, compression artifacts, gradients, or shadows that would interfere with auto-tracing in Illustrator.
+    - ${settings.techDescription ? "User specific requirements: " + settings.techDescription : "Style: clean vector graphic, solid colors, pure white background."}
+    - Keep it minimalist and perfectly geometric.`;
+  } else if (settings.visualStyle === "TECH_EFFECTS") {
+    if (settings.techEffectType === "REMOVE_SIGNATURE") {
+      finalPrompt = `Remove watermark/text from this image. Keep high quality, clear, bright.`;
+    } else {
+      finalPrompt = `
+Style Guide Requirements:
+${designTechEffects}
+
+Ocean night cinemetic. Product ${settings.productName}. Text "${settings.techTitle}". ${settings.selectedTechConcept}. Neon reflections, Camera: ${formatCameraSettings(settings.camera)}. 8k.`;
+    }
+  } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
+    const prodName = settings.productName || "Product";
+    const dim = settings.dimensions;
+    const hasDimensions = dim && (dim.length || dim.width || dim.height);
+    const dimPhrase = hasDimensions 
+      ? `The 3D box must have physical outer proportions representing dimensions of ${dim.length || "150"}mm (Length) x ${dim.width || "150"}mm (Width) x ${dim.height || "200"}mm (Height).`
+      : "The 3D box must have realistic square or rectangular product container packaging proportions.";
+
+    const matType = settings.packagingMaterial === "CARTON_BW" 
+      ? "Industrial Kraft Corrugated Cardboard box (Thùng carton nâu xi măng nhám, chất liệu bìa carton thô ráp nguyên bản)" 
+      : "Premium coated white folding boxboard or SBS paperboard with high-quality printing (Hộp giấy màu phủ mịn bồi carton cao cấp)";
+      
+    const matDetails = settings.packagingMaterial === "CARTON_BW"
+      ? "Texture: rough, natural raw fibrous kraft paper texture with micro-fibers, crease lines showing exposed light-brown cardboard pulp inside the folded seams. Printing: simple grayscale, matte black, or vintage dark ink colors directly screen-printed onto the brown container."
+      : "Texture: smooth, silk-coated finish with slight satin luster on premium thick paperboard. The folds are crisp, showing white or colored paper pulp precisely. High-brightness, vibrant corporate color reproduction.";
+
+    const outputScene = settings.packagingOutputStyle === "WHITE_BG_ROTATED"
+      ? "White Background Studio: Placed strictly on an absolute pure, clean, seamless white commercial studio backdrop (#FFFFFF). The 3D box is rotated at a 3/4 perspective angle to clearly display three sides of the package (Front, Right/Side, Top)."
+      : "Lifestyle Context: Placed elegantly inside a premium, modern minimalist lifestyle setting, such as on a clean light-refracting oak wood table, a solid concrete shelf, or a matte marble platform. The background is softly out-of-focus (gentle shallow depth-of-field) with natural organic window shadows, minimal natural props like a tiny green leaves plant branch.";
+
+    finalPrompt = `
+Style Guide Requirements:
+${designPackagingMockup}
+
+3D Packaging Mockup Reconstruction & Folding Task:
+We have a product named "${prodName}".
+Your task is to reconstruct a high-quality, photorealistic 3D paper container box mockup using the provided 2D flat custom die-line graphic layout from the input image (Image 1).
+
+DIMENSIONS & MATERIAL STRUCTURE:
+- ${dimPhrase}
+- Packaging Box Material: ${matType}
+- Material Surface Properties: ${matDetails}
+
+CREATIVE WRAPPING & RECONSTRUCTION RULES (MANDATORY):
+1. Precision 3D Folding: You must fold, wrap, and map the exact 2D graphic design layout from the flat layout image (Image 1) onto the respective faces of the 3D box.
+2. Graphic & Branding Fidelity: All brand logos ("Elmich"), typography, product photos, detailed labels, lists of specifications, certificates, and decorative color patches from Image 1 must transfer cleanly and become perfectly readable on the 3D folded surfaces. No weird gibberish text or distorted details.
+3. Realistic Seams, Flaps, and Creases: The paper seams where flaps lock together must be clearly modeled with paper thickness (approximately 1-2mm card edge). Edges must show natural crease lines (softly rounded edge highlights) reflecting light to define the box shape, rather than sharp computer-generated vectors.
+4. Professional Camera Specifications: ${formatCameraSettings(settings.camera)}
+5. Scene Setup:
+   - ${outputScene}
+6. Lighting and Grounding: Clean 3-point commercial studio lighting. A dark, diffuse, realistic contact shadow (grounding) must sit correctly beneath the bottom edges of the box, with soft ambient light shadows trailing off. No floating.
+
+Output style: Premium commercial packaging mockup, hyper-detailed rendering, photorealistic 8k.
+    `;
+  } else if (settings.visualStyle === "3D_TO_REAL_WHITE_BG") {
+    const productName = settings.productName || "Product";
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+    
+    let stylePrompt = `Photorealistic commercial studio photography of ${productName}, transforming a 3D render into a hyper-realistic physical object.
+- **Material properties:** ${matDesc || "Highly realistic materials, microscopic details, and authentic surface imperfections"}. Micro-textures applied to eliminate CGI look.
+- **Environment:** Seamless pure white background (#FFFFFF).
+- **Grounding:** Soft, realistic contact shadow under the product base.
+- **Lighting & Camera:** High-key commercial studio lighting, large softbox, shot on 85mm lens, f/8, ultra-detailed, 8k.
+${settings.whiteBGPriorityAdjustments ? `- **Priority user adjustments:** ${settings.whiteBGPriorityAdjustments}` : ""}
+`;
+
+    finalPrompt = `
+Style Guide Requirements:
+${render3DToPhoto}
+
+${stylePrompt}
+
+CRITICAL: Keep the exact shape and perspective of the original image. Only upgrade the realism, lighting, and material shaders.
+DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible inside the frame.
+    `;
+  } else if (settings.visualStyle === "WHITE_BG_RETOUCH") {
+    let stylePrompt = "";
+    const productName = settings.productName || "Product";
+    const selectedCats = settings.whiteBGSelectedCategories || [];
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+
+    let materialDirectives = "";
+    if (selectedCats.includes("METAL")) {
+      materialDirectives += `
+- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, clean, flawless, and pristine.`;
+    }
+    if (selectedCats.includes("PLASTIC")) {
+      materialDirectives += `
+- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely clean, uniform, smooth, and pristine.`;
+    }
+    if (selectedCats.includes("GLASS")) {
+      materialDirectives += `
+- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, uniform, and crystal clear.`;
+    }
+    if (selectedCats.includes("CERAMIC")) {
+      materialDirectives += `
+- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely smooth, uniform, flawless, and pristine.`;
+    }
+    if (materialDirectives === "") {
+      materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, completely clean and pristine.";
+    }
+
+    stylePrompt = `High-detail, professional commercial studio product photography of the product "${productName}", meticulously isolated on a pure, solid white background (#FFFFFF).
+    
+MATERIAL SEPARATION & PROPERTY DIRECTIVES:
+The product contains the following material compositions: [${selectedCats.join(', ')}].
+${materialDirectives}
+
+USER MATERIAL LOCATION & DETAIL DESCRIPTION:
+"${matDesc || "Automated multi-material detection based on the input photograph."}"
+-> Use this specific material mapping to assign glossiness, metalness, transparency, or roughness to different parts of the product. Keep original contours and text.
+
+${settings.whiteBGPriorityAdjustments ? `PRIORITY USER ADJUSTMENTS (MUST APPLY / ƯU TIÊN SỐ 1):
+"${settings.whiteBGPriorityAdjustments}"
+-> You MUST execute these specific aesthetic and lighting adjustments exactly as described by the user.` : ""}
+
+LIGHTING & STUDIO PRESENTATION:
+- Light Source: Professional three-point studio lighting with high-end key and fill lights, displaying pristine product shape and beautiful gradients.
+- Grounding: A very delicate, clean, and tight contact shadow must sit precisely underneath the base contact points. No floating, no artificial halo.
+- Quality: Superb clarity, high contrast, clean noise-free colors, commercial catalog style, photorealistic.`;
+
+    finalPrompt = `
+Style Guide Requirements:
+${designWhiteBGRetouch}
+
+${stylePrompt}
+ 
+CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product itself must remain exactly as it appears in the reference image.
+DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible inside the frame. Do NOT cut off any edges, handles, lids, or parts of the product. If the requested aspect ratio is different from the original image, you MUST pad the extra space with the pure white background. The product should be centered and completely contained within the image boundaries without any cropping.
+
+BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY / YÊU CẦU BẮT BUỘC):
+- WIPE OUT THE OLD BACKGROUND: You must completely remove, erase, and replace 100% of the original background, old room environment, countertop, floor, walls, and reflections from the input image.
+- Flawless, PURE #FFFFFF SOLID WHITE STUDIO BACKGROUND.
+- The background is completely blank, plain, clean, pristine, and 100% empty white digital canvas from edge to edge.
+- Every single background pixel at the top, bottom, left, right borders, and corners must be absolute, seamless flat pure white (#FFFFFF) (RGB: 255, 255, 255).
+- ABSOLUTELY NO other objects, NO vertical pillars, NO vertical stripes, NO grey patches, NO shadows from the room, and NO environmental reflections are allowed to leak into the background.
+- ABSOLUTELY NO gray areas, NO vignetting, NO gradients, NO shading, NO noise, NO dust, NO specks, NO spots, and NO dirty smudges are allowed anywhere in the image.
+- NỀN TRẮNG PHẢI SẠCH TUYỆT ĐỐI: Bạn phải LOẠI BỎ HOÀN TOÀN phông nền cũ và thay thế bằng màu trắng tinh khiết hoàn hảo (#FFFFFF). Không được có bóng xám dơ, không có cột đứng, không có vết bẩn, không có hạt nhiễu (noise), không có hiệu ứng tối góc (vignette), không có chuyển màu (gradient). Toàn bộ vùng nền xung quanh sản phẩm phải là màu trắng tinh khiết hoàn hảo #FFFFFF từ tâm ra đến tận rìa và bốn góc ảnh.
+- VERY TIGHT GROUND SHADOW ONLY: The only shadow allowed is a very tight, clean, localized contact shadow (ambient occlusion) directly beneath the physical touchpoints of the product. It must be extremely minimal and must rapidly fade to absolute pure white (#FFFFFF) within a few millimeters.
+- KHÔNG CÓ BÓNG ĐỔ RỘNG: Tuyệt đối không vẽ bóng đổ lan rộng ra nền nhà, không tạo bóng mờ xám to làm bẩn nền. Bóng đổ phải cực kỳ gọn, nhỏ, sắc nét và ôm sát ngay dưới chân đế của sản phẩm rồi tan biến hoàn toàn vào nền trắng tinh #FFFFFF.
+
+All product logos, text, and original product colors are strictly maintained exactly as they are in the original design.
+Additional Instructions: ${settings.concept || 'None'}
+Camera Setup: ${formatCameraSettings(settings.camera)}`;
+  } else if (settings.visualStyle === "LINE_ART") {
+    finalPrompt = `
+Style Guide Requirements:
+${designLineArt}
+
+A minimalist, clean line art illustration of the product. Pure white background, solid black outlines. Simple netline style, architectural drawing, blueprint style but black on white. 
+
+Strict preservation (VERY IMPORTANT): 
+keep the product's exact shape, proportions, and perspective exactly as original.
+do NOT change the camera angle or perspective.
+do NOT change shape, structure, proportions.
+
+Style constraints:
+No shading, no shadows, no gradients, no colors, no 3D realistic effects, no textures. 
+Only crisp, continuous, and precise black lines defining the outer shape and essential inner contours of the product. 
+Flat 2D vector style. High clarity, simple schematic outline.
+
+BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pure, clean, and seamless white (#FFFFFF) from edge to edge. The background is completely plain, blank, empty, and uniform. All pixels from center to borders and corners are perfectly solid white.
+    `;
+  } else if (settings.visualStyle === "COLOR_CHANGE") {
+    const changes = settings.colorChanges.map((c, i) => {
+      let changeStr = `- Part / Position to recolor: "${c.partName}"`;
+      if (c.pantoneCode) changeStr += ` to Pantone Color: "${c.pantoneCode}"`;
+      if (c.description) changeStr += ` describing: "${c.description}"`;
+      if (c.sampleImage) changeStr += ` (Reference the target/desired color/texture in Image ${i + 2} provided)`;
+      return changeStr;
+    }).join('\n');
+
+    finalPrompt = `
+Style Guide Requirements:
+${designColorEditing}
+
+Product Recoloring & Color Editing Task:
+We have a product named "${settings.productName}".
+Your task is to generate/edit the product image to change the colors of specified parts while meticulously preserving the design, format, and details of the original product.
+
+INPUT IMAGES DEFINITION:
+- Image 1 (First uploaded image): This is the ORIGINAL/BASE product image of "${settings.productName}". You MUST edit this image ONLY. This is your template and canvas. Do NOT modify its geometry, silhouette, size, or perspective.
+- Image 2 and onwards: These are color references/sample images indicating the target colors, tones, or materials to be applied to specified parts of Image 1. DO NOT edit or use these as your template; they are only reference samples!
+
+COLOR CHANGE SPECIFICATIONS:
+You must recolor specified parts of Image 1 based on these instructions and reference images (Image 2 onwards):
+${changes || "Change the product colors to match professional kitchenware premium colors."}
+
+STRICT PRESERVATION RULES (MANDATORY):
+1. Original Geometry and Shape: Preserve the exact structural boundaries, dimensions, camera perspective, lens angles, physical silhouette, and coordinates of the product as seen in Image 1. Do not distort, warp, or duplicate the product. Do NOT use the shapes or dimensions of the reference sample images (Image 2 onwards).
+2. Material Texture & Surface Details: Maintain the exact surface textures (e.g., brushed stainless steel inox metal, glossy glazed ceramic coating, matte premium plastic polymers) of each part in Image 1. The color change must look like a perfectly uniform pigment layer applied to that material, retaining its specific roughness, micro-scratches, or pores as seen in Image 1.
+3. Luma & Accent Preservation (Luma Preservation): Preserve original specular highlights, reflections, and dark light-occluded crevices of Image 1. Highlights should remain white or light-grey, reflecting the light source, rather than being painted over with color.
+4. Lighting System: Retain the identical commercial 3-Point studio lighting (Key Light, Fill Light, Rim Light) and shading of Image 1.
+5. Color Bleeding (Color Bleed): Realistic light reflection (color bleed) of the new product color onto adjacent stainless steel or surrounding reflective surfaces.
+6. Grounding and Shadows: Keep identical contact shadows (dense dark shadow at base of coordinates) and soft ambient key shadows on the floor/surface exactly as in Image 1.
+7. Background: The background of Image 1 must be preserved without any other changes. Do not use the background of reference sample images.
+
+Output style: Premium commercial cookware photography, hyper-detailed, 8k resolution, photorealistic.
+    `;
+  } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS" || settings.visualStyle === "STUDIO") {
+    
+    let spaceInstruction = "";
+    if (settings.emptySpacePosition && settings.emptySpacePosition.length > 0 && !settings.emptySpacePosition.includes('NONE' as any)) {
+      const positions = settings.emptySpacePosition.map((p: any) => {
+        if (p === 'TOP') return 'top (upper part)';
+        if (p === 'BOTTOM') return 'bottom (lower part)';
+        if (p === 'LEFT') return 'left side';
+        if (p === 'RIGHT') return 'right side';
+        return p;
+      }).join(' and ');
+      spaceInstruction = `Leave clear, unobstructed empty negative space on the ${positions} of the image for adding text/logos later.`;
+    } else {
+      spaceInstruction = "Center the subject normally.";
+    }
+
+    const isStudio = settings.visualStyle === "STUDIO";
+    const mode = isStudio ? "minimalist high-end studio product shot" : "high-end commercial product photography shot";
+    const propDetails = settings.props && settings.props.length > 0 ? settings.props.map(p => `${p.name}${p.amount ? ' (' + p.amount + ')' : ''}`).join(', ') : 'None';
+    const placementDetails = settings.placement || "Centered";
+    const cameraDetails = `${settings.camera?.angle || 'Front'}, ${settings.camera?.isMacro ? 'Macro Lens' : 'Standard Lens'}`;
+
+    let selectedStyleGuide = "";
+    if (settings.visualStyle === "CONCEPT") {
+      selectedStyleGuide = designLifestyleConcept;
+    } else if (settings.visualStyle === "STUDIO") {
+      selectedStyleGuide = designStudioCreative;
+    } else if (settings.visualStyle === "TECH_PS") {
+      selectedStyleGuide = designTechEffects;
+    }
+
+    const matDesc = settings.whiteBGMaterialsDescription || "";
+    let materialInstruction = "";
+    if (matDesc) {
+      materialInstruction = `
+      CRITICAL MATERIAL REQUIREMENT: ${matDesc}
+      You must explicitly describe these materials in the generated prompt, enforcing correct specular highlights, roughness, and physically based rendering (PBR) properties to match this description.`;
+    }
+
+    const thinkingPrompt = `
+      Act as Elmich's Head of Creative, a senior commercial product photographer and expert prompt engineer. You must read and strictly adhere to the following three master styling manuals of Elmich AI Image Studio to write the absolute best prompt:
+      
+      === MASTER MANUAL 1: LIFESTYLE CONCEPT (BỐ CẢNH ĐỜI SỐNG ANH/CHỊ ĐÒI HỎI) ===
+      ${designLifestyleConcept}
+      
+      === MASTER MANUAL 2: CREATIVE STUDIO PRO (CHỤP TRONG STUDIO/PHÔNG NỀN TRƠN) ===
+      ${designStudioCreative}
+      
+      === MASTER MANUAL 3: TECH EFFECTS & VISUALS (HIỆU ỨNG CÔNG NGHỆ LOOPS VÀ PHYSICS) ===
+      ${designTechEffects}
+      
+      =============================================================================
+
+      Generate a highly detailed, descriptive, and professional image generation prompt (in English) for a ${mode}.
+      Please apply the specific rules of the current selected style: "${settings.visualStyle}" (Main guide: ${settings.visualStyle === "CONCEPT" ? "LIFESTYLE" : settings.visualStyle === "STUDIO" ? "STUDIO" : "TECH EFFECTS"}), but cross-reference elements from the other manuals to guarantee absolute quality (e.g., maintain the premium material reflections, pristine geometry, absolute verticality, correct light bleed, and avoiding chaotic Sci-Fi graphics at all costs).
+      
+      Product: ${settings.productName}
+      Creative Concept/Theme: ${settings.concept}
+      Placement and Proportion: ${placementDetails}
+      Props to include: ${propDetails}
+      ${isStudio ? "Background: Plain paper background that is EXACTLY the same color as the product's primary color (tone-on-tone monochromatic look)." : ""}
+      Empty Space Requirement: ${spaceInstruction}
+      Composition: The product and props must be neatly arranged and fit entirely within the frame.
+      Camera & Lighting Setup: ${cameraDetails}${materialInstruction}
+      
+      CORE PHOTOGRAPHY AND DESIGN PRINCIPLES (STRICTLY ENFORCE):
+      1. Strict Geometry Preservation (Geometry Control Protocol): 
+         - Axis Alignment: "Maintain absolute verticality for all cylindrical products. Ensure the base and lid are perfectly parallel to the horizon."
+         - Logo Integrity: "Apply logo as a precise vector-based decal. No warping or distortion on curved surfaces. Center properly."
+         - Scale Reference: "Scale 1:1 relative to standard environment. Ensure handle-to-body proportion follows engineering standards."
+      2. PBR (Physically Based Rendering & Advanced Micro-surface Optics): 
+         - Metal (Inox/Aluminum): "Use Anisotropic reflection with a blurriness factor of 0.05. Highlights must trace the contour of the object, not bloom uncontrollably." Apply Fresnel reflections.
+         - Plastic: "Apply Micro-bump texture at 5% intensity to mimic high-grade food-safe plastic. Subtle Fresnel effect at the edges to show material thickness."
+         - Glass: "Set Refraction Index (IOR) to 1.5. Ensure the internal walls of the container are visible through the glass, with slight chromatic aberration at the edges to simulate professional camera optics."
+         - Ceramic/Stone: Grazing 45-degree light for micro-displacement/pores.
+      3. Shadow Structure: Must include contact shadows (stark black at the base), soft gradient key shadows, and feathered extrusion shadows for handles.
+      4. Lighting System: 3-Point Lighting System (Key Light, Fill Light, Rim Light).
+      
+      ASPECT RATIO SPECIFIC COMPOSITION DIRECTIVES:
+      - Current Aspect Ratio: ${settings.aspectRatio}
+      - For extremely wide aspect ratios (such as '4:1' or '16:9'), do NOT center a single tiny product in an empty void. Instead, design a breathtaking wide panoramic landscape/tabletop composition. Describe how the countertop, stone slabs, paper backdrop, or floor continuously extend horizontally from left to right across the ultra-wide frame. Place the main product strictly once, ideally offset to the left or right third (rule of thirds), and let the gorgeous ambient scenery or soft matching props (such as scattered ingredients, plants, glassware) flow elegantly along the horizontal axis, forming beautiful negative space.
+      - For extremely tall aspect ratios (such as '1:4' or '9:16'), design a vertical cascading composition where elements stack elegantly vertically.
+      
+      STRICT AVOIDANCE (NEGATIVE PROMPT EQUIVS):
+      - NO DUPLICATION: Under no circumstances should there be multiple copies, ghost shapes, blurred visual echoes, double images, or floating duplicate pieces of the main product. The main product must appear exactly ONCE in the entire image.
+      - Avoid distorted logos, skewed geometry, non-functional hinges, floating parts.
+      - Avoid over-saturated colors, unrealistic bloom, plastic-looking metal, blurry reflections.
+      - Avoid inconsistent shadow direction, multiple light sources causing conflicting shadows.
+      - Avoid low-resolution textures, pixelated edges on text/branding.
+      
+      Instructions for the prompt:
+      - Describe the product's placement (MANDATORY: you must explicitly describe placing the product as described in "${placementDetails}"), lighting, shadows, and reflections in vivid technical detail based on the core principles.
+      - Describe the background and environment based on the concept and color palette rules. Make sure the props (${propDetails}) are present.
+      - ${isStudio ? "Ensure minimalist, clean, extremely neat layout." : "Follow the rule of thirds for composition. Use an elegant, harmonious color palette."}
+      - Ensure the prompt emphasizes photorealism, 8k resolution, and high-end commercial aesthetic.
+      - ONLY output the final prompt text (in English), no explanations.
+    `;
+
+    const thinkingResponse = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: thinkingPrompt
+    });
+    trackGeminiUsage(thinkingResponse, "Suy luận Prompt ảnh", "gemini-2.5-pro");
+    finalPrompt = thinkingResponse.text || "";
+  } else if (settings.visualStyle === "TRACK_SOCKET_STAGING") {
+    const socketDetails = settings.sockets?.map((s, idx) => {
+      let detail = `- Loại ổ cắm ${idx + 1}: Số lượng ${s.quantity}`;
+      if (s.applianceNote) detail += `, dùng cho: ${s.applianceNote}`;
+      return detail;
+    }).join('\n      ') || '';
+
+    if (settings.trackSocketMode === 'REFERENCE') {
+      finalPrompt = `
+        Hình ảnh trực quan sản phẩm: Gắn các ổ cắm được cung cấp lên thanh ray.
+        Thanh ray được gắn cố định trên tường.
+        Các ổ cắm là các thành phần mô-đun có thể di chuyển dọc theo thanh ray và xoay để khóa/mở khóa.
+        
+        Cấu hình ổ cắm:
+        ${socketDetails}
+        
+        Bối cảnh: Tái tạo lại chính xác bối cảnh, phong cách, ánh sáng và không gian từ ảnh mẫu (reference image) được cung cấp.
+        
+        HƯỚNG DẪN QUAN TRỌNG:
+        1. Giữ nguyên thiết kế nội thất, màu sắc và bố cục của ảnh mẫu.
+        2. Thêm hệ thống thanh ray và ổ cắm vào vị trí hợp lý trên tường trong ảnh mẫu.
+        3. Đặt chính xác số lượng ổ cắm đã chỉ định lên thanh ray.
+        4. Ít nhất một ổ cắm PHẢI có thiết bị cắm vào.
+        5. Nếu ổ cắm có ghi chú "dùng cho", hãy hiển thị thiết bị đó đang được cắm vào.
+        6. Hệ thống thanh ray và ổ cắm phải hòa hợp hoàn hảo với môi trường của ảnh mẫu.
+        
+        Phong cách nhiếp ảnh kiến trúc chuyên nghiệp, 8k, siêu thực, ánh sáng và bóng đổ hoàn hảo.
+        Thông số máy ảnh: ${formatCameraSettings(settings.camera)}
+      `;
+    } else {
+      finalPrompt = `
+        Hình ảnh trực quan sản phẩm: Gắn các ổ cắm được cung cấp lên thanh ray.
+        Thanh ray được gắn cố định trên tường, ưu tiên các vị trí lắp đặt cố định.
+        Các ổ cắm là các thành phần mô-đun có thể di chuyển dọc theo thanh ray và xoay để khóa/mở khóa.
+        
+        Cấu hình ổ cắm:
+        ${socketDetails}
+        
+        Bối cảnh: ${settings.location}. 
+        Chi tiết môi trường: ${settings.concept || 'Nội thất hiện đại, sạch sẽ'}.
+        
+        HƯỚNG DẪN QUAN TRỌNG:
+        1. Thanh ray phải được gắn trên tường hoặc bề mặt cố định phù hợp với bối cảnh.
+        2. Đặt chính xác số lượng ổ cắm đã chỉ định lên thanh ray.
+        3. Ít nhất một ổ cắm PHẢI có thiết bị cắm vào.
+        4. Nếu ổ cắm có ghi chú "dùng cho", hãy hiển thị thiết bị đó đang được cắm vào.
+        5. Hệ thống thanh ray và ổ cắm phải hòa hợp hoàn hảo với môi trường ${settings.location}.
+        
+        Phong cách nhiếp ảnh kiến trúc chuyên nghiệp, 8k, siêu thực, ánh sáng và bóng đổ hoàn hảo.
+        Thông số máy ảnh: ${formatCameraSettings(settings.camera)}
+      `;
+    }
+  }
+
+  if (optimizedHistoryNote) {
+    finalPrompt += optimizedHistoryNote;
+  }
+
+  const parts: any[] = [{ text: finalPrompt }];
+  
+  if (settings.visualStyle === "SCENE_STAGING") {
+    if (settings.productImages[0]) {
+      const paddedImg = await padImageToAspectRatio(settings.productImages[0], settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: paddedImg.split(',')[1], mimeType: 'image/png' } });
+    }
+    if (settings.referenceImage) {
+      const paddedRef = await padImageToAspectRatio(settings.referenceImage, settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: paddedRef.split(',')[1], mimeType: 'image/png' } });
+    }
+  } else if (settings.visualStyle === "TRACK_SOCKET_STAGING") {
+    if (settings.trackImage) parts.push({ inlineData: { data: settings.trackImage.split(',')[1], mimeType: 'image/png' } });
+    settings.sockets?.forEach(s => {
+      if (s.image) parts.push({ inlineData: { data: s.image.split(',')[1], mimeType: 'image/png' } });
+    });
+    if (settings.trackSocketMode === 'REFERENCE' && settings.referenceImage) {
+      parts.push({ inlineData: { data: settings.referenceImage.split(',')[1], mimeType: 'image/png' } });
+    }
+  } else if (settings.visualStyle === "COLOR_CHANGE") {
+    if (settings.productImages[0]) {
+      const paddedImg = await padImageToAspectRatio(settings.productImages[0], settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: paddedImg.split(',')[1], mimeType: 'image/png' } });
+    }
+    settings.colorChanges.forEach(c => {
+      if (c.sampleImage) parts.push({ inlineData: { data: c.sampleImage.split(',')[1], mimeType: 'image/png' } });
+    });
+  } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
+    if (settings.packagingDesignType === "FLAT_DESIGN" && settings.packagingFaces.flat) parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
+  } else if (settings.referenceImage && (settings.visualStyle === "TRACING_ASSISTANT" || settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
+    let finalRefImage = settings.referenceImage;
+    if (settings.visualStyle === "TRACING_ASSISTANT" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "LINE_ART" || settings.visualStyle === "TECH_EFFECTS") {
+      finalRefImage = await padImageToAspectRatio(finalRefImage, settings.aspectRatio || "1:1", "#FFFFFF");
+    }
+    parts.push({ inlineData: { data: finalRefImage.split(',')[1], mimeType: 'image/png' } });
+  }
+  
+  const productImagesVisualStyles = ["CONCEPT", "TECH_PS", "STUDIO"];
+  if (settings.productImages.length > 0 && productImagesVisualStyles.includes(settings.visualStyle)) {
+    for (const img of settings.productImages) {
+      let finalImg = img;
+      finalImg = await padImageToAspectRatio(finalImg, settings.aspectRatio || "1:1", "#FFFFFF");
+      parts.push({ inlineData: { data: finalImg.split(',')[1], mimeType: 'image/png' } });
+    }
+  }
+
+  try {
+    const modelName = 'gemini-3.1-flash-image';
+    let imageConfig: any = { aspectRatio: settings.aspectRatio };
+    
+    // imageSize handling (API supports native 1K, 2K but we upscale to 4K manually if requested)
+    imageConfig.imageSize = settings.imageSize === '4K' ? '2K' : settings.imageSize;
+
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: { parts },
+      config: { imageConfig }
+    });
+    if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        trackImagenUsage(modelName, 1, `Tạo ảnh: ${settings.visualStyle || "N/A"}`, settings.imageSize);
+        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        return await resizeImageToQuality(base64Data, settings.imageSize as '1K' | '2K' | '4K');
+      }
+    }
+    throw new Error("Không có ảnh.");
+  } catch (error: any) { throw error; }
+};
+
+export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image', aspectRatio: string = "1:1", imageBase64?: string, imageSize: string = '1K'): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const parts: any[] = [{ text: prompt }];
+    if (imageBase64 && typeof imageBase64 === 'string') {
+      const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+      if (match) {
+        parts.push({
+          inlineData: {
+            mimeType: match[1],
+            data: match[2]
+          }
+        });
+      }
+    }
+
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: { parts },
+      config: {
+        imageConfig: {
+          aspectRatio: aspectRatio as any,
+          imageSize: imageSize === '4K' ? '2K' : imageSize,
+        }
+      }
+    });
+
+    const resParts = response.candidates?.[0]?.content?.parts;
+    if (resParts) {
+      for (const part of resParts) {
+        if (part.inlineData) {
+          trackImagenUsage(modelName, 1, "Tạo ảnh trong Chat", imageSize);
+          const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          return await resizeImageToQuality(base64Data, imageSize as '1K' | '2K' | '4K');
+        }
+      }
+    }
+    throw new Error("Không có ảnh.");
+  } catch (error: any) { throw error; }
+};
+
+export const chatWithAI = async (messages: import('../types').ChatMessage[], modelName: string = 'gemini-2.5-pro'): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const contents = messages.map(msg => {
+    const parts: any[] = [{ text: msg.text }];
+    if (msg.uploadedImageUrl) {
+      // Extract base64 and mime type from data URI
+      const match = msg.uploadedImageUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+      if (match) {
+        parts.push({
+          inlineData: {
+            mimeType: match[1],
+            data: match[2]
+          }
+        });
+      }
+    }
+    return {
+      role: msg.role,
+      parts
+    };
+  });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: contents,
+      config: {
+        systemInstruction: "Bạn là một trợ lý AI tư vấn và lên ý tưởng hình ảnh sản phẩm. Luôn ưu tiên trả lời bằng tiếng Việt, trừ khi người dùng yêu cầu ngôn ngữ khác.",
+      }
+    });
+    trackGeminiUsage(response, "Trò chuyện trợ lý", modelName);
+    return response.text || "No response generated.";
+  } catch (error) {
+    console.error("Chat generation failed:", error);
+    throw error;
+  }
+};
+export const analyzePackagingContent = async (
+  designFiles: {name: string, data: string}[],
+  standardParams: {key: string, value: string}[]
+): Promise<{params: any[]}> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `Bạn là chuyên gia kiểm duyệt nội dung bao bì (QA/QC). Bạn được cung cấp các tài liệu thiết kế. Mỗi tài liệu đều được đi kèm với tên file của nó.
+
+Hãy so sánh nội dung văn bản có trên CÁC thiết kế (được cung cấp qua file đính kèm) với BẢNG THÔNG SỐ CHUẨN sau đây:
+
+BẢNG THÔNG SỐ CHUẨN:
+${JSON.stringify(standardParams.filter(p => p.value.trim() !== ''), null, 2)}
+
+NHIỆM VỤ CỦA BẠN:
+1. Đọc tất cả các chữ (văn bản) trên CÁC tài liệu thiết kế.
+2. Đối chiếu từng thông số trong BẢNG THÔNG SỐ CHUẨN với nội dung bạn đọc được trên thiết kế.
+LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:
+- KIỂM TRA ĐỒNG NHẤT: Nếu một thông số xuất hiện ở nhiều nơi trên cùng một file thiết kế (ví dụ tên sản phẩm, công suất...), bạn PHẢI kiểm tra tất cả các vị trí đó. Chúng đều phải trùng khớp với nhau và trùng với tiêu chuẩn. Nếu có bất kỳ sự không đồng nhất nào (ví dụ: mặt trước ghi 500W, mặt sau ghi 600W), hãy tính là MATCH = false và ghi rõ cảnh báo trong phần 'notes'.
+- Nếu Tên thông số là 'Mã vạch EAN13' và giá trị chuẩn có 12 số, thiết kế có 13 số thì chỉ cần khớp 12 số đầu là tính MATCH.\n- Đối với 'Đơn vị sản xuất' (Manufacturer) và 'Địa chỉ' (Address): NHỮNG THÔNG TIN NÀY CHẮC CHẮN CÓ TRÊN THIẾT KẾ. Chúng có thể nằm ở các phần như 'NSX', 'Nhà nhập khẩu', 'Sản xuất bởi', 'Nhập khẩu bởi', 'NK&PP', hoặc ở dòng 'Khác', và có thể được viết bằng tiếng Anh (ví dụ: 'Manufactured by...', 'Address...', 'Add:', 'Zhongshan...', 'Guangdong...', 'China', 'P.R.C') hoặc xen kẽ giữa các ngôn ngữ. Bạn PHẢI TÌM KỸ TẤT CẢ CÁC GÓC trên toàn bộ file và TRÍCH XUẤT toàn bộ dòng địa chỉ / tên công ty bằng tiếng Anh hoặc tiếng Trung/Việt trên bản vẽ để điền vào trường 'actual'. Dù giá trị chuẩn là tiếng Việt nhưng trên bao bì là tiếng Anh/Trung tương đương, hãy vẫn đánh giá là MATCH = true.\n- KHÔNG được lười biếng bỏ qua Đơn vị sản xuất và Địa chỉ.\n- Đối với 'Mã QR' (QR Code): Nếu trong BẢNG THÔNG SỐ CHUẨN có yêu cầu kiểm tra Mã QR, bạn PHẢI TỰ QUÉT MÃ QR CÓ TRONG HÌNH ẢNH thiết kế để đọc nội dung mã hóa bên trong nó (tuyệt đối không chỉ đọc dòng chữ in bên cạnh/bên dưới mã). Lấy nội dung giải mã gốc (raw text/URL) để điền vào 'actual' CHÍNH XÁC NHƯ NHỮNG GÌ BẠN QUÉT ĐƯỢC (bao gồm cả http://, https:// nếu có). Khi so sánh với giá trị chuẩn, nếu kết quả quét raw từ ảnh CHỨA giá trị chuẩn (có thể thừa 'http://', 'https://' ở đầu hoặc '/' ở cuối), thì coi như MATCH = true (ví dụ: raw là 'https://www.elmich.vn/san-pham/4021617/' khớp với chuẩn 'www.elmich.vn/san-pham/4021617'). TUYỆT ĐỐI KHÔNG tự ý suy diễn hay truy cập link thực tế.\n- Mọi nội dung trả về trong 'notes' LUÔN LUÔN phải viết bằng tiếng Việt.
+- Trong phần 'notes' (ghi chú), đối với bất kỳ thông số nào, bạn PHẢI ghi rõ thông tin đó được tìm thấy (hoặc bị sai/thiếu) trên file thiết kế có TÊN FILE LÀ GÌ (dựa vào tên file được cung cấp ngay trước mỗi hình ảnh). Ví dụ: 'Trên file hop-mau.pdf: thông tin bị sai...'. Việc ghi rõ tên file là BẮT BUỘC để người dùng dễ kiểm tra và sửa.
+3. KIỂM TRA TOÀN DIỆN VÀ CHI TIẾT TỪNG TÀI LIỆU: Với mỗi thông số trong BẢNG THÔNG SỐ CHUẨN, bạn phải kiểm tra và báo cáo kết quả RIÊNG BIỆT cho TỪNG file thiết kế được cung cấp.\n- 'match' tổng thể: true nếu khớp hoàn toàn trên TẤT CẢ các file có thông số đó, false nếu có ít nhất 1 file sai/khác biệt.\n- 'fileResults': mảng chứa kết quả chi tiết cho từng file thiết kế. Với mỗi file, ghi CHÍNH XÁC tên file (fileName) giống y hệt như đã được cung cấp (ví dụ: 'hop-mau.pdf', 'tem.png'), nội dung thực tế đọc được trên file đó (actual), kết quả đối chiếu với chuẩn (match: true/false), và ghi chú thật ngắn gọn (notes) nếu sai (ví dụ: 'Sai model', 'Thiếu điện áp'). Nếu file không chứa thông tin của thông số này (và điều đó là bình thường), ghi 'actual': 'Không có', 'match': true.\n\nTrả về ĐÚNG định dạng JSON sau:\n{\n  "params": [\n    { \n      "key": "...", \n      "expected": "...", \n      "match": true/false,\n      "fileResults": [\n        { "fileName": "...", "actual": "...", "match": true/false, "notes": "..." }\n      ]\n    }\n  ]\n}`;
+
+    const parts: any[] = [
+      { text: prompt },
+    ];
+    
+    designFiles.forEach(file => {
+      const commaIdx = file.data.indexOf(',');
+      if (commaIdx !== -1) {
+        const header = file.data.substring(0, commaIdx);
+        const data = file.data.substring(commaIdx + 1);
+        const mimeMatch = header.match(/data:([^;]+)/);
+        if (mimeMatch && mimeMatch[1]) {
+          parts.push({ text: `Tài liệu thiết kế, Tên file: ${file.name}` });
+          parts.push({ inlineData: { mimeType: mimeMatch[1], data: data } });
+        }
+      }
+    });
+
+    if (parts.length === 1) throw new Error("Invalid files");
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: {
+        parts: parts
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            params: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  key: { type: Type.STRING },
+                  expected: { type: Type.STRING },
+                  match: { type: Type.BOOLEAN },
+                  fileResults: {
+                    type: Type.ARRAY,
+                    items: {
+                       type: Type.OBJECT,
+                       properties: {
+                          fileName: { type: Type.STRING },
+                          actual: { type: Type.STRING },
+                          match: { type: Type.BOOLEAN },
+                          notes: { type: Type.STRING }
+                       },
+                       required: ["fileName", "actual", "match"]
+                    }
+                  }
+                },
+                required: ["key", "expected", "match", "fileResults"]
+              }
+            }
+          }
+        }
+      }
+    });
+
+    trackGeminiUsage(response, "Kiểm tra bao bì");
+    return JSON.parse(response.text || '{"params": []}');
+  } catch (error) {
+    console.error("Lỗi kiểm tra bao bì:", error);
+    return { params: [] };
+  }
+};
+
+
+export const extractStandardParamsWithAI = async (textData: string): Promise<{key: string, value: string}[]> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const prompt = `Bạn là chuyên gia phân tích dữ liệu sản phẩm. Hãy trích xuất các thông số kỹ thuật quan trọng từ văn bản thô (thường được copy từ file Excel) dưới đây.
+Văn bản thô:
+${textData}
+
+Hãy trích xuất và trả về MỘT mảng JSON các thông số sau ĐÚNG VỚI DANH SÁCH BÊN DƯỚI (chỉ bao gồm 16 thông số này):
+1: Tên sản phẩm
+2: Model
+3: Mã sản phẩm
+4: Dung tích
+5: Công suất
+6: Điện áp
+7: Tần số
+8: Khối lượng
+9: Định lượng / hộp màu
+10: Định lượng / thùng carton
+11: Số Serial
+12: Nhà sản xuất
+13: Địa chỉ nhà sản xuất
+14: Mã QR
+15: Barcode 128
+16: Barcode EAN13
+
+LƯU Ý: 
+- Nếu Mã QR không có sẵn, hãy tự tạo ra từ Mã sản phẩm theo định dạng: www.elmich.vn/san-pham/<mã sản phẩm viết thường>.
+- Trả về danh sách đầy đủ 16 thông số trên, nếu thông số nào không có dữ liệu hãy để giá trị là "".
+
+Định dạng JSON:
+{
+  "params": [
+    { "key": "Tên thông số", "value": "Giá trị" }
+  ]
+}
+`;
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            params: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  key: { type: Type.STRING },
+                  value: { type: Type.STRING }
+                },
+                required: ["key", "value"]
+              }
+            }
+          }
+        }
+      }
+    });
+    const res = JSON.parse(response.text || '{"params": []}');
+    return res.params || [];
+  } catch (error) {
+    console.error("Lỗi trích xuất thông số:", error);
+    return [];
+  }
+};
+
+export const analyzeAndTranslatePackaging = async (imageBase64: string): Promise<{ regions: any[] }> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    if (!match) throw new Error("Ảnh không hợp lệ.");
+    const parts: any[] = [
+      {
+        text: `Bạn là chuyên gia dịch thuật và bóc tách bố cục (OCR & Layout Analysis).
+Nhiệm vụ: Tìm tất cả các cụm văn bản (text) bằng tiếng Anh trên ảnh, dịch sang tiếng Việt.
+Trả về một JSON có cấu trúc sau:
+{
+  "regions": [
+    {
+      "box": [ymin, xmin, ymax, xmax], // Tọa độ chuẩn hóa từ 0 đến 1000
+      "original": "English text",
+      "translated": "Bản dịch tiếng Việt (phù hợp ngữ cảnh bao bì/sản phẩm)",
+      "bgColor": "#HexColor", // Mã màu HEX ước lượng của phần nền bên dưới chữ này để tiện lấp đi (thường là màu nền của bao bì, ví dụ #FFFFFF cho nền trắng, #000000 cho nền đen). Hãy dự đoán chính xác nhất có thể.
+      "textColor": "#HexColor" // Mã màu HEX của chữ (ví dụ #000000 cho chữ đen)
+    }
+  ]
+}`
+      },
+      {
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      }
+    ];
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    if (response.text) {
+      trackGeminiUsage(response, "Dịch và OCR bao bì", "gemini-2.5-flash");
+      return JSON.parse(response.text);
+    }
+    throw new Error("Không có phản hồi");
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
