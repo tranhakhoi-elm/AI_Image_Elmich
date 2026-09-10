@@ -2,6 +2,13 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
+import {
+  createUploadUrl,
+  saveImageRecord,
+  listImageRecords,
+  saveChatSession,
+  listChatSessions,
+} from "./lib/historyStore";
 
 dotenv.config();
 
@@ -161,6 +168,66 @@ app.post("/api/lark/report", async (req: any, res: any) => {
   }
 });
 
+// Lịch sử dùng chung (ảnh đã tạo & chat) — lưu qua Firestore + Cloud Storage,
+// dùng chung Service Account với tích hợp Google Sheets ở trên.
+// Xem lib/historyStore.ts và ARCHITECTURE.md để biết chi tiết thiết kế.
+app.post("/api/history/upload-url", async (req: any, res: any) => {
+  try {
+    const { folder, contentType } = req.body || {};
+    if (folder !== "images" && folder !== "chat") {
+      return res.status(400).json({ success: false, error: "folder phải là 'images' hoặc 'chat'." });
+    }
+    const result = await createUploadUrl({ folder, contentType: contentType || "image/png" });
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error creating history upload URL:", error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+app.post("/api/history/images", async (req: any, res: any) => {
+  try {
+    const record = await saveImageRecord(req.body || {});
+    res.json({ success: true, record });
+  } catch (error: any) {
+    console.error("Error saving image history record:", error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/api/history/images", async (req: any, res: any) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 30, 100);
+    const cursor = (req.query.cursor as string) || undefined;
+    const result = await listImageRecords({ limit, cursor });
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error listing image history:", error.message);
+    res.status(200).json({ success: false, error: error.message, items: [] });
+  }
+});
+
+app.post("/api/history/chats", async (req: any, res: any) => {
+  try {
+    const result = await saveChatSession(req.body || {});
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error saving chat history:", error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/api/history/chats", async (req: any, res: any) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 30, 100);
+    const cursor = (req.query.cursor as string) || undefined;
+    const result = await listChatSessions({ limit, cursor });
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error listing chat history:", error.message);
+    res.status(200).json({ success: false, error: error.message, items: [] });
+  }
+});
 
 // Vite middleware for development or serving built static files in production
 async function startServer() {

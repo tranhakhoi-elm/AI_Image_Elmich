@@ -2,17 +2,29 @@
 
 Tài liệu này cung cấp các tiêu chuẩn mô hình và kỹ thuật prompt dành riêng cho hệ thống Elmich AI Studio.
 
+> Danh sách đầy đủ các hàm gọi Gemini (model chính xác đang dùng, ai gọi
+> hàm nào) nằm ở [ARCHITECTURE.md](ARCHITECTURE.md) mục 3.1 — bảng dưới đây
+> chỉ là khuyến nghị chọn model theo loại nhiệm vụ. Skill file (tiêu chuẩn
+> phong cách được nhúng vào prompt) xem [SKILLS.md](SKILLS.md).
+
 ---
 
 ## 1. LỰA CHỌN MÔ HÌNH GEMINI (MODEL SELECTION MATRIX)
 
-| Nhiệm vụ | Model khuyến nghị | Lý do kỹ thuật |
+> **Lưu ý:** Code hiện tại (`services/geminiService.ts`) chỉ hard-code
+> `gemini-3.1-flash-image` cho mọi tác vụ sinh/sửa ảnh. Kiểu `AIModel`
+> trong `types.ts` có khai báo thêm `imagen-3.0-fast-generate-001` và
+> `imagen-3.0-generate-002`, nhưng **không có lời gọi API nào thực sự dùng
+> dòng model Imagen** — đây là lựa chọn dự phòng cho tương lai, không phải
+> mô tả hành vi hiện tại.
+
+| Nhiệm vụ | Model đang dùng thực tế | Lý do kỹ thuật |
 |---|---|---|
-| **Tạo ảnh sản phẩm chất lượng cao** | `gemini-3.1-flash-image` hoặc `imagen-3.0-generate-002` | Tái hiện vật liệu kim loại Inox 304, thủy tinh, bóng phản chiếu studio sắc nét |
-| **Dịch bao bì tự động (Translate)** | `gemini-3.1-flash-image` (Image-to-Image recreation) | Giữ nguyên 100% kết cấu bế dieline, thay chữ tiếng Anh thành tiếng Việt chuẩn |
-| **Phân tích OCR & Kiểm tra bao bì** | `gemini-3.1-flash-image` / `gemini-2.5-flash` | Nhận diện chữ tiếng Việt có dấu, đọc được cả font chữ nhỏ trên tem phụ |
-| **Gợi ý Concept & Đạo cụ Lifestyle** | `gemini-2.5-flash` | Tốc độ phân tích dưới 2 giây, tư duy bối cảnh sống và bố cục chụp ảnh thẩm mỹ |
-| **Trợ lý Chat tư vấn thiết kế** | `gemini-2.5-flash` hoặc `gemini-2.5-pro` | Đối thoại tự nhiên, hiểu sâu về đồ gia dụng và thuật ngữ thiết kế đồ họa |
+| **Tạo ảnh sản phẩm chất lượng cao** | `gemini-3.1-flash-image` | Tái hiện vật liệu kim loại Inox 304, thủy tinh, bóng phản chiếu studio sắc nét |
+| **Dịch bao bì tự động (Translate)** | `gemini-3.1-flash-image` (Image-to-Image recreation qua `editProductImage`) | Giữ nguyên 100% kết cấu bế dieline, thay chữ tiếng Anh thành tiếng Việt chuẩn |
+| **Phân tích OCR & Kiểm tra bao bì** | `gemini-2.5-flash` | Nhận diện chữ tiếng Việt có dấu, đọc được cả font chữ nhỏ trên tem phụ |
+| **Gợi ý Concept & Đạo cụ Lifestyle** | `gemini-2.5-flash` (phân tích ban đầu), `gemini-2.5-pro` (gợi ý đạo cụ chi tiết, "thinking prompt" cuối trước khi sinh ảnh) | Cân bằng tốc độ (flash) và chất lượng suy luận sâu (pro) tùy bước |
+| **Trợ lý Chat tư vấn thiết kế** | `gemini-2.5-pro` (mặc định trong `ChatView.tsx`) | Đối thoại tự nhiên, hiểu sâu về đồ gia dụng và thuật ngữ thiết kế đồ họa |
 
 ---
 

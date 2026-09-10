@@ -47,12 +47,14 @@ import { HandbookModal } from './src/components/common/HandbookModal';
 import { LockScreen } from './src/components/common/LockScreen';
 import { LoadingModal } from './src/components/common/LoadingModal';
 import { GalleryRail } from './src/components/common/GalleryRail';
-import { 
-  CAMERA_APERTURES, 
-  CAMERA_ISO, 
-  TONE_STYLES 
+import { HistoryView } from './src/components/history/HistoryView';
+import {
+  CAMERA_APERTURES,
+  CAMERA_ISO,
+  TONE_STYLES
 } from './constants';
 import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
+import { logGeneratedImage } from './services/historyService';
 
 const initialSettings: GenerationSettings = {
   productName: '',
@@ -326,7 +328,7 @@ const App: React.FC = () => {
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
   
-  const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
+  const [viewMode, setViewMode] = useState<'studio' | 'chat' | 'history'>('studio');
   const [isHandbookOpen, setIsHandbookOpen] = useState(false);
   
   const [chatSessions, setChatSessions] = useState<import('./types').ChatSession[]>([]);
@@ -696,6 +698,21 @@ const App: React.FC = () => {
       const newImages: GeneratedImage[] = urls.map((url, i) => ({ id: `${time}-${i}`, url, prompt: finalSettings.concept, timestamp: time, settings: { ...finalSettings }, variant: i + 1 }));
       setGallery(prev => [...newImages, ...prev]);
       setActiveImage(newImages[0]);
+      // Ghi lịch sử dùng chung (bắn-và-quên, không chặn UI nếu backend chưa cấu hình)
+      newImages.forEach(img => {
+        logGeneratedImage({
+          url: img.url,
+          prompt: img.prompt,
+          productName: finalSettings.productName,
+          productCode: finalSettings.productCode,
+          visualStyle: finalSettings.visualStyle,
+          aspectRatio: finalSettings.aspectRatio,
+          imageSize: finalSettings.imageSize,
+          variant: img.variant,
+          costUSD: calculateCost(img),
+          timestamp: img.timestamp,
+        }).catch(() => {});
+      });
     } catch (error: any) {
       console.error(error);
       setAlertMessage("Lỗi tạo ảnh.");
@@ -720,6 +737,18 @@ const App: React.FC = () => {
       setActiveImage(newImage);
       setEditPrompt("");
       setEditReferenceImage(null);
+      logGeneratedImage({
+        url: newImage.url,
+        prompt: newImage.prompt,
+        productName: newImage.settings.productName,
+        productCode: newImage.settings.productCode,
+        visualStyle: newImage.settings.visualStyle,
+        aspectRatio: newImage.settings.aspectRatio,
+        imageSize: editQuality,
+        variant: newImage.variant,
+        costUSD: calculateCost(newImage),
+        timestamp: newImage.timestamp,
+      }).catch(() => {});
     } catch (error: any) {
       console.error(error);
       setAlertMessage("Lỗi chỉnh sửa ảnh.");
@@ -2964,7 +2993,7 @@ const renderTrackSocketWorkflow = () => (
       )}
   
       </main>
-      ) : (
+      ) : viewMode === 'chat' ? (
         <ChatView
           chatSessions={chatSessions}
           setChatSessions={setChatSessions}
@@ -2972,6 +3001,8 @@ const renderTrackSocketWorkflow = () => (
           setActiveSessionId={setActiveSessionId}
           handleDeleteSession={handleDeleteSession}
         />
+      ) : (
+        <HistoryView />
       )}
 
       {/* Feedback Modal */}
