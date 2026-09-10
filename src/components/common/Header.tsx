@@ -1,9 +1,9 @@
 import React from 'react';
-import { Layout, MessageCircle, BookOpen, Sparkles, RefreshCw } from 'lucide-react';
+import { Layout, MessageCircle, Clock, BookOpen, Sparkles, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
-  viewMode: 'studio' | 'chat';
-  setViewMode: (mode: 'studio' | 'chat') => void;
+  viewMode: 'studio' | 'chat' | 'history';
+  setViewMode: (mode: 'studio' | 'chat' | 'history') => void;
   onOpenHandbook: () => void;
   onResetToMenu?: () => void;
   galleryCount?: number;
@@ -56,6 +56,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <MessageCircle size={14} />
           <span>Trợ lý Chat AI</span>
+        </button>
+
+        <button
+          onClick={() => setViewMode('history')}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            viewMode === 'history'
+              ? 'bg-[#1877F2] text-white shadow-sm'
+              : 'text-gray-400 hover:text-white hover:bg-[#242526]'
+          }`}
+        >
+          <Clock size={14} />
+          <span>Lịch Sử</span>
         </button>
       </div>
 

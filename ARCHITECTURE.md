@@ -1,387 +1,85 @@
-# ARCHITECTURE.MD — KIẾN TRÚC KỸ THUẬT CHI TIẾT (AI IMAGE ELMICH)
+# ARCHITECTURE.MD — TÀI LIỆU THIẾT KẾ KIẾN TRÚC ELMICH AI STUDIO
 
-> Tài liệu này mô tả **đúng thực trạng code hiện tại** (không phải trạng thái lý tưởng). Nơi nào code đi ngược lại nguyên tắc đã đề ra trong [AGENTS.md](AGENTS.md), tài liệu này ghi rõ để người đọc (người hoặc AI agent) không bị bất ngờ.
->
-> Đọc kèm: [HANDBOOK.md](HANDBOOK.md) (góc nhìn nghiệp vụ/vận hành), [SKILLS.md](SKILLS.md) (hệ thống "skill" prompt theo từng workflow), [GEMINI.md](GEMINI.md) (chi tiết model & prompt).
-
----
-
-## 1. Sơ đồ tổng thể
-
-```
-┌───────────────────────────────────────────────────────────────────────────┐
-│ BROWSER (SPA — không có server-side rendering)                            │
-│                                                                           │
-│  index.html → index.tsx → <App/> (App.tsx, ~2850 dòng, 1 component duy nhất)│
-│                                                                           │
-│  App.tsx nắm TOÀN BỘ state của ứng dụng (~80+ useState) và tự render      │
-│  UI cho phần lớn 15 workflow bằng if/else theo `VisualStyle`.             │
-│  4 workflow được tách thành component riêng:                             │
-│    - BarcodeGenerator.tsx (không gọi AI, thuần JS lib)                   │
-│    - workflows/PackagingCheckWorkflow.tsx                                │
-│    - workflows/TranslatePackagingWorkflow.tsx                           │
-│    - chat/ChatView.tsx                                                  │
-│                                                                           │
-│  App.tsx  ──gọi trực tiếp──▶  services/geminiService.ts                  │
-│                                     │                                     │
-│                                     ├─▶ @google/genai SDK (client-side!)  │
-│                                     │   new GoogleGenAI({ apiKey:         │
-│                                     │     process.env.GEMINI_API_KEY })   │
-│                                     │   → gọi thẳng Google Gemini API     │
-│                                     │     từ trình duyệt, KHÔNG qua       │
-│                                     │     backend của dự án.              │
-│                                     │                                     │
-│                                     └─▶ services/metricsService.ts        │
-│                                           └─▶ fetch('/api/sheets/report') │
-│                                                                           │
-│  Lưu trữ cục bộ trong trình duyệt:                                        │
-│    - localStorage: cờ nhỏ (tên/mã SP hiện tại, lịch sử prompt thành công) │
-│    - localforage (IndexedDB): gallery ảnh & lịch sử chat (dữ liệu nặng)   │
-└───────────────────────────────────▲───────────────────────────────────────┘
-                                     │ HTTP JSON (chỉ 2 route)
-┌───────────────────────────────────┴───────────────────────────────────────┐
-│ BACKEND — TỒN TẠI SONG SONG 2 BẢN GIỐNG NHAU CHO 2 MÔI TRƯỜNG DEPLOY      │
-│                                                                           │
-│  A) Tự host / npm run dev|start → server.ts (Express, cổng 3000)         │
-│     - POST /api/sheets/report                                           │
-│     - POST /api/lark/report   (tồn tại nhưng KHÔNG được gọi từ frontend) │
-│     - Vite middleware (dev) hoặc serve static dist/ (prod)               │
-│                                                                           │
-│  B) Deploy Vercel → api/sheets/report.ts, api/lark/report.ts             │
-│     (Vercel Serverless Functions, logic giống hệt bản trong server.ts,   │
-│      COPY TAY — sửa 1 bên phải nhớ sửa bên kia)                          │
-└───────────────────────────────────▲───────────────────────────────────────┘
-                                     │
-┌───────────────────────────────────┴───────────────────────────────────────┐
-│ DỊCH VỤ NGOÀI                                                             │
-│  - Google Sheets API (Service Account) — đích thực sự của reportToLark() │
-│  - Lark Suite Bitable API — có code sẵn sàng nhưng chưa được kích hoạt   │
-│  - Google Gemini API (gemini-2.5-flash/pro, gemini-3.1-flash-image)      │
-└───────────────────────────────────────────────────────────────────────────┘
-```
-
-Điểm khác biệt quan trọng nhất so với một kiến trúc "chuẩn": **không có backend cho AI**. Toàn bộ việc gọi Gemini (phân tích ảnh, sinh prompt, sinh ảnh) chạy trực tiếp trong trình duyệt người dùng. Backend Express/Vercel chỉ tồn tại để ghi log chi phí/token ra Google Sheets.
+> **Phiên bản:** 2.6  
+> **Cập nhật:** 2026-09-10  
+> **Tài liệu liên quan:** [HANDBOOK.md](HANDBOOK.md), [SKILLS.md](SKILLS.md), [GEMINI.md](GEMINI.md), [AGENTS.md](AGENTS.md)
 
 ---
 
-## 2. Lớp Frontend
+## 1. TỔNG QUAN KIẾN TRÚC HỆ THỐNG
 
-### 2.1. Cây thư mục thực tế
-
-```
-App.tsx                          # "God component" — state + UI cho 11/15 workflow
-constants.tsx                    # Hằng số tĩnh (địa điểm, tiêu cự, tone màu...)
-types.ts                         # Toàn bộ type/interface dùng chung
-index.tsx                        # Bootstrap React
-index.css                        # Tailwind entry
-
-services/
-  geminiService.ts                # Toàn bộ lời gọi Gemini + build prompt (~1430 dòng)
-  metricsService.ts                # Ước tính chi phí + gửi log Google Sheets
-
-src/
-  utils/imageUtils.ts             # resizeImage, fileToBase64
-  components/
-    BarcodeGenerator.tsx          # Workflow 13 — độc lập, không gọi AI
-    workflows/
-      PackagingCheckWorkflow.tsx  # Workflow 15
-      TranslatePackagingWorkflow.tsx # Workflow 14
-    chat/ChatView.tsx             # Chế độ "Trợ lý Chat AI"
-    common/
-      Header.tsx, HandbookModal.tsx, GalleryRail.tsx,
-      LoadingModal.tsx, LockScreen.tsx
-```
-
-**11 workflow còn lại** (CONCEPT, SCENE_STAGING, TECH_PS, COLOR_CHANGE,
-PACKAGING_MOCKUP, TECH_EFFECTS, WHITE_BG_RETOUCH, 3D_TO_REAL_WHITE_BG,
-TRACING_ASSISTANT, LINE_ART, STUDIO, TRACK_SOCKET_STAGING) **không có component
-riêng** — toàn bộ UI wizard (các bước `xxxStep`), state, và handler của chúng
-nằm trực tiếp trong `App.tsx`. Đây là lý do file này dài gần 2.900 dòng và là
-nợ kỹ thuật lớn nhất của dự án (xem mục 7).
-
-### 2.2. Quản lý state
-
-`App.tsx` không dùng Redux/Zustand/Context — toàn bộ là `useState` cục bộ
-trong 1 component (~80+ state), bao gồm:
-- Trạng thái chung: `appState` (READY/GENERATING/ANALYZING), `viewMode`
-  (`studio` | `chat`), `isLocked`, `isSidebarVisible`...
-- Một biến step riêng cho **mỗi** workflow dạng wizard: `conceptStep`,
-  `techStep`, `packagingStep`, `techEffectStep`, `packagingCheckStep`,
-  `render3DStep`, `whiteBgStep`, `colorChangeStep`, `stagingStep`,
-  `studioStep`, `trackSocketStep`...
-- `state` (settings đang soạn) kiểu `GenerationSettings` (xem `types.ts`) —
-  đây là "form" trung tâm chứa toàn bộ tham số của workflow đang chọn
-  (productImages, camera, props, aspectRatio, các field riêng theo từng
-  mode...).
-- `gallery: GeneratedImage[]` và `chatSessions: ChatSession[]` — đồng bộ vào
-  IndexedDB qua `localforage` mỗi khi thay đổi (side-effect trong
-  `useEffect`, dynamic `import('localforage')`).
-
-Điều hướng giữa các workflow là **điều kiện render theo `state.visualStyle`**
-(kiểu union `VisualStyle` trong `types.ts`), không dùng router — toàn bộ ứng
-dụng chỉ có 1 "trang".
-
-### 2.3. Lưu trữ cục bộ (Client Storage)
-
-| Cơ chế | Key | Nội dung | Vì sao dùng cơ chế này |
-|---|---|---|---|
-| `localStorage` | `elmich_ai_successful_prompts` | Lịch sử các concept/prompt đã tạo ảnh thành công (dùng để "gợi ý theo lịch sử" trong `generateProductImage`) | Dữ liệu nhỏ, dạng text |
-| `localStorage` | `elmich_ai_product_name`, `elmich_ai_product_code` | Tên/mã sản phẩm đang thao tác | Dùng làm nhãn khi ghi log chi phí sang Google Sheets |
-| `localStorage` (session) | `elmich_session_tokens`, `elmich_session_cost` | Tổng token/chi phí ước tính trong phiên (thực chất dùng `sessionStorage`, xem `metricsService.ts`) | Hiển thị nhanh, mất khi đóng tab |
-| `localforage` (IndexedDB) | `elmich_ai_gallery` | Toàn bộ `GeneratedImage[]` — ảnh base64 + settings đã dùng | Ảnh base64 rất nặng, `localStorage` sẽ vỡ hạn mức 5–10MB |
-| `localforage` (IndexedDB) | `elmich_ai_chat_sessions` | Toàn bộ lịch sử chat, gồm cả ảnh đính kèm | Cùng lý do — chat có thể chứa nhiều ảnh |
-
-Không có backend lưu trữ nào cho ảnh/chat — **toàn bộ dữ liệu là cục bộ theo
-trình duyệt của từng người dùng**, không đồng bộ giữa các máy/nhân viên.
-
-### 2.4. "Đăng nhập"
-
-`LockScreen.tsx` chỉ là một màn hình chặn UI phía client, so sánh PIN nhập
-vào với 2 chuỗi hard-code `"15012026"` hoặc `"1111"` ngay trong bundle JS.
-**Đây không phải cơ chế xác thực bảo mật thật** — bất kỳ ai xem source bundle
-đã build đều thấy được PIN. Vai trò thực tế của nó là ngăn người dùng vãng
-lai vô tình bấm vào ứng dụng nội bộ, không phải kiểm soát truy cập.
+Elmich AI Design Studio được tổ chức theo mô hình Single-Page Application (SPA) kết hợp Node.js Express server:
+- **Client (Frontend):** React 19 + TypeScript + Vite + Tailwind CSS v4 + Motion. Gọi trực tiếp Gemini Multimodal API thông qua `@google/genai` bằng khóa cấu hình từ môi trường.
+- **Server (Backend):** Node.js Express (`server.ts` cổng 3000 khi tự host, hoặc serverless functions trong `api/` khi deploy Vercel). Đảm nhiệm ghi log chi phí (Google Sheets, Lark Suite) và lưu trữ lịch sử dùng chung (Google Cloud Firestore & Cloud Storage).
 
 ---
 
-## 3. Lớp Service — `services/geminiService.ts`
+## 2. STATE MANAGEMENT & ĐIỀU HƯỚNG
 
-Đây là nơi duy nhất gọi Google Gemini. Mỗi lời gọi tự khởi tạo
-`new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })` — không có client
-dùng chung, không có retry/backoff tập trung.
-
-### 3.1. Bảng hàm export
-
-| Hàm | Model | Dùng bởi | Việc chính |
-|---|---|---|---|
-| `analyzeProductMaterials` | gemini-2.5-flash | App.tsx (một số bước phân tích chất liệu) | Phân loại chất liệu (METAL/PLASTIC/GLASS/CERAMIC) từ ảnh |
-| `getAiSuggestions` | gemini-2.5-flash | App.tsx (đường cũ, ít dùng) | Gợi ý concept/location/props chung chung |
-| `analyzeConceptAndCamera` | gemini-2.5-flash | CONCEPT | Đọc `Design_Lifestyle_Concept.md`, trả 5 concept + camera đề xuất |
-| `analyzeTechConceptAndCamera` | gemini-2.5-flash | TECH_PS | Đọc `Design_Tech_Effects.md`, trả 5 concept + camera |
-| `suggestPropsForConcept` | gemini-2.5-**pro** | CONCEPT/STUDIO | Gợi ý 10 đạo cụ + placement dựa trên concept đã chọn |
-| `suggestTechVisuals` | gemini-2.5-flash | TECH_PS | Gợi ý placement + hiệu ứng đồ họa |
-| `suggestTechConcepts` | gemini-2.5-flash | TECH_EFFECTS (SEA_TECH_GENERATION) | Đọc `Design_Tech_Effects.md`, trả 3 concept hiệu ứng biển đêm |
-| `analyzeStagingScene` | gemini-2.5-flash | SCENE_STAGING | Gợi ý 10 vật trang trí thêm vào ảnh phòng có sẵn |
-| `analyzeStudioConcept` | gemini-2.5-flash | STUDIO | Đọc `Design_Studio_Creative.md`, trả 5 concept + camera |
-| `editProductImage` | gemini-3.1-flash-image | TRANSLATE_PACKAGING, chỉnh sửa ảnh trong gallery | Sửa ảnh theo 1 prompt tự do (image-to-image) |
-| `generateProductImage` | gemini-2.5-pro (bước "suy luận" cho 3 mode) + gemini-3.1-flash-image | **Toàn bộ 11 workflow tạo ảnh** | Build prompt cuối cùng theo `visualStyle` rồi sinh ảnh — xem mục 3.2 |
-| `generateImageForChat` | gemini-3.1-flash-image | ChatView (chế độ "Tạo ảnh AI") | Sinh/sửa ảnh tự do trong khung chat |
-| `chatWithAI` | gemini-2.5-pro | ChatView (chế độ "Chat & Tư vấn") | Hội thoại nhiều lượt, có system instruction tiếng Việt |
-| `analyzePackagingContent` | gemini-2.5-flash | PackagingCheckWorkflow | Đối chiếu OCR nhiều file thiết kế với bảng thông số chuẩn |
-| `extractStandardParamsWithAI` | gemini-2.5-flash | PackagingCheckWorkflow | Trích 16 thông số chuẩn từ text Excel dán vào |
-| `analyzeAndTranslatePackaging` | gemini-2.5-flash | **Không có nơi nào gọi hàm này** (dead code) | Trả layout vùng text + bản dịch theo tọa độ — dự kiến dùng cho một luồng dịch "overlay text" chưa hoàn thiện |
-
-> `TranslatePackagingWorkflow.tsx` (workflow đang chạy thật) dùng
-> `editProductImage()` với 1 prompt cố định để Gemini **vẽ lại toàn bộ ảnh**
-> bằng tiếng Việt, chứ không dùng `analyzeAndTranslatePackaging()`.
-
-### 3.2. Hai kiểu dựng prompt trong `generateProductImage`
-
-- **Kiểu A — Template trực tiếp** (SCENE_STAGING, TRACING_ASSISTANT,
-  TECH_EFFECTS, PACKAGING_MOCKUP, 3D_TO_REAL_WHITE_BG, WHITE_BG_RETOUCH,
-  LINE_ART, COLOR_CHANGE, TRACK_SOCKET_STAGING): ghép chuỗi JS trực tiếp,
-  nhúng nguyên văn nội dung skill file liên quan (mục 4), gọi thẳng
-  `gemini-3.1-flash-image` 1 lần.
-- **Kiểu B — "Suy luận" 2 bước** (CONCEPT, TECH_PS, STUDIO): gọi
-  `gemini-2.5-pro` trước với một "thinking prompt" nhúng **cả 3** skill file
-  (Lifestyle + Studio + Tech Effects) cùng lúc để Gemini tự viết ra một prompt
-  tiếng Anh chi tiết, sau đó mới đưa prompt đó + ảnh sản phẩm vào
-  `gemini-3.1-flash-image`. Cách này tốn thêm 1 lời gọi Pro (đắt hơn) nhưng
-  cho chất lượng prompt tốt hơn.
-
-### 3.3. Xử lý ảnh phía client trước khi gửi AI
-
-- `padImageToAspectRatio()` — chèn nền trắng để ép ảnh về đúng tỷ lệ khung
-  hình mong muốn trước khi gửi cho Gemini (tránh Gemini tự crop/méo sản
-  phẩm).
-- `resizeImageToQuality()` — resize/canvas lại ảnh **kết quả trả về** cho
-  đúng 1K/2K (4K thực tế bị giới hạn ở 2K native rồi upscale bằng canvas,
-  xem `imageConfig.imageSize = settings.imageSize === '4K' ? '2K' : ...`).
-- `src/utils/imageUtils.ts::resizeImage()` — resize ảnh **đầu vào** người
-  dùng tải lên (mặc định tối đa 1024px) trước khi gửi phân tích, để giảm
-  băng thông/token.
-
-### 3.4. `metricsService.ts` — ước tính chi phí
-
-- `calculateGeminiCost()` / `calculateImagenCost()`: bảng giá **hard-code
-  trong code**, chỉ là ước tính gần đúng để hiển thị cho người dùng, không
-  phải số liệu billing thật từ Google Cloud.
-- `reportToLark()`: **tên hàm gây hiểu nhầm** — hàm này thực chất
-  `fetch('/api/sheets/report')`, tức là ghi vào **Google Sheets**, không
-  liên quan đến Lark. Route `/api/lark/report` có tồn tại ở backend (cả 2
-  bản) nhưng không có chỗ nào trong frontend gọi tới nó.
+- **`App.tsx`:** Bộ điều phối trạng thái trung tâm (`AppState`, `GenerationSettings`, `activeImage`, `gallery`, `viewMode`).
+- **`viewMode`:**
+  - `'studio'`: 15 Workflow thiết kế đồ họa & kiểm duyệt bao bì.
+  - `'chat'`: Trợ lý Chat AI đối thoại đa phương thức.
+  - `'history'`: Lịch sử dùng chung xem lại ảnh đã tạo và các phiên chat của toàn đội ngũ.
 
 ---
 
-## 4. Lớp Backend
+## 3. MÔ HÌNH VÀ DỊCH VỤ GEMINI (`services/geminiService.ts`)
 
-Hai bản triển khai **giống hệt nhau về logic** cho cùng 2 endpoint, phục vụ
-2 kịch bản deploy khác nhau:
-
-| | `server.ts` | `api/sheets/report.ts`, `api/lark/report.ts` |
+| Tác vụ | Mô hình | Phương thức |
 |---|---|---|
-| Dùng khi | `npm run dev` / tự host (`npm start`) | Deploy lên Vercel (`vercel.json` rewrite `/api/*` → các file này) |
-| Kiểu | Express app, lắng nghe cổng 3000, host `0.0.0.0` | Vercel Serverless Function (`export default handler`) |
-| Vai trò khác | Kiêm Vite middleware (dev) hoặc serve `dist/` tĩnh (prod) | Không phục vụ static — Vercel tự làm việc đó qua build output |
-
-**Rủi ro bảo trì:** logic xác thực Google Service Account / Lark App
-Secret được viết trùng lặp ở 2 nơi. Sửa lỗi hay đổi luồng auth phải nhớ sửa
-cả hai, nếu không 2 môi trường deploy sẽ lệch hành vi.
-
-Không có endpoint nào cho AI (`/api/generate-image` không tồn tại trong
-code, dù tài liệu cũ có nhắc tới) — mọi lời gọi Gemini đi thẳng từ trình
-duyệt như mô tả ở mục 3.
+| Sinh ảnh sản phẩm theo concept | `gemini-3.1-flash-image` | `ai.models.generateImages` |
+| Sửa ảnh & Dịch bao bì | `gemini-3.1-flash-image` | `editProductImage` (image-to-image) |
+| Phân tích OCR & Kiểm tra bao bì | `gemini-2.5-flash` | `ai.models.generateContent` |
+| Trợ lý Chat tư vấn thiết kế | `gemini-2.5-pro` | Chat session đa vòng |
 
 ---
 
-## 5. Biến môi trường & lộ khóa API (quan trọng)
+## 4. BỘ ĐIỀU HƯỚNG VÀ ENDPOINT API (`server.ts`)
 
-`vite.config.ts` có đoạn:
-
-```ts
-define: {
-  'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-  'process.env': {}
-}
-```
-
-Điều này khiến **giá trị thật của `GEMINI_API_KEY` được nhúng cứng vào file
-JS build ra**, gửi cho mọi trình duyệt tải trang. Bất kỳ ai mở DevTools /
-tải file bundle đều có thể lấy được API key này và gọi Gemini bằng chi phí
-của Elmich.
-
-> Đây là điểm **mâu thuẫn với chính nguyên tắc bảo mật đã nêu trong
-> [AGENTS.md](AGENTS.md)** (bản cũ ghi "khóa được quản lý server-side, không
-> đưa vào client bundle"). Thực tế code hiện tại KHÔNG như vậy đối với
-> `GEMINI_API_KEY`. Chỉ có `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID`,
-> `LARK_APP_ID/SECRET` là thực sự chỉ nằm ở server (dùng trong
-> `server.ts`/`api/*.ts`, không import vào code frontend).
->
-> Vì phạm vi công việc hiện tại là **chỉ cập nhật tài liệu, không sửa code**,
-> mục này được ghi lại như một rủi ro đã biết cần đội kỹ thuật cân nhắc xử lý
-> (ví dụ: chuyển toàn bộ lời gọi Gemini qua một route backend proxy) ở một
-> lần thay đổi code riêng, có kiểm thử đầy đủ.
+1. **Ghi log chi phí Google Sheets:** `POST /api/sheets/report`
+2. **Ghi log Lark Base (Dự phòng):** `POST /api/lark/report`
+3. **Lịch sử dùng chung (Firestore & Cloud Storage):**
+   - `POST /api/history/upload-url`: Tạo Signed URL để upload trực tiếp lên Cloud Storage.
+   - `POST /api/history/images`: Lưu bản ghi ảnh đã tạo.
+   - `GET /api/history/images`: Liệt kê danh sách ảnh trong lịch sử.
+   - `POST /api/history/chats`: Lưu phiên hội thoại chat.
+   - `GET /api/history/chats`: Liệt kê lịch sử hội thoại.
 
 ---
 
-## 6. Build & Deploy
+## 5. BẢO MẬT & QUY TẮC API KEY
 
-```bash
-npm run dev     # tsx server.ts → Express + Vite middleware, cổng 3000
-npm run build   # vite build (bundle client) + esbuild server.ts → dist/server.cjs
-npm start       # node dist/server.cjs (phục vụ dist/ tĩnh + 2 API route)
-npm run lint    # tsc --noEmit (chỉ type-check, không có ESLint/test runner)
-```
-
-- Không có bộ test tự động nào trong repo (không có thư mục `__tests__`,
-  không có Jest/Vitest trong `package.json`).
-- Có cả `package-lock.json` (npm) và `bun.lock` (Bun) trong repo — nghĩa là
-  từng có ít nhất 2 công cụ quản lý gói được dùng tại các thời điểm khác
-  nhau; nên thống nhất 1 công cụ để tránh lệch phiên bản dependency.
-- `metadata.json` và `firebase-applet-config.json` là tàn dư từ việc dự án
-  được khởi tạo qua Google AI Studio — không có đoạn code nào trong repo
-  import hay tham chiếu tới `firebase-applet-config.json`.
+- `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID`, `LARK_APP_ID`, `LARK_APP_SECRET`: Tuyệt đối bảo mật phía máy chủ qua `process.env`.
+- `GEMINI_API_KEY`: Được nạp qua biến môi trường để client khởi tạo GoogleGenAI SDK.
 
 ---
 
-## 7. Nợ kỹ thuật đã biết (Known Technical Debt)
+## 6. LƯU TRỮ CỤC BỘ & CACHE TRÊN CLIENT
 
-Ghi lại để bất kỳ ai (người hoặc AI agent) chạm vào code đều biết trước,
-tránh ngỡ ngàng hoặc vô tình "sửa cho giống tài liệu cũ" theo hướng sai:
-
-1. **`App.tsx` ~2.850 dòng** — vi phạm trực tiếp nguyên tắc "không nhồi code
-   vào App.tsx" trong AGENTS.md. 11/15 workflow chưa được tách component.
-2. **`geminiService.ts` ~1.430 dòng** — toàn bộ prompt engineering của mọi
-   workflow dồn vào 1 file, khó review từng phần độc lập.
-3. **Trùng lặp backend** giữa `server.ts` và `api/*.ts` (mục 4).
-4. **`reportToLark()` đặt tên sai** — thực chất gọi Google Sheets, không
-   phải Lark (mục 3.4).
-5. **`/api/lark/report` không được gọi** từ bất kỳ đâu trong frontend — code
-   backend cho Lark tồn tại nhưng chưa được kích hoạt trong luồng thực tế.
-6. **`analyzeAndTranslatePackaging()` không được gọi** — hàm mồ côi, luồng
-   dịch bao bì thật dùng `editProductImage()` với prompt khác hẳn.
-7. **`AIModel` (`types.ts`) khai báo `imagen-3.0-fast-generate-001` /
-   `imagen-3.0-generate-002`** nhưng không nơi nào trong code thực sự gọi
-   Imagen — mọi nơi đều hard-code `gemini-3.1-flash-image`.
-8. **`GEMINI_API_KEY` bị nhúng vào client bundle** (mục 5) — rủi ro bảo mật
-   thật, không chỉ là vấn đề tài liệu.
-9. **LockScreen chỉ là UI gate**, không phải xác thực (mục 2.4).
-10. **Không có test tự động** và tồn tại song song 2 lockfile (`npm` +
-    `bun`).
-
-Các mục 1–3 người dùng đã quyết định **không refactor trong lần làm việc
-này** (chỉ cập nhật tài liệu) — xem lại khi có thời gian dành riêng cho việc
-tái cấu trúc, kèm kiểm thử thủ công đầy đủ cho từng workflow sau khi tách.
+- **LocalForage (IndexedDB):** Lưu trữ bộ sưu tập ảnh phiên hiện tại (`gallery`) và danh sách phiên chat cục bộ (`chatSessions`), tránh tràn hạn ngạch 5MB của `localStorage`.
+- **LocalStorage:** Chỉ lưu trữ các cờ cài đặt nhẹ: mã PIN màn hình khóa (`elmich_ai_pin_unlocked`), tên/mã sản phẩm gần nhất.
 
 ---
 
-## 8. Lịch sử dùng chung (Ảnh đã tạo & Chat) — bổ sung sau bản 2.6
+## 7. NỢ KỸ THUẬT (KNOWN TECHNICAL DEBT)
 
-Để khắc phục việc gallery/chat chỉ sống trong IndexedDB của từng trình
-duyệt (mục 2.3) và tự xóa sau 7 ngày, hệ thống có thêm 1 nhánh lưu trữ
-**dùng chung cho cả team, không phụ thuộc thiết bị/trình duyệt**, dùng
-chung Service Account đang có (mở rộng quyền, không tạo secret mới).
+1. **`App.tsx` kích thước lớn:** Phần lớn JSX của các workflow (Concept, Tech Effects, White BG...) nằm trong `App.tsx`. Khi mở rộng cần tiếp tục tách thành các workflow components riêng như `PackagingCheckWorkflow` và `TranslatePackagingWorkflow`.
+2. **Backend dự phòng song song:** `server.ts` (Express) và thư mục `api/` (Vercel Serverless) chia sẻ cùng logic xử lý. Khi cập nhật cần đồng bộ cả hai môi trường.
 
-### 8.1. Hạ tầng thêm
+---
 
-- **Cloud Firestore** (Native mode, cùng GCP project với tích hợp Sheets) —
-  lưu metadata dạng document, hỗ trợ query + phân trang theo `timestamp`.
-- **Cloud Storage** (1 bucket riêng, **private**, không public-read) — lưu
-  file ảnh thật (ảnh kết quả sinh ra + ảnh trong chat).
-- Biến môi trường mới: `GCS_BUCKET_NAME`. Không cần secret mới —
-  `GOOGLE_SERVICE_ACCOUNT_JSON` hiện có được cấp thêm 2 quyền IAM:
-  `roles/datastore.user` và `roles/storage.objectAdmin` (giới hạn ở bucket
-  mới). Việc bật Firestore API, tạo bucket, và cấp quyền IAM là thao tác
-  **thủ công trên GCP Console**, không thể tự động hóa từ môi trường code.
+## 8. CẤU HÌNH LỊCH SỬ DÙNG CHUNG (FIRESTORE & CLOUD STORAGE)
 
-### 8.2. Module & route mới
-
-- `lib/googleCloud.ts` — parse `GOOGLE_SERVICE_ACCOUNT_JSON` dùng chung
-  (gom về 1 chỗ thay vì lặp lại như route Sheets/Lark), export
-  `getFirestore()` / `getBucket()`.
-- `lib/historyStore.ts` — toàn bộ logic nghiệp vụ (`createUploadUrl`,
-  `saveImageRecord`, `listImageRecords`, `saveChatSession`,
-  `listChatSessions`), được cả `server.ts` và `api/history/*.ts` import
-  chung — đây là ví dụ đầu tiên trong repo tránh lặp code giữa 2 môi
-  trường deploy, khác với cách `/api/sheets` và `/api/lark` đang bị trùng.
-- 5 route: `POST/GET /api/history/upload-url`, `/api/history/images`,
-  `/api/history/chats` — xem chi tiết payload trong chính các file route.
-- Tất cả đều **fail-soft**: thiếu `GCS_BUCKET_NAME`/Firestore → trả
-  `{success:false, error:"..."}` HTTP 200, không làm vỡ luồng sinh ảnh/chat.
-
-### 8.3. Vì sao dùng "signed upload URL" thay vì gửi ảnh qua body API
-
-Ảnh 2K/4K dạng base64 khá nặng (vài MB). Gửi thẳng qua body của Vercel
-Serverless Function dễ vượt giới hạn dung lượng request mặc định của nền
-tảng đó. Giải pháp: client xin 1 signed URL (`POST /api/history/upload-url`),
-rồi `PUT` thẳng file lên Cloud Storage — route backend không bao giờ phải
-nhận nguyên ảnh trong body. Điều này cũng khiến `server.ts` (Express, vốn
-đã set `limit:'100mb'`) và bản Vercel hoạt động **giống hệt nhau**, không
-cần cấu hình riêng cho từng môi trường.
-
-### 8.4. Link ảnh là signed URL có thời hạn (~6 giờ)
-
-Theo lựa chọn bảo mật của người dùng: bucket ở chế độ private, mỗi lần gọi
-`GET /api/history/images` hoặc `/api/history/chats`, backend tự sinh signed
-URL đọc mới cho từng ảnh. Nghĩa là: (1) không thể dán link ảnh từ trang
-Lịch sử vào tài liệu khác để xem vĩnh viễn — phải mở lại từ trang Lịch sử;
-(2) nếu người dùng mở tab Lịch sử rồi để rất lâu không thao tác, ảnh có
-thể hết hạn hiển thị — bấm "Làm mới" để lấy link mới.
-
-### 8.5. Phạm vi cố ý KHÔNG làm trong v1
-
-- Không lưu lại các ảnh **đầu vào** (ảnh mẫu màu, các mặt bao bì, ảnh
-  track/socket...) đi kèm mỗi lần tạo — chỉ log ảnh **đầu ra** + metadata.
-  `GenerationSettings` đầy đủ vẫn chỉ nằm trong gallery cục bộ như cũ.
-- Không có `costUSD`/`tokens` chính xác tuyệt đối cho lịch sử — dùng lại
-  hàm ước tính chi phí hiển thị sẵn có ở client (`calculateCost` trong
-  `App.tsx`), cùng độ chính xác (ước tính) như bảng chi phí trong
-  HANDBOOK.md mục 8, không phải số liệu billing thật.
-- Vẫn là log dùng chung toàn team (không phân biệt người tạo ngoài
-  `productName`/`productCode` nhập tay) — khớp với mô hình "1 PIN chung"
-  hiện có, không có khái niệm tài khoản cá nhân.
-- Endpoint ghi log (`POST /api/history/images`, `/api/history/chats`)
-  hiện **không có xác thực nào ngoài việc cùng origin với app** — bất kỳ
-  ai gọi được API (kể cả không qua UI) đều có thể ghi dữ liệu giả vào
-  lịch sử dùng chung. Chấp nhận được cho một tool nội bộ đã có PIN chặn ở
-  tầng UI, nhưng cần biết đây không phải hàng rào bảo mật thật ở tầng API.
+### 8.1. Các bước kích hoạt trên Google Cloud Console:
+1. Sử dụng Google Cloud Project hiện có (cùng Project với Service Account của Google Sheets).
+2. Kích hoạt **Firestore** (ở chế độ Native Mode).
+3. Tạo **Cloud Storage Bucket** (ví dụ: `elmich-ai-studio-storage`).
+4. Cấp quyền cho Service Account:
+   - `roles/datastore.user` (Cloud Datastore User / Firestore)
+   - `roles/storage.objectAdmin` (Storage Object Admin)
+5. Cập nhật biến môi trường:
+   ```env
+   GCS_BUCKET_NAME=elmich-ai-studio-storage
+   ```
+6. Nếu chưa cấu hình Cloud Storage/Firestore, hệ thống tự động lưu vào bộ nhớ tạm in-memory để đảm bảo ứng dụng luôn phản hồi trơn tru và không bị gián đoạn.
