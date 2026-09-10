@@ -35,10 +35,18 @@ import {
   ChevronDown,
   Trash2,
   QrCode,
-  AlertCircle
+  AlertCircle, Languages
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
 import { BarcodeGenerator } from './src/components/BarcodeGenerator';
+import { PackagingCheckWorkflow } from './src/components/workflows/PackagingCheckWorkflow';
+import { TranslatePackagingWorkflow } from './src/components/workflows/TranslatePackagingWorkflow';
+import { ChatView } from './src/components/chat/ChatView';
+import { Header } from './src/components/common/Header';
+import { HandbookModal } from './src/components/common/HandbookModal';
+import { LockScreen } from './src/components/common/LockScreen';
+import { LoadingModal } from './src/components/common/LoadingModal';
+import { GalleryRail } from './src/components/common/GalleryRail';
 import { 
   CAMERA_APERTURES, 
   CAMERA_ISO, 
@@ -294,6 +302,11 @@ const App: React.FC = () => {
   const [activeImage, setActiveImage] = useState<GeneratedImage | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [editReferenceImage, setEditReferenceImage] = useState<string | null>(null);
+
+  const [translateImageBase64, setTranslateImageBase64] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedImageURL, setTranslatedImageURL] = useState<string | null>(null);
+
   const editRefFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -314,6 +327,7 @@ const App: React.FC = () => {
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
   
   const [viewMode, setViewMode] = useState<'studio' | 'chat'>('studio');
+  const [isHandbookOpen, setIsHandbookOpen] = useState(false);
   
   const [chatSessions, setChatSessions] = useState<import('./types').ChatSession[]>([]);
   const [isChatLoaded, setIsChatLoaded] = useState(false);
@@ -474,7 +488,7 @@ const App: React.FC = () => {
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let width = img.width; let height = img.height;
-          const maxDim = 2560; 
+          const maxDim = 1024; // Giảm xuống 1024 để tăng tốc độ phân tích và tiết kiệm băng thông (AI chỉ cần độ phân giải này là đủ hiểu chi tiết)
           if (width > maxDim || height > maxDim) {
             const ratio = Math.min(maxDim / width, maxDim / height);
             width = Math.round(width * ratio); height = Math.round(height * ratio);
@@ -2497,6 +2511,18 @@ const renderTrackSocketWorkflow = () => (
     </div>
   );
 
+  
+  const renderTranslatePackagingSidebar = () => (
+    <div className="space-y-6">
+      <div className="bg-[#242526] p-6 rounded-2xl border border-[#3E4042]">
+        <h3 className="text-white font-bold text-lg mb-2">Dịch bao bì tự động</h3>
+        <p className="text-gray-400 text-sm mb-4">
+          Công cụ tạo ảnh: AI sẽ tạo lại (recreate) bức ảnh thiết kế của bạn với toàn bộ nội dung tiếng Anh được dịch sang tiếng Việt.
+        </p>
+      </div>
+    </div>
+  );
+
   const renderPackagingCheckSidebar = () => (
     <div className="space-y-6">
       <div className="bg-[#242526] p-6 rounded-2xl border border-[#3E4042]">
@@ -2525,6 +2551,7 @@ const renderTrackSocketWorkflow = () => (
         { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'bg-emerald-50 text-emerald-400', hover: 'hover:bg-emerald-100' },
         { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'bg-orange-50 text-orange-400', hover: 'hover:bg-orange-100' },
         { id: 'BARCODE_QR_GENERATOR', icon: <QrCode size={20} />, title: 'Tạo QR & Barcode', desc: 'Tạo SVG cho Code 128, EAN, QR.', color: 'bg-teal-50 text-teal-400', hover: 'hover:bg-teal-100' },
+        { id: 'TRANSLATE_PACKAGING', icon: <Languages size={20} />, title: 'Dịch bao bì tự động', desc: 'Dịch nội dung tiếng Anh sang Việt, giữ nguyên thiết kế.', color: 'bg-emerald-50 text-emerald-500', hover: 'hover:bg-emerald-100' },
         { id: 'PACKAGING_CHECK', icon: <Check size={20} />, title: 'Kiểm tra bao bì', desc: 'Kiểm tra nội dung từ file chuẩn.', color: 'bg-rose-50 text-rose-400', hover: 'hover:bg-rose-100' },
       ];
 
@@ -2612,6 +2639,7 @@ const renderTrackSocketWorkflow = () => (
                {settings.visualStyle === 'TRACK_SOCKET_STAGING' && renderTrackSocketWorkflow()}
                {settings.visualStyle === 'BARCODE_QR_GENERATOR' && renderBarcodeQrSidebar()}
                {settings.visualStyle === 'PACKAGING_CHECK' && renderPackagingCheckSidebar()}
+               {settings.visualStyle === 'TRANSLATE_PACKAGING' && renderTranslatePackagingSidebar()}
                {settings.visualStyle === 'TRACING_ASSISTANT' && renderTracingAssistantWorkflow()}
              </motion.div>
            </AnimatePresence>
@@ -2640,245 +2668,25 @@ const renderTrackSocketWorkflow = () => (
   );
 
   // 13. Kiểm tra bao bì
-  const renderPackagingCheckWorkflow = () => {
-    return (
-      <div className="space-y-6">
-        <button onClick={() => setCurrentStep(1)} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-bold mb-2">
-          <ArrowLeft size={16} /> Quay lại Menu
-        </button>
-        <StepIndicator current={packagingCheckStep} total={3} labels={['Nhập dữ liệu chuẩn', 'Tải thiết kế', 'Kết quả']} />
-        
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={packagingCheckStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
-          >
-            {packagingCheckStep === 1 && (
-              <div className="space-y-4">
-                <div className="flex gap-2 p-1 bg-[#242526] rounded-xl border border-[#3E4042]">
-                  <button onClick={() => setPackagingInputMode('EXCEL')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${packagingInputMode === 'EXCEL' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'}`}>Nhập từ Excel</button>
-                  <button onClick={() => setPackagingInputMode('MANUAL')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${packagingInputMode === 'MANUAL' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'}`}>Nhập thủ công</button>
-                </div>
-
-                {packagingInputMode === 'EXCEL' ? (
-                  <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-6 text-center">
-                    <div className="mb-4 text-white text-sm">Tải lên file Excel (.xlsx) chứa dữ liệu chuẩn của bao bì</div>
-                    <input 
-                      type="file" 
-                      accept=".xlsx, .xls, .csv" 
-                      onChange={handleExcelUpload}
-                      className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1877F2]/10 file:text-[#1877F2] hover:file:bg-[#1877F2]/20 cursor-pointer"
-                    />
-                  </div>
-                ) : (
-                  <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-4">
-                     <span className="text-white text-xs font-bold block mb-2">Dán dữ liệu từ Excel (Copy các cột Tên thông số, Giá trị):</span>
-                     <textarea 
-                        className="w-full h-24 bg-[#3A3B3C] border border-[#3E4042] rounded-lg p-2 text-white text-xs outline-none focus:border-[#1877F2] resize-none"
-                        placeholder="Dán nội dung bảng vào đây..."
-                        onChange={handlePastedExcelData}
-                     ></textarea>
-                     <div className="flex justify-end mt-2">
-                        <button onClick={addStandardParam} className="px-3 py-1 bg-[#3A3B3C] hover:bg-[#4A4B4C] text-white rounded-lg text-xs font-bold transition-all border border-[#3E4042]">+ Thêm 1 dòng trống</button>
-                     </div>
-                  </div>
-                )}
-
-                {standardParams.length > 0 && (
-                  <div className="bg-[#242526] border border-[#3E4042] rounded-xl overflow-hidden">
-                    <div className="p-4 border-b border-[#3E4042] flex justify-between items-center">
-                      <h3 className="text-white text-sm font-bold">Dữ liệu chuẩn trích xuất</h3>
-                      <button onClick={addStandardParam} className="text-xs text-[#1877F2] hover:underline font-bold">+ Thêm thông số</button>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                      <table className="w-full text-left text-xs text-white">
-                        <thead className="bg-[#3A3B3C] sticky top-0">
-                          <tr>
-                            <th className="p-3 font-semibold">Thông số</th>
-                            <th className="p-3 font-semibold">Giá trị chuẩn</th>
-                            <th className="p-3 w-10"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {standardParams.map((param, index) => (
-                            <tr key={index} className="border-b border-[#3E4042]">
-                              <td className="p-2">
-                                <input 
-                                  value={param.key} 
-                                  onChange={(e) => updateStandardParam(index, 'key', e.target.value)} 
-                                  className="w-full bg-transparent border-none outline-none focus:ring-1 focus:ring-[#1877F2] rounded px-2 py-1"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <input 
-                                  value={param.value} 
-                                  onChange={(e) => updateStandardParam(index, 'value', e.target.value)} 
-                                  className="w-full bg-transparent border-none outline-none focus:ring-1 focus:ring-[#1877F2] rounded px-2 py-1"
-                                />
-                              </td>
-                              <td className="p-2 text-center">
-                                <button onClick={() => removeStandardParam(index)} className="text-red-400 hover:text-red-300">
-                                  <Trash2 size={14} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-                <button 
-                  disabled={standardParams.length === 0} 
-                  onClick={() => setPackagingCheckStep(2)} 
-                  className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg disabled:opacity-50 hover:brightness-110 transition-all"
-                >
-                  Tiếp tục tải thiết kế
-                </button>
-              </div>
-            )}
-
-            {packagingCheckStep === 2 && (
-              <div className="space-y-4">
-                <label className="block text-[9px] font-bold text-white uppercase mt-4">Tải lên các file thiết kế bao bì (Ảnh hoặc PDF)</label>
-                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="h-32 w-full bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all">
-                  <span className="text-white font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Chọn file thiết kế (Hộp màu, Tem phụ, Thùng carton...)</span>
-                </FileDropzone>
-                <input type="file" hidden multiple ref={productFilesRef} accept="image/*, application/pdf" onChange={e => {
-                  const files = Array.from(e.target.files || []) as File[];
-                  if (files.length > 0) {
-                    files.forEach(file => {
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        setPackagingFiles(prev => [...prev, { name: file.name, data: reader.result as string }]);
-                      };
-                      reader.readAsDataURL(file);
-                    });
-                  }
-                  e.target.value = '';
-                }} />
-
-                {packagingFiles.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2 mt-4">
-                    {packagingFiles.map((f, i) => (
-                      <div key={i} className="relative bg-[#242526] border border-[#3E4042] rounded-xl p-2 flex items-center gap-2">
-                        {f.data.startsWith('data:application/pdf') ? (
-                          <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center shrink-0">
-                            <Box size={20} className="text-[#1877F2]" />
-                          </div>
-                        ) : (
-                          <img src={f.data} className="w-10 h-10 rounded object-cover shrink-0" referrerPolicy="no-referrer" />
-                        )}
-                        <span className="text-white text-xs truncate flex-1">{f.name}</span>
-                        <button onClick={() => setPackagingFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-300 p-1 shrink-0">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex gap-2 mt-4">
-                  <button onClick={() => setPackagingCheckStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526]">Quay lại</button>
-                  <button 
-                    disabled={packagingFiles.length === 0 || appState !== AppState.READY} 
-                    onClick={runPackagingCheck} 
-                    className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {appState === AppState.ANALYZING ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                    Bắt đầu AI Kiểm tra
-                  </button>
-                </div>
-              </div>
-            )}
-            {packagingCheckStep === 3 && packagingCheckResult && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-white font-bold text-sm uppercase">Kết quả kiểm tra AI</h3>
-                  <button onClick={exportPackagingReport} className="flex items-center gap-2 bg-[#2E7D32] hover:bg-[#1B5E20] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                    <Download size={14} />
-                    Xuất báo cáo
-                  </button>
-                </div>
-                
-                {/* Check Results */}
-                <div className="overflow-x-auto custom-scrollbar mt-4 border border-[#3E4042] rounded-xl bg-[#1A1A1C] max-h-[500px]">
-                  <table className="w-full text-left text-xs text-gray-300 min-w-[600px] relative">
-                    <thead className="bg-[#242526] text-gray-400 uppercase text-[10px] tracking-wider sticky top-0 z-10 shadow-md">
-                      <tr>
-                        <th className="px-4 py-3 min-w-[150px] border-r border-b border-[#3E4042] font-bold">Thông số</th>
-                        <th className="px-4 py-3 min-w-[150px] border-r border-b border-[#3E4042] font-bold">Chuẩn</th>
-                        {packagingFiles.map((file, idx) => (
-                          <th key={idx} className="px-4 py-3 min-w-[200px] border-r border-b border-[#3E4042] last:border-r-0 truncate max-w-[200px]" title={file.name}>
-                            <div className="flex items-center gap-1.5 font-bold">
-                              <Box size={14} className="text-[#1877F2]" />
-                              <span className="truncate">{file.name}</span>
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#3E4042]">
-                      {packagingCheckResult.params.map((res: any, idx: number) => (
-                        <tr key={idx} className={`hover:bg-[#2A2B2D] transition-colors ${!res.match ? 'bg-red-500/5' : ''}`}>
-                          <td className="px-4 py-4 border-r border-[#3E4042] align-top">
-                            <div className="font-bold text-white mb-1 flex items-start justify-between gap-2">
-                              <span>{res.key}</span>
-                              {!res.match && <X size={14} className="text-red-400 shrink-0 mt-0.5" />}
-                              {res.match && <Check size={14} className="text-green-500 shrink-0 mt-0.5" />}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 border-r border-[#3E4042] text-white font-medium align-top">
-                            {res.expected || '-'}
-                          </td>
-                          {packagingFiles.map((file, fIdx) => {
-                            let fileResult = (res.fileResults || []).find((fr: any) => {
-                               if (!fr.fileName) return false;
-                               const cleanFr = fr.fileName.toLowerCase().trim();
-                               const cleanF = file.name.toLowerCase().trim();
-                               return cleanFr === cleanF || cleanFr.includes(cleanF) || cleanF.includes(cleanFr);
-                            });
-                            if (!fileResult && (res.fileResults || []).length === packagingFiles.length) {
-                               fileResult = (res.fileResults || [])[fIdx];
-                            }
-                            if (!fileResult) {
-                              return <td key={fIdx} className="px-4 py-4 border-r border-[#3E4042] last:border-r-0 align-top text-gray-500 text-[11px] italic">Không có dữ liệu</td>;
-                            }
-                            return (
-                              <td key={fIdx} className="px-4 py-4 border-r border-[#3E4042] last:border-r-0 align-top">
-                                <div className={`font-medium mb-1 ${fileResult.match ? 'text-green-100' : 'text-red-300'}`}>
-                                  {fileResult.actual || 'Không tìm thấy'}
-                                </div>
-                                {!fileResult.match && fileResult.notes && (
-                                  <div className="mt-2 text-[10px] text-red-300 bg-red-500/10 p-2 rounded-lg flex items-start gap-1.5">
-                                    <AlertCircle size={12} className="shrink-0 mt-0.5" />
-                                    <span className="leading-relaxed">{fileResult.notes}</span>
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button onClick={() => setPackagingCheckStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526]">Bắt đầu lại</button>
-                  <button onClick={() => setPackagingCheckStep(2)} className="flex-1 py-4 bg-[#242526] border border-[#3E4042] text-white font-bold rounded-xl text-[10px] hover:bg-[#3A3B3C]">Kiểm tra lại thiết kế</button>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    );
+  
+  
+  const handleTranslatePackaging = async () => {
+    if (!translateImageBase64) return;
+    setIsTranslating(true);
+    setAlertMessage(null);
+    try {
+      const { editProductImage } = await import('./services/geminiService');
+      const prompt = "Recreate this exact packaging design perfectly. Keep the exact same dieline (cut lines), background graphics, and colors. However, translate all the English text on the packaging into Vietnamese.";
+      const newImageUrl = await editProductImage(translateImageBase64, prompt, '1K');
+      setTranslatedImageURL(newImageUrl);
+      setIsTranslating(false);
+    } catch (err: any) {
+      console.error(err);
+      setAlertMessage("Lỗi dịch: " + err.message);
+      setIsTranslating(false);
+    }
   };
+
   const renderCameraSettings = (onBack: () => void) => (
     <div className="space-y-5">
       <div className="bg-[#242526]  rounded-xl p-4 space-y-4 border border-[#3E4042]">
@@ -2922,16 +2730,7 @@ const renderTrackSocketWorkflow = () => (
   );
 
   if (isLocked) {
-    return (
-      <div className="fixed inset-0 z-[150] bg-[#242526] flex flex-col items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full glass-card p-10 rounded-[40px] border border-white/10">
-          <div className="space-y-4">
-            <input type="password" placeholder="Mật khẩu..." className="w-full bg-[#242526]/5 border border-white/10 rounded-xl px-4 py-4 text-center text-white tracking-[0.5em] outline-none" value={passwordInput} onChange={(e) => handlePasswordChange(e.target.value)} autoFocus />
-            {passwordError && <p className="text-red-400 text-xs font-bold uppercase">{passwordError}</p>}
-          </div>
-        </div>
-      </div>
-    );
+    return <LockScreen onUnlock={() => setIsLocked(false)} />;
   }
 
   const getDownloadFileName = (image: GeneratedImage) => {
@@ -2985,227 +2784,31 @@ const renderTrackSocketWorkflow = () => (
     }
   };
 
-  const renderChatView = () => (
-    <main className="flex-1 flex max-w-[1920px] mx-auto w-full relative bg-[#242526]">
-      {/* Session Sidebar */}
-      <aside className="w-[300px] border-r border-[#3E4042] bg-[#242526] flex flex-col h-full hidden md:flex shrink-0">
-        <div className="p-4 border-b border-[#3E4042] flex items-center justify-between">
-          <h2 className="font-bold text-white text-lg">Lịch sử chat</h2>
-          <button onClick={handleNewChat} className="p-2 rounded-full hover:bg-[#18191A] text-[#1877F2]">
-            <Zap size={20} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-1">
-          {chatSessions.map(s => (
-            <div
-              key={s.id}
-              onClick={() => setActiveSessionId(s.id)}
-              className={`w-full text-left p-3 rounded-xl transition-colors cursor-pointer group flex items-start justify-between ${activeSessionId === s.id ? 'bg-[#3A3B3C] font-semibold text-white' : 'text-white hover:bg-[#18191A]'}`}
-            >
-              <div className="flex-1 overflow-hidden pr-2">
-                <div className="text-[15px] truncate">{s.title}</div>
-                <div className="text-[11px] text-white mt-1">{new Date(s.timestamp).toLocaleDateString('vi-VN')}</div>
-              </div>
-              <button 
-                onClick={(e) => handleDeleteSession(s.id, e)}
-                className={`p-1.5 rounded-full hover:bg-black/10 transition-colors ${activeSessionId === s.id ? 'opacity-100 text-red-400' : 'opacity-0 text-red-400 group-hover:opacity-100'}`}
-                title="Xóa đoạn chat này"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
-        </div>
-        </aside>
-      
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-screen bg-[#242526] text-white">
-        <div className="px-6 py-3 border-b border-[#3E4042] flex items-center justify-between bg-[#242526] z-10 shrink-0 shadow-sm">
-          <div>
-            <h2 className="font-bold text-xl">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white font-semibold">Chế độ:</span>
-                <select 
-                  value={chatMode}
-                  onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
-                  className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
-                >
-                  <option value="chat">Chat & Tư vấn</option>
-                  <option value="image">Tạo ảnh AI</option>
-                </select>
-              </div>
-              
-              {chatMode === 'image' && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white font-semibold">Tỷ lệ:</span>
-                    <select 
-                      value={chatImageAspectRatio}
-                      onChange={e => setChatImageAspectRatio(e.target.value)}
-                      className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
-                    >
-                      <option value="1:1">1:1 (Vuông)</option>
-                      <option value="16:9">16:9 (Ngang)</option>
-                      <option value="9:16">9:16 (Dọc)</option>
-                      <option value="4:3">4:3</option>
-                      <option value="3:4">3:4</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white font-semibold">Chất lượng:</span>
-                    <select 
-                      value={chatImageQuality}
-                      onChange={e => setChatImageQuality(e.target.value)}
-                      className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
-                    >
-                      <option value="1K">1K</option>
-                      <option value="2K">2K</option>
-                      <option value="4K">4K</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:px-24 xl:px-48 flex flex-col gap-6 custom-scrollbar text-[15px]">
-            {chatMessages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-white space-y-4 opacity-50">
-                <Wand2 size={48} />
-                <p className="text-xl font-medium">Bắt đầu trò chuyện với Trợ lý AI</p>
-                <p className="text-sm text-center max-w-lg">
-                  Tải lên hình để AI tư vấn thiết kế bằng chữ (chọn model Chat).<br/>
-                  Để tạo/sửa ảnh, tải hình lên, viết yêu cầu, và bắt buộc chọn model Image (Imagen 3.0 Fast/3.1 Image).
-                </p>
-              </div>
-            )}
-            {chatMessages.map((msg, index) => (
-              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group max-w-full`}>
-                {msg.role === 'model' && (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1877F2] to-cyan-500 text-white flex-shrink-0 flex items-center justify-center font-bold text-[11px] mr-3 font-sans shadow-md border-2 border-white">
-                    AI
-                  </div>
-                )}
-                <div className={`px-4 py-3 rounded-2xl max-w-[85%] break-words flex flex-col gap-3 shadow-sm ${msg.role === 'user' ? 'bg-[#1877F2] text-white rounded-br-sm' : 'bg-[#18191A] text-white rounded-bl-sm border border-[#3A3B3C]'}`}>
-                  <span className="leading-relaxed whitespace-pre-wrap">
-                    {msg.role === 'model' && index === chatMessages.length - 1 ? (
-                      <TypingEffect text={msg.text} />
-                    ) : (
-                      msg.text
-                    )}
-                  </span>
-                  {msg.uploadedImageUrl && (
-                    <img src={msg.uploadedImageUrl} alt="User Upload" className="max-w-[400px] w-full rounded-lg border border-black/10 mx-auto" />
-                  )}
-                  {msg.imageUrl && (
-                    <img src={msg.imageUrl} alt="AI Generated" className="max-w-2xl w-full rounded-xl border border-black/10 mx-auto bg-[#242526]" />
-                  )}
-                </div>
-              </div>
-            ))}
-            {isChatLoading && (
-              <div className="flex justify-start items-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1877F2] to-cyan-500 text-white flex-shrink-0 flex items-center justify-center font-bold text-[11px] mr-3 font-sans shadow-md border-2 border-white">
-                  AI
-                </div>
-                <div className="px-5 py-4 bg-[#18191A] rounded-2xl rounded-bl-sm flex gap-1.5 border border-[#3A3B3C]">
-                  <div className="w-2 h-2 bg-[#65676B] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-2 h-2 bg-[#65676B] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-2 h-2 bg-[#65676B] rounded-full animate-bounce"></div>
-                </div>
-              </div>
-            )}
-            <div ref={chatMessagesEndRef} />
-        </div>
-
-        <div className="p-4 md:p-6 lg:px-24 xl:px-48 border-t border-[#3E4042] bg-[#242526] shrink-0">
-          <FileDropzone onFilesDrop={handleImageUploadToChat} className="flex flex-col gap-3 bg-[#18191A] p-3 rounded-2xl border border-[#3E4042] focus-within:border-[#1877F2] focus-within:ring-1 focus-within:ring-[#1877F2] transition-colors shadow-sm">
-            {chatInputImageBase64 && (
-              <div className="relative inline-block w-20 h-20 bg-[#242526] rounded-lg border border-[#3E4042] p-1 shadow-sm">
-                <img src={chatInputImageBase64} alt="Upload preview" className="w-full h-full object-contain rounded-md" />
-                <button 
-                  onClick={() => setChatInputImageBase64(null)}
-                  className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center bg-[#050505] text-white rounded-full shadow-md hover:bg-red-500 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-            <div className="flex items-end gap-2">
-              <label className="p-2.5 text-white hover:text-[#1877F2] hover:bg-[#3A3B3C] rounded-full cursor-pointer transition-colors" title="Đính kèm ảnh">
-                <ImageIcon size={24} />
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageUploadToChat} />
-              </label>
-              <textarea 
-                placeholder="Hỏi AI về thiết kế sản phẩm, hoặc tải lên một hình ảnh..." 
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                disabled={isChatLoading}
-                className="flex-1 bg-transparent px-2 py-3 text-[16px] outline-none text-white placeholder-[#65676B] resize-none h-[50px] min-h-[50px] max-h-[200px]"
-                rows={1}
-              />
-              <button 
-                onClick={handleSendMessage}
-                disabled={(!chatInput.trim() && !chatInputImageBase64) || isChatLoading}
-                className="p-3 text-[#1877F2] hover:bg-[#3A3B3C] rounded-full transition-colors disabled:opacity-50 disabled:bg-transparent"
-              >
-                <Send size={24} className={(chatInput.trim() || chatInputImageBase64) ? "fill-[#1877F2]" : ""} />
-              </button>
-            </div>
-          </FileDropzone>
-          <div className="text-center mt-3 text-xs text-white">Gemini AI có thể mắc lỗi. Vui lòng kiểm tra lại những thông tin quan trọng.</div>
-        </div>
-      </div>
-    </main>
-  );
-
   return (
     <div className="min-h-screen bg-[#18191A] text-white font-sans flex flex-col relative animate-fade-in">
+      <Header
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        onOpenHandbook={() => setIsHandbookOpen(true)}
+        onResetToMenu={() => setCurrentStep(1)}
+        galleryCount={gallery.length}
+      />
+
+      <HandbookModal
+        isOpen={isHandbookOpen}
+        onClose={() => setIsHandbookOpen(false)}
+      />
+
+      <LoadingModal
+        appState={appState}
+        loadingMessage={loadingMessage}
+      />
+
       <AnimatePresence>
         {alertMessage && (
           <motion.div initial={{ opacity: 0, y: -20, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: -20, x: '-50%' }} className="fixed top-16 left-1/2 z-[100] bg-gray-900 border border-gray-700 text-white font-semibold px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 min-w-[300px] justify-between">
              <span className="text-[14px] leading-snug">{alertMessage}</span>
              <button onClick={() => setAlertMessage(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-800 transition-colors shrink-0 text-gray-400 hover:text-white"><X size={16} /></button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {(appState === AppState.GENERATING || appState === AppState.ANALYZING) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-[#000000]/80 backdrop-blur-md pointer-events-auto"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#242526] border border-[#3E4042] rounded-3xl p-8 max-w-sm w-full mx-4 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col items-center text-center relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#1877F2] to-transparent animate-pulse"></div>
-              <div className="relative mb-6">
-                <div className="w-16 h-16 border-[4px] border-[#18191A] border-t-[#1877F2] rounded-full animate-spin"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Sparkles size={20} className="text-[#1877F2] animate-pulse" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Đang xử lý</h3>
-              <p className="text-[#B0B3B8] font-medium">{loadingMessage || "AI đang làm việc, vui lòng chờ..."}</p>
-              <div className="mt-8 w-full">
-                <div className="h-1.5 w-full bg-[#18191A] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#1877F2] w-full animate-pulse"></div>
-                </div>
-              </div>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -3238,9 +2841,22 @@ const renderTrackSocketWorkflow = () => (
           
           {settings.visualStyle === 'BARCODE_QR_GENERATOR' ? (
             <BarcodeGenerator />
+          ) : settings.visualStyle === 'TRANSLATE_PACKAGING' ? (
+            <div className="bg-[#242526] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#3E4042] p-6">
+               <TranslatePackagingWorkflow 
+                 onBackToMenu={() => setCurrentStep(1)} 
+                 setAlertMessage={setAlertMessage} 
+               />
+            </div>
           ) : settings.visualStyle === 'PACKAGING_CHECK' ? (
             <div className="bg-[#242526] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#3E4042] p-6">
-               {renderPackagingCheckWorkflow()}
+               <PackagingCheckWorkflow 
+                 onBackToMenu={() => setCurrentStep(1)} 
+                 appState={appState} 
+                 setAppState={setAppState} 
+                 setLoadingMessage={setLoadingMessage} 
+                 setAlertMessage={setAlertMessage} 
+               />
             </div>
           ) : (
             <div className="bg-[#242526] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#3E4042]">
@@ -3336,41 +2952,27 @@ const renderTrackSocketWorkflow = () => (
 
       {/* Footer Gallery Rail */}
       {settings.visualStyle !== 'BARCODE_QR_GENERATOR' && settings.visualStyle !== 'PACKAGING_CHECK' && (
-      <div className="w-full shrink-0 border-t border-[#3E4042] bg-[#18191A] xl:bg-[#242526] z-10 flex flex-col h-[260px]">
-        <div className="p-4 flex items-center justify-between shrink-0">
-          <span className="font-semibold text-white text-[17px]">Bộ sưu tập</span>
-          <div className="flex items-center gap-4">
-            <span className="text-[13px] text-white hidden sm:inline">Ảnh sẽ tự động hết hạn và bị xóa sau 7 ngày. Bạn nhớ lưu ảnh về máy nhé.</span>
-            <button title="Làm mới bộ sưu tập" className="text-[#1877F2] font-semibold text-[14px] hover:underline" onClick={() => {
-              setGallery([]);
-              setActiveImage(null);
-            }}>Xóa tất cả</button>
-          </div>
-        </div>
-        
-        <div className="flex-1 flex gap-4 overflow-x-auto px-4 pb-6 custom-scrollbar items-center">
-          
-          {gallery.map(img => (
-            <div key={img.id} className="relative h-full aspect-square shrink-0 bg-[#3A3B3C] rounded-lg overflow-hidden group cursor-pointer" onClick={() => setActiveImage(img)}>
-               <img src={img.url} className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 object-center ${activeImage?.id === img.id ? 'opacity-50' : ''}`} />
-               {activeImage?.id === img.id && (
-                 <div className="absolute inset-0 flex items-center justify-center bg-[#1877F2]/20">
-                    <Check size={24} className="text-white drop-shadow-md" />
-                 </div>
-               )}
-            </div>
-          ))}
-          {gallery.length === 0 && (
-             <div className="w-full flex justify-center text-white text-[14px]">
-               Chưa có ảnh nào được tạo.
-             </div>
-          )}
-        </div>
-      </div>
+        <GalleryRail
+          gallery={gallery}
+          activeImage={activeImage}
+          setActiveImage={setActiveImage}
+          onClearGallery={() => {
+            setGallery([]);
+            setActiveImage(null);
+          }}
+        />
       )}
   
       </main>
-      ) : renderChatView()}
+      ) : (
+        <ChatView
+          chatSessions={chatSessions}
+          setChatSessions={setChatSessions}
+          activeSessionId={activeSessionId}
+          setActiveSessionId={setActiveSessionId}
+          handleDeleteSession={handleDeleteSession}
+        />
+      )}
 
       {/* Feedback Modal */}
       <AnimatePresence>

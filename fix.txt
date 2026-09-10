@@ -1,6 +1,0 @@
-                  </button>
-                </div>
-              </div>
-            )}
-            {packagingCheckStep === 3 && packagingCheckResult && (
-              <div className="space-y-4">

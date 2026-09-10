@@ -1381,3 +1381,52 @@ LƯU Ý:
     return [];
   }
 };
+
+export const analyzeAndTranslatePackaging = async (imageBase64: string): Promise<{ regions: any[] }> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    if (!match) throw new Error("Ảnh không hợp lệ.");
+    const parts: any[] = [
+      {
+        text: `Bạn là chuyên gia dịch thuật và bóc tách bố cục (OCR & Layout Analysis).
+Nhiệm vụ: Tìm tất cả các cụm văn bản (text) bằng tiếng Anh trên ảnh, dịch sang tiếng Việt.
+Trả về một JSON có cấu trúc sau:
+{
+  "regions": [
+    {
+      "box": [ymin, xmin, ymax, xmax], // Tọa độ chuẩn hóa từ 0 đến 1000
+      "original": "English text",
+      "translated": "Bản dịch tiếng Việt (phù hợp ngữ cảnh bao bì/sản phẩm)",
+      "bgColor": "#HexColor", // Mã màu HEX ước lượng của phần nền bên dưới chữ này để tiện lấp đi (thường là màu nền của bao bì, ví dụ #FFFFFF cho nền trắng, #000000 cho nền đen). Hãy dự đoán chính xác nhất có thể.
+      "textColor": "#HexColor" // Mã màu HEX của chữ (ví dụ #000000 cho chữ đen)
+    }
+  ]
+}`
+      },
+      {
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      }
+    ];
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    if (response.text) {
+      trackGeminiUsage(response, "Dịch và OCR bao bì", "gemini-2.5-flash");
+      return JSON.parse(response.text);
+    }
+    throw new Error("Không có phản hồi");
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
