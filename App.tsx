@@ -41,12 +41,16 @@ import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, A
 import { BarcodeGenerator } from './src/components/BarcodeGenerator';
 import { PackagingCheckWorkflow } from './src/components/workflows/PackagingCheckWorkflow';
 import { TranslatePackagingWorkflow } from './src/components/workflows/TranslatePackagingWorkflow';
+import { LineArtWorkflow } from './src/components/workflows/LineArtWorkflow';
+import { PackagingMockupWorkflow } from './src/components/workflows/PackagingMockupWorkflow';
 import { ChatView } from './src/components/chat/ChatView';
 import { Header } from './src/components/common/Header';
 import { HandbookModal } from './src/components/common/HandbookModal';
 import { LockScreen } from './src/components/common/LockScreen';
 import { LoadingModal } from './src/components/common/LoadingModal';
 import { GalleryRail } from './src/components/common/GalleryRail';
+import { FileDropzone } from './src/components/common/FileDropzone';
+import { ModelSelection } from './src/components/common/ModelSelection';
 import { HistoryView } from './src/components/history/HistoryView';
 import {
   CAMERA_APERTURES,
@@ -187,39 +191,8 @@ const TypingEffect = ({ text }: { text: string }) => {
   );
 };
 
-const FileDropzone: React.FC<React.HTMLAttributes<HTMLDivElement> & { onFilesDrop: (files: FileList) => void }> = ({ onFilesDrop, className, children, ...props }) => {
-  const [isDragActive, setIsDragActive] = useState(false);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragActive(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragActive(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFilesDrop(e.dataTransfer.files);
-    }
-  };
-
-  return (
-    <div
-      {...props}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={`${className || ''} ${isDragActive ? '!border-[#1877F2] !bg-[#1877F2]/10 transition-all' : ''}`}
-    >
-      {children}
-    </div>
-  );
-};
+// FileDropzone được tách sang src/components/common/FileDropzone.tsx (dùng
+// chung cho các workflow đã tách file lẫn các workflow còn nhúng ở đây).
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(true); 
@@ -417,7 +390,6 @@ const App: React.FC = () => {
   const productFilesRef = useRef<HTMLInputElement>(null);
   const refFileRef = useRef<HTMLInputElement>(null);
   const colorSampleRef = useRef<HTMLInputElement>(null);
-  const packagingFileRef = useRef<HTMLInputElement>(null); 
   const trackFileRef = useRef<HTMLInputElement>(null);
   const socketFileRef = useRef<HTMLInputElement>(null);
   const pendingPackagingFace = useRef<keyof PackagingFaces | "flat">("flat");
@@ -1499,68 +1471,9 @@ const App: React.FC = () => {
   );
 
   // 5. Dựng mockup bao bì Workflow (Packaging Mockup)
-  const renderPackagingWorkflow = () => (
-    <div className="space-y-6">
-      <StepIndicator current={packagingStep} total={3} labels={['Dữ liệu', 'Thiết kế', 'Xuất bản']} />
-      
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={packagingStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-6"
-        >
-          {packagingStep === 1 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-2">
-                <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-                <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                 {['length', 'width', 'height'].map(f => (
-                   <input key={f} type="number" placeholder={f === 'length' ? 'Dài (mm)' : f === 'width' ? 'Rộng (mm)' : 'Cao (mm)'} className="bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-xs text-white outline-none focus:border-[#1877F2] transition-colors" value={(settings.dimensions as any)[f]} onChange={e => setSettings({...settings, dimensions: {...settings.dimensions, [f]: e.target.value}})} />
-                 ))}
-              </div>
-              <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.packagingMaterial} onChange={e => setSettings({...settings, packagingMaterial: e.target.value as any})}>
-                 <option value="COLOR_BOX" className="bg-[#242526]">Hộp giấy màu</option>
-                 <option value="CARTON_BW" className="bg-[#242526]">Thùng Carton</option>
-              </select>
-              <button onClick={() => setPackagingStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
-            </div>
-          )}
-          {packagingStep === 2 && (
-            <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-white uppercase">File thiết kế phẳng</label>
-               <FileDropzone onFilesDrop={(f) => { pendingPackagingFace.current = 'flat'; onImageUpload(f, 'packaging'); }} onClick={() => { pendingPackagingFace.current = 'flat'; packagingFileRef.current?.click(); }} className="h-40 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
-                 {settings.packagingFaces.flat ? <img src={settings.packagingFaces.flat} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ File thiết kế phẳng</span>}
-               </FileDropzone>
-               <input type="file" hidden ref={packagingFileRef} onChange={e => onImageUpload(e, 'packaging')} />
-               <div className="flex gap-2">
-                 <button onClick={() => setPackagingStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                 <button onClick={() => setPackagingStep(3)} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tiếp tục</button>
-               </div>
-            </div>
-          )}
-          {packagingStep === 3 && (
-            <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-white uppercase">Kiểu xuất bản</label>
-               <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.packagingOutputStyle} onChange={e => setSettings({...settings, packagingOutputStyle: e.target.value as any})}>
-                 <option value="WHITE_BG_ROTATED" className="bg-[#242526]">Nền trắng xoay</option>
-                 <option value="CONTEXTUAL" className="bg-[#242526]">Lifestyle Context</option>
-               </select>
-               {renderModelSelection()}
-               <div className="flex gap-2">
-                 <button onClick={() => setPackagingStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                 <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
-               </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
+  // renderPackagingWorkflow được tách sang
+  // src/components/workflows/PackagingMockupWorkflow.tsx (xem dispatch JSX
+  // bên dưới, tìm '<PackagingMockupWorkflow').
 
   // 6. Xử lý chữ ký hình ảnh Workflow (Tech Effects)
   const renderTechEffectsWorkflow = () => (
@@ -1969,54 +1882,9 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderLineArtWorkflow = () => (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <label className="block text-[9px] font-bold text-white uppercase mb-2">Thông tin sản phẩm</label>
-          <div className="grid grid-cols-3 gap-2">
-            <input type="text" placeholder="Tên sản phẩm..." className="col-span-2 bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-            <input type="text" placeholder="Mã sản phẩm..." className="bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productCode || ''} onChange={e => setSettings({...settings, productCode: e.target.value})} />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh sản phẩm gốc (Nền trắng)</label>
-          <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
-             {settings.referenceImage ? (
-               <>
-                 <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                 <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
-               </>
-             ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh SP gốc</span>}
-          </FileDropzone>
-          <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
-        </div>
-
-        <div>
-           <label className="block text-[9px] font-bold text-white uppercase mb-2">Tỷ lệ</label>
-           <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-              <option value="1:1" className="bg-[#242526]">1:1 Vuông</option>
-              <option value="4:3" className="bg-[#242526]">4:3 Catalog</option>
-              <option value="3:4" className="bg-[#242526]">3:4 Portrait</option>
-              <option value="16:9" className="bg-[#242526]">16:9 HD</option>
-              <option value="9:16" className="bg-[#242526]">9:16</option>
-              <option value="1:4" className="bg-[#242526]">1:4 Siêu dài</option>
-              <option value="4:1" className="bg-[#242526]">4:1 Siêu rộng</option>
-           </select>
-        </div>
-
-        {renderModelSelection()}
-
-        <div className="flex gap-2 pt-2">
-          <button disabled={appState !== AppState.READY} onClick={() => { if (!settings.referenceImage) { setAlertMessage("Vui lòng tải ảnh sản phẩm gốc (nền trắng) trước khi tạo ảnh Line Art."); } else { startGeneration(); } }} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50 flex justify-center items-center gap-2">
-            {appState === AppState.GENERATING ? <Loader2 size={16} className="animate-spin" /> : null}
-            Tạo ảnh Line Art
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  // renderLineArtWorkflow được tách sang
+  // src/components/workflows/LineArtWorkflow.tsx (xem dispatch JSX bên dưới,
+  // tìm '<LineArtWorkflow').
 
   // 8. Tạo hình ảnh chụp trong studio Workflow
   const renderStudioWorkflow = () => (
@@ -2615,11 +2483,30 @@ const renderTrackSocketWorkflow = () => (
                {settings.visualStyle === 'SCENE_STAGING' && renderStagingWorkflow()}
                {settings.visualStyle === 'TECH_PS' && renderTechWorkflow()}
                {settings.visualStyle === 'COLOR_CHANGE' && renderColorWorkflow()}
-               {settings.visualStyle === 'PACKAGING_MOCKUP' && renderPackagingWorkflow()}
+               {settings.visualStyle === 'PACKAGING_MOCKUP' && (
+                 <PackagingMockupWorkflow
+                   settings={settings}
+                   setSettings={setSettings}
+                   packagingStep={packagingStep}
+                   setPackagingStep={setPackagingStep}
+                   pendingPackagingFace={pendingPackagingFace}
+                   onImageUpload={onImageUpload}
+                   startGeneration={startGeneration}
+                 />
+               )}
                {settings.visualStyle === 'TECH_EFFECTS' && renderTechEffectsWorkflow()}
                {settings.visualStyle === 'WHITE_BG_RETOUCH' && renderWhiteBgRetouchWorkflow()}
                {settings.visualStyle === '3D_TO_REAL_WHITE_BG' && render3DRenderToPhotoWorkflow()}
-               {settings.visualStyle === 'LINE_ART' && renderLineArtWorkflow()}
+               {settings.visualStyle === 'LINE_ART' && (
+                 <LineArtWorkflow
+                   settings={settings}
+                   setSettings={setSettings}
+                   onImageUpload={onImageUpload}
+                   appState={appState}
+                   startGeneration={startGeneration}
+                   setAlertMessage={setAlertMessage}
+                 />
+               )}
                {settings.visualStyle === 'STUDIO' && renderStudioWorkflow()}
                {settings.visualStyle === 'TRACK_SOCKET_STAGING' && renderTrackSocketWorkflow()}
                {settings.visualStyle === 'BARCODE_QR_GENERATOR' && renderBarcodeQrSidebar()}
@@ -2633,23 +2520,11 @@ const renderTrackSocketWorkflow = () => (
     );
   };
 
+  // Dùng lại component chung (đã tách sang src/components/common/ModelSelection.tsx)
+  // để các workflow còn lại vẫn gọi renderModelSelection() như cũ, không phải
+  // sửa từng chỗ gọi ngay lúc này.
   const renderModelSelection = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="block text-[9px] font-bold text-white uppercase mb-1">Chất lượng hình ảnh</label>
-        <div className="grid grid-cols-3 gap-2">
-          {(['1K', '2K', '4K'] as ImageSize[]).map(size => (
-            <button 
-              key={size} 
-              onClick={() => setSettings({...settings, imageSize: size})} 
-              className={`py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.imageSize === size ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-[#242526] shadow-sm text-white border-[#3E4042] text-white hover:text-white'}`}
-            >
-              {size === '1K' ? '1K Standard' : size === '2K' ? '2K Pro' : '4K Ultra HD'}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} />
   );
 
   // 13. Kiểm tra bao bì
