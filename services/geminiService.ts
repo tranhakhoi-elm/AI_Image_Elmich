@@ -1215,31 +1215,54 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
   } catch (error: any) { throw error; }
 };
 
-export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image', aspectRatio: string = "1:1", imageBase64?: string, imageSize: string = '1K'): Promise<string> => {
+// Ghép 1 tin nhắn chat thành inlineData nếu là data URI ảnh hợp lệ.
+const chatImageToInlineData = (dataUri?: string) => {
+  if (!dataUri) return null;
+  const match = dataUri.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+  return match ? { inlineData: { mimeType: match[1], data: match[2] } } : null;
+};
+
+/**
+ * Tạo ảnh trong Chat, CÓ NGỮ CẢNH TOÀN BỘ ĐOẠN HỘI THOẠI (giống ChatGPT giữ
+ * mạch khi đổi công cụ trong cùng 1 thread) — nhận nguyên mảng tin nhắn
+ * (giống chatWithAI) thay vì chỉ 1 câu prompt đơn lẻ, để khi người dùng bàn
+ * bạc bằng chữ rồi mới chuyển sang "Tạo ảnh AI", model vẫn thấy được toàn
+ * bộ nội dung đã trao đổi VÀ mọi ảnh mẫu/ảnh đã tạo trước đó trong đoạn chat.
+ */
+export const generateImageForChat = async (
+  messages: import('../types').ChatMessage[],
+  modelName: string = 'gemini-3.1-flash-image',
+  aspectRatio: string = "1:1",
+  imageSize: string = '1K'
+): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const guidedPrompt = `Elmich Brand Image Standards (bắt buộc tuân thủ):
+    const contents = messages.map((msg, idx) => {
+      const isLastMessage = idx === messages.length - 1;
+      let text = msg.text || '';
+      if (isLastMessage) {
+        // Chỉ nhúng chuẩn thương hiệu vào lượt cuối (chỉ thị chốt trước khi
+        // sinh ảnh) — các lượt trước giữ nguyên làm bối cảnh hội thoại thuần túy.
+        text = `Elmich Brand Image Standards (bắt buộc tuân thủ):
 ${chatAssistantHandbook}
 
 ===================================================
 
-Yêu cầu cụ thể của người dùng: ${prompt}`;
-    const parts: any[] = [{ text: guidedPrompt }];
-    if (imageBase64 && typeof imageBase64 === 'string') {
-      const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
-      if (match) {
-        parts.push({
-          inlineData: {
-            mimeType: match[1],
-            data: match[2]
-          }
-        });
+Yêu cầu cụ thể của người dùng (dựa trên toàn bộ ngữ cảnh cuộc trò chuyện phía trên, kể cả ảnh đã đề cập): ${text}`;
       }
-    }
+      const parts: any[] = [];
+      if (text) parts.push({ text });
+      const uploaded = chatImageToInlineData(msg.uploadedImageUrl);
+      if (uploaded) parts.push(uploaded);
+      const generated = chatImageToInlineData(msg.imageUrl);
+      if (generated) parts.push(generated);
+      if (parts.length === 0) parts.push({ text: '' });
+      return { role: msg.role, parts };
+    });
 
     const response = await ai.models.generateContent({
       model: modelName,
-      contents: { parts },
+      contents,
       config: {
         imageConfig: {
           aspectRatio: aspectRatio as any,
@@ -1266,18 +1289,13 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const contents = messages.map(msg => {
     const parts: any[] = [{ text: msg.text }];
-    if (msg.uploadedImageUrl) {
-      // Extract base64 and mime type from data URI
-      const match = msg.uploadedImageUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
-      if (match) {
-        parts.push({
-          inlineData: {
-            mimeType: match[1],
-            data: match[2]
-          }
-        });
-      }
-    }
+    // Nhớ cả ảnh người dùng tải lên LẪN ảnh AI đã tạo ở các lượt trước, để
+    // chuyển từ chế độ "Tạo ảnh AI" về "Chat & Tư vấn" không bị mất ngữ cảnh
+    // hình ảnh đã trao đổi trong đoạn chat.
+    const uploaded = chatImageToInlineData(msg.uploadedImageUrl);
+    if (uploaded) parts.push(uploaded);
+    const generated = chatImageToInlineData(msg.imageUrl);
+    if (generated) parts.push(generated);
     return {
       role: msg.role,
       parts

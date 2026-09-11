@@ -120,17 +120,20 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setChatInputImageBase64(null);
     setIsChatLoading(true);
 
+    // Toàn bộ lịch sử hội thoại (kể cả ảnh đã tải lên/đã tạo ở các lượt
+    // trước) — dùng chung cho CẢ 2 chế độ, để chuyển qua lại giữa "Chat & Tư
+    // vấn" và "Tạo ảnh AI" trong cùng đoạn chat không bị mất mạch/ảnh mẫu.
+    const messagesToSend = [...priorMessages, newUserMsg];
+
     let finalMsg: ChatMessage;
     try {
       let newModelMsg: ChatMessage;
       if (chatMode === 'image') {
-        const fullPrompt = `${chatInput}`;
         const defaultImageModel = 'gemini-3.1-flash-image';
         const imageUrl = await generateImageForChat(
-          fullPrompt,
+          messagesToSend,
           defaultImageModel,
           chatImageAspectRatio,
-          chatInputImageBase64 || undefined,
           chatImageQuality
         );
         newModelMsg = {
@@ -146,7 +149,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         logGeneratedImage({
           id: newModelMsg.id,
           url: imageUrl,
-          prompt: fullPrompt,
+          prompt: newUserMsg.text || '(theo ngữ cảnh cuộc trò chuyện)',
           productName: 'Trợ lý Chat AI',
           visualStyle: 'CONCEPT',
           aspectRatio: chatImageAspectRatio,
@@ -154,8 +157,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
           timestamp: Date.now(),
         }).catch(() => {});
       } else {
-        const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
-        const messagesToSend = [...currentMsgs, newUserMsg];
         const defaultChatModel = 'gemini-2.5-flash';
         const replyText = await chatWithAI(messagesToSend, defaultChatModel);
         newModelMsg = {

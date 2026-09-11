@@ -396,88 +396,11 @@ const App: React.FC = () => {
     }
   }, [chatSessions, isChatLoaded]);
 
-  const currentSession = chatSessions.find(s => s.id === activeSessionId);
-  const chatMessages = currentSession?.messages || [];
-  
-  const [chatInput, setChatInput] = useState('');
-  const [chatInputImageBase64, setChatInputImageBase64] = useState<string | null>(null);
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const [chatMode, setChatMode] = useState<'chat' | 'image'>('chat');
-  const [chatImageAspectRatio, setChatImageAspectRatio] = useState('1:1');
-  const [chatImageQuality, setChatImageQuality] = useState('1K');
-  const [showSessionsList, setShowSessionsList] = useState(false);
-  
-  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    if (viewMode === 'chat') {
-      scrollToBottom();
-    }
-  }, [chatMessages, viewMode]);
-
-  const handleSendMessage = async () => {
-    if ((!chatInput.trim() && !chatInputImageBase64) || isChatLoading) return;
-    
-    const newUserMsg: ChatMessage = { id: Date.now().toString(), role: 'user', text: chatInput, uploadedImageUrl: chatInputImageBase64 || undefined };
-    
-    let targetSessionId = activeSessionId;
-    if (!targetSessionId) {
-      targetSessionId = Date.now().toString();
-      setActiveSessionId(targetSessionId);
-      setChatSessions(prev => [{ id: targetSessionId!, title: chatInput.trim().slice(0, 30) || 'New Chat', messages: [newUserMsg], timestamp: Date.now() }, ...prev]);
-    } else {
-      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newUserMsg], timestamp: Date.now() } : s));
-    }
-
-    setChatInput('');
-    setChatInputImageBase64(null);
-    setIsChatLoading(true);
-
-    try {
-      let newModelMsg: ChatMessage;
-      if (chatMode === 'image') {
-        const fullPrompt = `${chatInput}`;
-        // Default implicit image model
-        const defaultImageModel = 'gemini-3.1-flash-image';
-        const imageUrl = await generateImageForChat(fullPrompt, defaultImageModel, chatImageAspectRatio, chatInputImageBase64 || undefined, chatImageQuality);
-        newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: 'Đây là hình ảnh của bạn:', imageUrl };
-      } else {
-        const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
-        const messagesToSend = [...currentMsgs, newUserMsg];
-        // Default implicit chat model
-        const defaultChatModel = 'gemini-2.5-flash';
-        const replyText = await chatWithAI(messagesToSend, defaultChatModel);
-        newModelMsg = { id: Date.now().toString() + 'm', role: 'model', text: replyText };
-      }
-      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newModelMsg], timestamp: Date.now() } : s));
-    } catch (e: any) {
-      const errorMsg: ChatMessage = { id: Date.now().toString() + 'e', role: 'model', text: `⚠️ Error: ${e.message || 'Something went wrong.'}` };
-      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, errorMsg], timestamp: Date.now() } : s));
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
-  const handleImageUploadToChat = (filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList) => {
-    const files = 'target' in filesOrEvent ? filesOrEvent.target.files : filesOrEvent;
-    const file = files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setChatInputImageBase64(ev.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleNewChat = () => {
-    setActiveSessionId(null);
-    setShowSessionsList(false);
-  };
+  // Lưu ý: state/logic gửi tin nhắn chat (chatInput, handleSendMessage,
+  // handleImageUploadToChat, handleNewChat...) đã được chuyển hẳn vào
+  // src/components/chat/ChatView.tsx từ khi tách component — không khai
+  // báo lại ở đây để tránh 2 nguồn sự thật (trước đó có 1 bản sao chép y
+  // hệt nhưng KHÔNG bao giờ được gọi tới, đã dọn bỏ).
 
   useEffect(() => {
     if (isGalleryLoaded) {
