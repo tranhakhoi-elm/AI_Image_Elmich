@@ -235,7 +235,7 @@ app.get("/api/history/chats", async (req: any, res: any) => {
 
 // Đánh giá 1 ảnh đã tạo ("Rất tốt!" / "Không hẳn") — dùng để định hướng các
 // lần tạo ảnh sau (xem listApprovedPrompts + generateProductImage).
-app.post("/api/history/images/rate", async (req: any, res: any) => {
+app.post("/api/history/rate-image", async (req: any, res: any) => {
   try {
     const { id, rating } = req.body || {};
     if (rating !== "good" && rating !== "bad") {
@@ -271,7 +271,7 @@ app.delete("/api/history/chats", async (req: any, res: any) => {
   }
 });
 
-app.get("/api/history/images/approved", async (req: any, res: any) => {
+app.get("/api/history/approved-prompts", async (req: any, res: any) => {
   try {
     const visualStyle = (req.query.visualStyle as string) || undefined;
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 5, 20);

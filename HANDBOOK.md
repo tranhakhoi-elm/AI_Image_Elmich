@@ -269,7 +269,7 @@ an toàn hiện tại của hệ thống:
 - **Không có bộ test tự động.** `npm run lint` chỉ chạy `tsc --noEmit`
   (kiểm tra kiểu, không phát hiện lỗi logic).
 - **Route ghi Lịch sử (`POST /api/history/images`, `/api/history/chats`,
-  `/api/history/images/rate`) không có xác thực riêng** ngoài việc chạy
+  `/api/history/rate-image`) không có xác thực riêng** ngoài việc chạy
   trên cùng domain với app — chấp nhận được cho công cụ nội bộ đã có PIN
   chặn ở tầng UI, nhưng không phải hàng rào bảo mật thật ở tầng API. Vì
   đánh giá "Rất tốt!" ảnh hưởng trực tiếp đến gợi ý cho cả team (mục 9.3),

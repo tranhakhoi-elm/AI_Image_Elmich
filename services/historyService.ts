@@ -162,7 +162,7 @@ export async function logChatSession(session: ChatSession): Promise<void> {
 export async function rateGeneratedImage(id: string, rating: 'good' | 'bad'): Promise<void> {
   try {
     if (!id) return;
-    const res = await fetch('/api/history/images/rate', {
+    const res = await fetch('/api/history/rate-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, rating }),
@@ -192,7 +192,7 @@ export async function fetchApprovedPromptHints(visualStyle?: string, limit = 3):
   try {
     const params = new URLSearchParams({ limit: String(limit) });
     if (visualStyle) params.set('visualStyle', visualStyle);
-    const res = await fetch(`/api/history/images/approved?${params.toString()}`);
+    const res = await fetch(`/api/history/approved-prompts?${params.toString()}`);
     const data = await res.json();
     if (!data.success) return [];
     return data.items || [];

@@ -456,10 +456,10 @@ team**, dựa trên collection `imageHistory` đã có ở mục 8.1–8.2:
   làm doc id trên Firestore thay vì tự sinh UUID. Nhờ vậy, khi người dùng
   bấm "Rất tốt!"/"Không hẳn" ở modal phản hồi (`App.tsx`, sau khi tải ảnh
   về), `rateGeneratedImage(id, rating)` có thể cập nhật **đúng** bản ghi đã
-  log trước đó bằng `POST /api/history/images/rate` (Firestore
+  log trước đó bằng `POST /api/history/rate-image` (Firestore
   `.set({rating, ratedAt}, {merge:true})`).
 - `listApprovedPrompts()` (`lib/historyStore.ts`) truy vấn tối đa 50 bản ghi
-  `rating == "good"` gần nhất (`GET /api/history/images/approved`), lọc
+  `rating == "good"` gần nhất (`GET /api/history/approved-prompts`), lọc
   theo `visualStyle` ở tầng ứng dụng (JS) thay vì query Firestore lồng
   nhiều điều kiện — chỉ cần đúng **1 composite index** (`imageHistory`:
   `rating` + `timestamp desc`) thay vì 1 index riêng cho mỗi workflow.
@@ -509,6 +509,31 @@ về từ server) nên chưa làm trong lần sửa này — tab "Lịch sử" r
 nơi đúng để xem lại ảnh cũ từ máy khác, gallery Studio vẫn chỉ là cache tạm
 cho phiên làm việc hiện tại như tài liệu tại mục 8.7 đã ghi.
 
+### 8.6b. Bug đã sửa: Vercel trả "A server error has occurred" (không phải JSON) cho route rate/approved
+
+**Triệu chứng:** tab Lịch sử báo lỗi `Unexpected token 'A', "A server e"...
+is not valid JSON` — nghĩa là response không phải JSON như code client kỳ
+vọng, mà là trang lỗi mặc định của Vercel (`FUNCTION_INVOCATION_FAILED`),
+tức 1 Serverless Function bị crash trước khi kịp trả JSON.
+
+**Nguyên nhân:** `api/history/images/rate.ts` và `api/history/images/approved.ts`
+từng nằm trong thư mục con `api/history/images/`, trong khi `api/history/images.ts`
+(file xử lý `GET`/`POST`/`DELETE` cho `/api/history/images`) là 1 **file
+cùng tên** ở cấp cha. Vercel build file-system routing cho `api/` không xử
+lý ổn định trường hợp vừa có file `images.ts` vừa có thư mục `images/` làm
+route cha của route con — gây lỗi khi build/invoke function tương ứng.
+
+**Đã sửa:** dời 2 route này ra thành file phẳng, không lồng thư mục trùng
+tên với file khác:
+- `POST /api/history/images/rate` → `POST /api/history/rate-image`
+  (`api/history/rate-image.ts`)
+- `GET /api/history/images/approved` → `GET /api/history/approved-prompts`
+  (`api/history/approved-prompts.ts`)
+
+Đã cập nhật đồng bộ ở `server.ts` (route Express) và
+`services/historyService.ts` (URL client gọi) — 2 nơi này luôn phải khớp
+tên route với nhau vì cùng 1 client code chạy trên cả 2 kiểu deploy.
+
 ### 8.7. Phạm vi cố ý KHÔNG làm trong v1
 
 - Không lưu lại các ảnh **đầu vào** (ảnh mẫu màu, các mặt bao bì, ảnh
@@ -522,7 +547,7 @@ cho phiên làm việc hiện tại như tài liệu tại mục 8.7 đã ghi.
   `productName`/`productCode` nhập tay) — khớp với mô hình "1 PIN chung"
   hiện có, không có khái niệm tài khoản cá nhân.
 - Mọi route ghi (`POST /api/history/images`, `/api/history/chats`,
-  `/api/history/images/rate`) hiện **không có xác thực nào ngoài việc cùng
+  `/api/history/rate-image`) hiện **không có xác thực nào ngoài việc cùng
   origin với app** — bất kỳ ai gọi được API (kể cả không qua UI) đều có thể
   ghi dữ liệu giả hoặc tự "dìm"/"đẩy" đánh giá `rating` của bất kỳ ảnh nào
   vào lịch sử dùng chung. Chấp nhận được cho một tool nội bộ đã có PIN chặn

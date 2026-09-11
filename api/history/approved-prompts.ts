@@ -1,4 +1,4 @@
-import { listApprovedPrompts } from "../../../lib/historyStore";
+import { listApprovedPrompts } from "../../lib/historyStore";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "GET") {
@@ -10,7 +10,7 @@ export default async function handler(req: any, res: any) {
     const items = await listApprovedPrompts({ visualStyle, limit });
     return res.status(200).json({ success: true, items });
   } catch (error: any) {
-    console.error("Error in /api/history/images/approved:", error.message);
+    console.error("Error in /api/history/approved-prompts:", error.message);
     return res.status(200).json({ success: false, error: error.message, items: [] });
   }
 }

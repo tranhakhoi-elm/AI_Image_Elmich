@@ -1,4 +1,4 @@
-import { rateImageRecord } from "../../../lib/historyStore";
+import { rateImageRecord } from "../../lib/historyStore";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -12,7 +12,7 @@ export default async function handler(req: any, res: any) {
     const result = await rateImageRecord({ id, rating });
     return res.status(200).json({ success: true, ...result });
   } catch (error: any) {
-    console.error("Error in /api/history/images/rate:", error.message);
+    console.error("Error in /api/history/rate-image:", error.message);
     return res.status(200).json({ success: false, error: error.message });
   }
 }
