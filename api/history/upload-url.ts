@@ -1,4 +1,4 @@
-import { createUploadUrl } from "../../lib/historyStore";
+import { createUploadUrl } from "../../lib/historyStore.js";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {

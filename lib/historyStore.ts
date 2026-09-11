@@ -2,7 +2,7 @@
 // Thuần server-side, không phụ thuộc Express/Vercel — server.ts và các file
 // trong api/history/ đều gọi thẳng các hàm ở đây.
 import { randomUUID } from "crypto";
-import { getFirestore, getBucket } from "./googleCloud";
+import { getFirestore, getBucket } from "./googleCloud.js";
 
 export const HISTORY_NOT_CONFIGURED_ERROR =
   "Tính năng Lịch sử chưa được cấu hình (thiếu GOOGLE_SERVICE_ACCOUNT_JSON hoặc GCS_BUCKET_NAME trên server).";

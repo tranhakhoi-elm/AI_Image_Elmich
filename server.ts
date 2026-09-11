@@ -12,7 +12,7 @@ import {
   deleteChatSession,
   rateImageRecord,
   listApprovedPrompts,
-} from "./lib/historyStore";
+} from "./lib/historyStore.js";
 
 dotenv.config();
 

@@ -1,4 +1,4 @@
-import { listApprovedPrompts } from "../../lib/historyStore";
+import { listApprovedPrompts } from "../../lib/historyStore.js";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "GET") {

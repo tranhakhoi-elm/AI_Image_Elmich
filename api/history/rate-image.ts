@@ -1,4 +1,4 @@
-import { rateImageRecord } from "../../lib/historyStore";
+import { rateImageRecord } from "../../lib/historyStore.js";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {

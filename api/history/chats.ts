@@ -1,4 +1,4 @@
-import { saveChatSession, listChatSessions, deleteChatSession } from "../../lib/historyStore";
+import { saveChatSession, listChatSessions, deleteChatSession } from "../../lib/historyStore.js";
 
 export default async function handler(req: any, res: any) {
   try {

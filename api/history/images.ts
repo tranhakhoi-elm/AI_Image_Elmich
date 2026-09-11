@@ -1,4 +1,4 @@
-import { saveImageRecord, listImageRecords, deleteImageRecord } from "../../lib/historyStore";
+import { saveImageRecord, listImageRecords, deleteImageRecord } from "../../lib/historyStore.js";
 
 export default async function handler(req: any, res: any) {
   try {
