@@ -43,6 +43,8 @@ import { PackagingCheckWorkflow } from './src/components/workflows/PackagingChec
 import { TranslatePackagingWorkflow } from './src/components/workflows/TranslatePackagingWorkflow';
 import { LineArtWorkflow } from './src/components/workflows/LineArtWorkflow';
 import { PackagingMockupWorkflow } from './src/components/workflows/PackagingMockupWorkflow';
+import { TechEffectsWorkflow } from './src/components/workflows/TechEffectsWorkflow';
+import { Render3DToPhotoWorkflow } from './src/components/workflows/Render3DToPhotoWorkflow';
 import { ChatView } from './src/components/chat/ChatView';
 import { Header } from './src/components/common/Header';
 import { HandbookModal } from './src/components/common/HandbookModal';
@@ -1476,79 +1478,9 @@ const App: React.FC = () => {
   // bên dưới, tìm '<PackagingMockupWorkflow').
 
   // 6. Xử lý chữ ký hình ảnh Workflow (Tech Effects)
-  const renderTechEffectsWorkflow = () => (
-    <div className="space-y-6">
-      <StepIndicator current={techEffectStep} total={2} labels={['Chế độ', 'Xuất bản']} />
-      
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={techEffectStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-6"
-        >
-          {techEffectStep === 0 && (
-            <div className="space-y-4">
-              <label className="block text-[10px] font-bold text-white uppercase">Chọn chế độ xử lý</label>
-              <div className="flex gap-2">
-                 <button onClick={() => { setSettings({...settings, techEffectType: 'REMOVE_SIGNATURE'}); setTechEffectStep(1); }} className={`flex-1 py-4 rounded-xl text-[10px] font-bold border transition-all ${settings.techEffectType === 'REMOVE_SIGNATURE' ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-[#242526] shadow-sm text-white border-[#3E4042] text-white hover:bg-[#3A3B3C]'}`}>Xóa chữ ký</button>
-                 <button onClick={() => { setSettings({...settings, techEffectType: 'SEA_TECH_GENERATION'}); setTechEffectStep(1); }} className={`flex-1 py-4 rounded-xl text-[10px] font-bold border transition-all ${settings.techEffectType === 'SEA_TECH_GENERATION' ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-[#242526] shadow-sm text-white border-[#3E4042] text-white hover:bg-[#3A3B3C]'}`}>Biển đêm</button>
-              </div>
-            </div>
-          )}
-
-          {techEffectStep === 1 && (
-            <div className="space-y-4">
-              {settings.techEffectType === 'REMOVE_SIGNATURE' ? (
-                <div className="space-y-4">
-                   <label className="block text-[10px] font-bold text-white uppercase">Ảnh cần xử lý</label>
-                   <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
-                     {settings.referenceImage ? <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh</span>}
-                   </FileDropzone>
-                   <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
-                   {renderModelSelection()}
-                   <div className="flex gap-2">
-                     <button onClick={() => setTechEffectStep(0)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                     <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
-                   </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                   <input type="text" placeholder="Tên SP..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-                   <input type="text" placeholder="Tiêu đề..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.techTitle} onChange={e => setSettings({...settings, techTitle: e.target.value})} />
-                   <div className="flex gap-2">
-                     <button onClick={() => setTechEffectStep(0)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                     <button onClick={handleSeaConceptSuggestion} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Concept</button>
-                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {techEffectStep === 3 && (
-            <div className="space-y-4">
-               <label className="block text-[10px] font-bold text-white uppercase">Chọn Concept</label>
-               <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
-                 {suggestions.concepts.map((c, idx) => (
-                   <button key={idx} onClick={() => setSettings({...settings, selectedTechConcept: c.prompt})} className={`w-full text-left p-3 rounded-xl border transition-all ${settings.selectedTechConcept === c.prompt ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'bg-[#242526] shadow-sm text-white border-[#3E4042] text-white hover:bg-[#3A3B3C]'}`}>
-                     <div className="font-bold text-[11px] mb-1">{c.title}</div>
-                     <div className="text-[10px] leading-relaxed opacity-80 whitespace-pre-line">{c.prompt}</div>
-                   </button>
-                 ))}
-               </div>
-               {renderModelSelection()}
-               <div className="flex gap-2">
-                 <button onClick={() => setTechEffectStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                 <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>
-               </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
+  // renderTechEffectsWorkflow được tách sang
+  // src/components/workflows/TechEffectsWorkflow.tsx (xem dispatch JSX
+  // bên dưới, tìm '<TechEffectsWorkflow').
 
   // 7. Làm ảnh nền trắng Workflow (White BG Retouch)
   const renderWhiteBgRetouchWorkflow = () => (
@@ -1707,123 +1639,9 @@ const App: React.FC = () => {
   );
 
   // 3D Render sang Ảnh thật Workflow
-  const render3DRenderToPhotoWorkflow = () => (
-    <div className="space-y-6">
-      <StepIndicator current={render3DStep} total={2} labels={['Dữ liệu & Chất liệu', 'Kích thước & Tạo ảnh']} />
-      
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={render3DStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-6"
-        >
-          {render3DStep === 1 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Tên Sản Phẩm (Bắt buộc)</label>
-                <input type="text" placeholder="Ví dụ: Nồi inox 304, Sofa da..." className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-              </div>
-              
-              <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Mô tả đặc tính vật liệu (Quan trọng để khử CGI)</label>
-                <textarea 
-                  rows={3}
-                  placeholder="Ví dụ: Inox xước hairline mờ, tay cầm nhựa nhám, nắp kính cường lực..."
-                  className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#1877F2] resize-none transition-all placeholder:text-gray-500"
-                  value={settings.whiteBGMaterialsDescription || ''}
-                  onChange={e => setSettings({...settings, whiteBGMaterialsDescription: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh 3D Render gốc</label>
-                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
-                   {settings.referenceImage ? (
-                     <>
-                       <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                       <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
-                     </>
-                   ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh 3D gốc</span>}
-                </FileDropzone>
-                <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
-              </div>
-
-              <button 
-                type="button"
-                disabled={!settings.referenceImage || isAnalyzingMaterial} 
-                onClick={async (e) => {
-                  e.preventDefault();
-                  if (!settings.referenceImage) return;
-                  setIsAnalyzingMaterial(true);
-                  try {
-                    const result = await analyzeProductMaterials(settings.referenceImage);
-                    setSettings(s => ({
-                      ...s,
-                      whiteBGSelectedCategories: result.categories,
-                      whiteBGMaterialsDescription: result.description
-                    }));
-                  } catch (err: any) {
-                    console.error("Auto analyze failed:", err);
-                    setAlertMessage("Lỗi phân tích chất liệu. Vui lòng thử lại.");
-                  } finally {
-                    setIsAnalyzingMaterial(false);
-                  }
-                }}
-                className="w-full py-2 bg-[#2A2B2C] border border-[#1877F2]/30 text-[#1877F2] font-bold rounded-xl text-xs hover:bg-[#1877F2]/10 transition-all flex items-center justify-center gap-2"
-              >
-                {isAnalyzingMaterial ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
-                {isAnalyzingMaterial ? 'Đang phân tích chất liệu...' : '✨ Tự động nhận diện chất liệu bằng AI'}
-              </button>
-              
-              <button 
-                type="button"
-                disabled={!settings.referenceImage || !settings.productName} 
-                onClick={() => setRender3DStep(2)} 
-                className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
-              >
-                Tiếp tục
-              </button>
-            </div>
-          )}
-
-          {render3DStep === 2 && (
-            <div className="space-y-4">
-              <div>
-                 <label className="block text-[9px] font-bold text-white uppercase mb-2">Tỷ lệ khung hình</label>
-                 <select className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
-                    <option value="1:1" className="bg-[#242526]">1:1 Vuông</option>
-                    <option value="4:3" className="bg-[#242526]">4:3 Catalog</option>
-                    <option value="3:4" className="bg-[#242526]">3:4 Portrait</option>
-                    <option value="16:9" className="bg-[#242526]">16:9 HD</option>
-                    <option value="9:16" className="bg-[#242526]">9:16</option>
-                 </select>
-              </div>
-
-              <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Các chỉnh sửa ưu tiên (Tùy chọn)</label>
-                <textarea 
-                  placeholder="Ví dụ: Tăng thêm độ xước cho inox, làm ánh sáng gắt hơn..." 
-                  className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors resize-none h-20" 
-                  value={settings.whiteBGPriorityAdjustments || ''} 
-                  onChange={e => setSettings({...settings, whiteBGPriorityAdjustments: e.target.value})} 
-                />
-              </div>
-
-              {renderModelSelection()}
-
-              <div className="flex gap-2 mb-4">
-                <button onClick={() => setRender3DStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
-                <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Tạo ảnh</button>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
+  // render3DRenderToPhotoWorkflow được tách sang
+  // src/components/workflows/Render3DToPhotoWorkflow.tsx (xem dispatch JSX
+  // bên dưới, tìm '<Render3DToPhotoWorkflow').
 
   // 7.6 Chuyển thành Line Art
   
@@ -2494,9 +2312,32 @@ const renderTrackSocketWorkflow = () => (
                    startGeneration={startGeneration}
                  />
                )}
-               {settings.visualStyle === 'TECH_EFFECTS' && renderTechEffectsWorkflow()}
+               {settings.visualStyle === 'TECH_EFFECTS' && (
+                 <TechEffectsWorkflow
+                   settings={settings}
+                   setSettings={setSettings}
+                   techEffectStep={techEffectStep}
+                   setTechEffectStep={setTechEffectStep}
+                   concepts={suggestions.concepts}
+                   onImageUpload={onImageUpload}
+                   handleSeaConceptSuggestion={handleSeaConceptSuggestion}
+                   startGeneration={startGeneration}
+                 />
+               )}
                {settings.visualStyle === 'WHITE_BG_RETOUCH' && renderWhiteBgRetouchWorkflow()}
-               {settings.visualStyle === '3D_TO_REAL_WHITE_BG' && render3DRenderToPhotoWorkflow()}
+               {settings.visualStyle === '3D_TO_REAL_WHITE_BG' && (
+                 <Render3DToPhotoWorkflow
+                   settings={settings}
+                   setSettings={setSettings}
+                   render3DStep={render3DStep}
+                   setRender3DStep={setRender3DStep}
+                   onImageUpload={onImageUpload}
+                   isAnalyzingMaterial={isAnalyzingMaterial}
+                   setIsAnalyzingMaterial={setIsAnalyzingMaterial}
+                   setAlertMessage={setAlertMessage}
+                   startGeneration={startGeneration}
+                 />
+               )}
                {settings.visualStyle === 'LINE_ART' && (
                  <LineArtWorkflow
                    settings={settings}
