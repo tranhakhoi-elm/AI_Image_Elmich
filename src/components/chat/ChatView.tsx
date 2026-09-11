@@ -68,6 +68,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [chatImageQuality, setChatImageQuality] = useState('1K');
   
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  // Chỉ tin nhắn VỪA được tạo trong phiên component hiện tại mới chạy hiệu
+  // ứng gõ chữ. Khởi tạo là null mỗi khi ChatView mount lại (chuyển tab,
+  // đổi đoạn chat) nên tin nhắn cũ không bị "gõ lại" từ đầu mỗi lần vào.
+  const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
 
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -181,6 +185,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
     } finally {
       setIsChatLoading(false);
     }
+
+    // Chỉ tin nhắn vừa nhận trong lượt gửi NÀY mới chạy hiệu ứng gõ chữ.
+    setTypingMessageId(finalMsg.id);
 
     // Ghi lịch sử dùng chung (bắn-và-quên, không chặn UI nếu backend chưa cấu hình)
     logChatSession({
@@ -360,7 +367,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               </p>
             </div>
           )}
-          {chatMessages.map((msg, index) => (
+          {chatMessages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group max-w-full`}>
               {msg.role === 'model' && (
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1877F2] to-cyan-500 text-white flex-shrink-0 flex items-center justify-center font-bold text-[11px] mr-3 font-sans shadow-md border-2 border-white">
@@ -371,7 +378,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 msg.role === 'user' ? 'bg-[#1877F2] text-white rounded-br-sm' : 'bg-[#18191A] text-white rounded-bl-sm border border-[#3A3B3C]'
               }`}>
                 <span className="leading-relaxed whitespace-pre-wrap">
-                  {msg.role === 'model' && index === chatMessages.length - 1 ? (
+                  {msg.role === 'model' && msg.id === typingMessageId ? (
                     <TypingEffect text={msg.text} />
                   ) : (
                     msg.text
