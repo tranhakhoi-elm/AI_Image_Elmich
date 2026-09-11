@@ -5,10 +5,14 @@ import {
   Wand2, 
   Send, 
   X, 
-  Image as ImageIcon 
+  Image as ImageIcon,
+  MessageSquare,
+  Plus,
+  Menu
 } from 'lucide-react';
 import { ChatMessage, ChatSession } from '../../../types';
 import { generateImageForChat, chatWithAI } from '../../../services/geminiService';
+import { logChatSession, logGeneratedImage } from '../../../services/historyService';
 
 const TypingEffect: React.FC<{ text: string }> = ({ text }) => {
   const [displayedText, setDisplayedText] = useState("");
@@ -74,6 +78,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
     scrollToBottom();
   }, [chatMessages]);
 
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   const handleSendMessage = async () => {
     if ((!chatInput.trim() && !chatInputImageBase64) || isChatLoading) return;
     
@@ -85,16 +91,22 @@ export const ChatView: React.FC<ChatViewProps> = ({
     };
     
     let targetSessionId = activeSessionId;
+    let currentSessionTitle = 'Đoạn chat mới';
+
     if (!targetSessionId) {
       targetSessionId = Date.now().toString();
+      currentSessionTitle = chatInput.trim().slice(0, 30) || 'Đoạn chat mới';
       setActiveSessionId(targetSessionId);
-      setChatSessions(prev => [{ 
-        id: targetSessionId!, 
-        title: chatInput.trim().slice(0, 30) || 'Đoạn chat mới', 
+      const newSession: ChatSession = { 
+        id: targetSessionId, 
+        title: currentSessionTitle, 
         messages: [newUserMsg], 
         timestamp: Date.now() 
-      }, ...prev]);
+      };
+      setChatSessions(prev => [newSession, ...prev]);
     } else {
+      const existing = chatSessions.find(s => s.id === targetSessionId);
+      if (existing) currentSessionTitle = existing.title;
       setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { 
         ...s, 
         messages: [...s.messages, newUserMsg], 
@@ -124,6 +136,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
           text: 'Đây là hình ảnh của bạn:', 
           imageUrl 
         };
+
+        // Also log image to shared history
+        logGeneratedImage({
+          url: imageUrl,
+          prompt: fullPrompt,
+          productName: 'Trợ lý Chat AI',
+          visualStyle: 'CONCEPT',
+          aspectRatio: chatImageAspectRatio,
+          imageSize: chatImageQuality,
+          timestamp: Date.now()
+        }).catch(err => console.warn('Could not log chat image:', err));
       } else {
         const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
         const messagesToSend = [...currentMsgs, newUserMsg];
@@ -135,11 +158,22 @@ export const ChatView: React.FC<ChatViewProps> = ({
           text: replyText 
         };
       }
-      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { 
-        ...s, 
-        messages: [...s.messages, newModelMsg], 
-        timestamp: Date.now() 
-      } : s));
+
+      const currentMsgs = (chatSessions.find(s => s.id === targetSessionId)?.messages || []);
+      const finalMessages = [...currentMsgs, newUserMsg, newModelMsg];
+      const updatedSessionRecord = {
+        id: targetSessionId,
+        title: currentSessionTitle,
+        messages: finalMessages,
+        timestamp: Date.now()
+      };
+
+      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? updatedSessionRecord : s));
+
+      // Persist to shared backend
+      logChatSession(updatedSessionRecord).catch(err => {
+        console.warn('Could not persist chat session to server:', err);
+      });
     } catch (e: any) {
       const errorMsg: ChatMessage = { 
         id: Date.now().toString() + 'e', 
@@ -174,58 +208,122 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   return (
     <main className="flex-1 flex max-w-[1920px] mx-auto w-full relative bg-[#242526]">
-      {/* Session Sidebar */}
-      <aside className="w-[300px] border-r border-[#3E4042] bg-[#242526] flex flex-col h-full hidden md:flex shrink-0">
+      {/* Mobile Drawer Backdrop */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Session Sidebar (Desktop & Mobile Drawer) */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-[300px] bg-[#242526] border-r border-[#3E4042] flex flex-col h-full shrink-0 transition-transform duration-300
+        md:static md:translate-x-0
+        ${isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="p-4 border-b border-[#3E4042] flex items-center justify-between">
-          <h2 className="font-bold text-white text-lg">Lịch sử chat</h2>
-          <button onClick={handleNewChat} className="p-2 rounded-full hover:bg-[#18191A] text-[#1877F2]" title="Tạo đoạn chat mới">
-            <Zap size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <MessageSquare size={18} className="text-[#1877F2]" />
+            <h2 className="font-bold text-white text-base">Lịch sử chat</h2>
+          </div>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => {
+                handleNewChat();
+                setIsMobileSidebarOpen(false);
+              }} 
+              className="p-2 rounded-full hover:bg-[#18191A] text-[#1877F2] transition-colors" 
+              title="Tạo đoạn chat mới"
+            >
+              <Plus size={20} />
+            </button>
+            <button 
+              onClick={() => setIsMobileSidebarOpen(false)} 
+              className="p-2 rounded-full hover:bg-[#18191A] text-gray-400 hover:text-white md:hidden transition-colors" 
+              title="Đóng menu"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-1">
-          {chatSessions.map(s => (
-            <div
-              key={s.id}
-              onClick={() => setActiveSessionId(s.id)}
-              className={`w-full text-left p-3 rounded-xl transition-colors cursor-pointer group flex items-start justify-between ${
-                activeSessionId === s.id ? 'bg-[#3A3B3C] font-semibold text-white' : 'text-white hover:bg-[#18191A]'
-              }`}
-            >
-              <div className="flex-1 overflow-hidden pr-2">
-                <div className="text-[15px] truncate">{s.title}</div>
-                <div className="text-[11px] text-gray-400 mt-1">{new Date(s.timestamp).toLocaleDateString('vi-VN')}</div>
-              </div>
-              <button 
-                onClick={(e) => handleDeleteSession(s.id, e)}
-                className={`p-1.5 rounded-full hover:bg-black/10 transition-colors ${
-                  activeSessionId === s.id ? 'opacity-100 text-red-400' : 'opacity-0 text-red-400 group-hover:opacity-100'
-                }`}
-                title="Xóa đoạn chat này"
-              >
-                <Trash2 size={16} />
-              </button>
+          {chatSessions.length === 0 ? (
+            <div className="p-4 text-center text-xs text-gray-400">
+              Chưa có đoạn chat nào. Bắt đầu nhắn tin để lưu lịch sử!
             </div>
-          ))}
+          ) : (
+            chatSessions.map(s => (
+              <div
+                key={s.id}
+                onClick={() => {
+                  setActiveSessionId(s.id);
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full text-left p-3 rounded-xl transition-colors cursor-pointer group flex items-start justify-between ${
+                  activeSessionId === s.id ? 'bg-[#3A3B3C] font-semibold text-white' : 'text-white hover:bg-[#18191A]'
+                }`}
+              >
+                <div className="flex-1 overflow-hidden pr-2">
+                  <div className="text-[14px] truncate">{s.title}</div>
+                  <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-2">
+                    <span>{new Date(s.timestamp).toLocaleDateString('vi-VN')}</span>
+                    <span>•</span>
+                    <span>{s.messages?.length || 0} tin nhắn</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={(e) => handleDeleteSession(s.id, e)}
+                  className={`p-1.5 rounded-full hover:bg-black/10 transition-colors ${
+                    activeSessionId === s.id ? 'opacity-100 text-red-400' : 'opacity-0 text-red-400 group-hover:opacity-100'
+                  }`}
+                  title="Xóa đoạn chat này"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </aside>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-screen bg-[#242526] text-white">
-        <div className="px-6 py-3 border-b border-[#3E4042] flex items-center justify-between bg-[#242526] z-10 shrink-0 shadow-sm">
-          <div>
-            <h2 className="font-bold text-xl">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
-            <div className="flex items-center gap-4 mt-2">
+      <div className="flex-1 flex flex-col h-screen bg-[#242526] text-white min-w-0">
+        <div className="px-4 md:px-6 py-3 border-b border-[#3E4042] flex items-center justify-between bg-[#242526] z-10 shrink-0 shadow-sm">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-2 rounded-xl bg-[#18191A] border border-[#3E4042] text-gray-300 hover:text-white shrink-0"
+              title="Xem danh sách chat"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-white font-semibold">Chế độ:</span>
-                <select 
-                  value={chatMode}
-                  onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
-                  className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
+                <h2 className="font-bold text-base md:text-xl truncate">
+                  {activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}
+                </h2>
+                <button
+                  onClick={handleNewChat}
+                  className="hidden sm:inline-flex items-center gap-1 text-[11px] bg-[#18191A] border border-[#3E4042] hover:border-[#1877F2] text-gray-300 hover:text-white px-2.5 py-1 rounded-lg transition-colors shrink-0"
+                  title="Tạo đoạn chat mới"
                 >
-                  <option value="chat">Chat & Tư vấn</option>
-                  <option value="image">Tạo ảnh AI</option>
-                </select>
+                  <Plus size={12} className="text-[#1877F2]" />
+                  <span>Đoạn chat mới</span>
+                </button>
               </div>
+              <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-semibold">Chế độ:</span>
+                  <select 
+                    value={chatMode}
+                    onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
+                    className="bg-[#18191A] border border-[#3E4042] rounded-md px-2.5 py-1 text-xs outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
+                  >
+                    <option value="chat">Chat & Tư vấn</option>
+                    <option value="image">Tạo ảnh AI</option>
+                  </select>
+                </div>
               
               {chatMode === 'image' && (
                 <>
@@ -260,6 +358,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
             </div>
           </div>
         </div>
+      </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:px-24 xl:px-48 flex flex-col gap-6 custom-scrollbar text-[15px]">
           {chatMessages.length === 0 && (

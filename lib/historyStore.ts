@@ -1,4 +1,4 @@
-import { getFirestore, getStorage, getGCSBucketName } from './googleCloud';
+import { getFirestore, getStorage, getGCSBucketName } from './googleCloud.ts';
 import crypto from 'crypto';
 
 export interface ImageHistoryRecord {
@@ -207,13 +207,75 @@ export async function saveChatSession(data: any): Promise<{ id: string; success:
   const db = getFirestore();
   if (db) {
     try {
-      await db.collection('elmich_history_chats').doc(id).set(record);
+      // Process messages: if any message has base64 image > 300KB, upload to GCS or truncate to prevent Firestore 1MB document limit
+      const sanitizedMessages = await Promise.all(
+        (data.messages || []).map(async (msg: any) => {
+          const m = { ...msg };
+          if (m.uploadedImageUrl && typeof m.uploadedImageUrl === 'string' && m.uploadedImageUrl.startsWith('data:image/')) {
+            const gcsUrl = await uploadBase64ToGCS(m.uploadedImageUrl, 'chat');
+            if (gcsUrl) {
+              m.uploadedImageUrl = gcsUrl;
+            } else if (m.uploadedImageUrl.length > 500000) {
+              m.uploadedImageUrl = m.uploadedImageUrl.substring(0, 100) + '...[truncated]';
+            }
+          }
+          if (m.imageUrl && typeof m.imageUrl === 'string' && m.imageUrl.startsWith('data:image/')) {
+            const gcsUrl = await uploadBase64ToGCS(m.imageUrl, 'chat');
+            if (gcsUrl) {
+              m.imageUrl = gcsUrl;
+            } else if (m.imageUrl.length > 500000) {
+              m.imageUrl = m.imageUrl.substring(0, 100) + '...[truncated]';
+            }
+          }
+          return m;
+        })
+      );
+
+      const firestoreRecord = {
+        ...record,
+        messages: sanitizedMessages,
+      };
+
+      await db.collection('elmich_history_chats').doc(id).set(firestoreRecord);
     } catch (err: any) {
       console.warn("Firestore error saving chat session:", err.message);
     }
   }
 
   return { id, success: true };
+}
+
+/**
+ * Delete chat session from Firestore and in-memory fallback
+ */
+export async function deleteChatSession(id: string): Promise<{ success: boolean }> {
+  inMemoryChats.delete(id);
+  const db = getFirestore();
+  if (db) {
+    try {
+      await db.collection('elmich_history_chats').doc(id).delete();
+    } catch (err: any) {
+      console.warn("Firestore error deleting chat session:", err.message);
+    }
+  }
+  return { success: true };
+}
+
+/**
+ * Delete image record from Firestore and in-memory fallback
+ */
+export async function deleteImageRecord(id: string): Promise<{ success: boolean }> {
+  const idx = inMemoryImages.findIndex(img => img.id === id);
+  if (idx !== -1) inMemoryImages.splice(idx, 1);
+  const db = getFirestore();
+  if (db) {
+    try {
+      await db.collection('elmich_history_images').doc(id).delete();
+    } catch (err: any) {
+      console.warn("Firestore error deleting image record:", err.message);
+    }
+  }
+  return { success: true };
 }
 
 /**

@@ -15,10 +15,19 @@ import {
   Sparkles, 
   Filter,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Trash2,
+  Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { fetchImageHistory, fetchChatHistory, ImageHistoryItem, ChatHistoryItem } from '../../../services/historyService';
+import { 
+  fetchImageHistory, 
+  fetchChatHistory, 
+  deleteChatFromServer, 
+  deleteImageFromServer, 
+  ImageHistoryItem, 
+  ChatHistoryItem 
+} from '../../../services/historyService';
 
 const STYLE_NAMES: Record<string, string> = {
   'CONCEPT': 'Concept Lifestyle',
@@ -37,7 +46,11 @@ const STYLE_NAMES: Record<string, string> = {
   'PACKAGING_CHECK': 'Kiểm duyệt Bao bì'
 };
 
-export const HistoryView: React.FC = () => {
+export interface HistoryViewProps {
+  onSelectChat?: (sessionId: string, session?: ChatHistoryItem) => void;
+}
+
+export const HistoryView: React.FC<HistoryViewProps> = ({ onSelectChat }) => {
   const [activeTab, setActiveTab] = useState<'images' | 'chats'>('images');
   const [images, setImages] = useState<ImageHistoryItem[]>([]);
   const [chats, setChats] = useState<ChatHistoryItem[]>([]);
@@ -49,6 +62,26 @@ export const HistoryView: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<ImageHistoryItem | null>(null);
   const [selectedChat, setSelectedChat] = useState<ChatHistoryItem | null>(null);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+
+  const handleDeleteImage = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!window.confirm('Bạn có chắc muốn xóa ảnh này khỏi lịch sử dùng chung?')) return;
+    const ok = await deleteImageFromServer(id);
+    if (ok) {
+      setImages(prev => prev.filter(img => img.id !== id));
+      if (selectedImage?.id === id) setSelectedImage(null);
+    }
+  };
+
+  const handleDeleteChat = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!window.confirm('Bạn có chắc muốn xóa đoạn chat này khỏi lịch sử dùng chung?')) return;
+    const ok = await deleteChatFromServer(id);
+    if (ok) {
+      setChats(prev => prev.filter(c => c.id !== id));
+      if (selectedChat?.id === id) setSelectedChat(null);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -198,8 +231,15 @@ export const HistoryView: React.FC = () => {
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <span className="text-xs bg-[#1877F2] text-white px-2.5 py-1 rounded-full font-bold shadow-md flex items-center gap-1">
-                        <Sparkles size={11} /> Xem chi tiết
+                        <Sparkles size={11} /> Chi tiết
                       </span>
+                      <button
+                        onClick={(e) => handleDeleteImage(img.id, e)}
+                        className="p-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-colors shadow-md"
+                        title="Xóa ảnh khỏi lịch sử"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
 
                     {/* Style Tag Badge */}
@@ -271,7 +311,16 @@ export const HistoryView: React.FC = () => {
                       <h4 className="font-bold text-white text-sm group-hover:text-[#1877F2] transition-colors line-clamp-2">
                         {c.title || 'Đoạn chat không tên'}
                       </h4>
-                      <ChevronRight size={16} className="text-gray-500 group-hover:text-white shrink-0 mt-0.5" />
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={(e) => handleDeleteChat(c.id, e)}
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#18191A] transition-colors opacity-0 group-hover:opacity-100"
+                          title="Xóa đoạn chat này"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <ChevronRight size={16} className="text-gray-500 group-hover:text-white mt-0.5" />
+                      </div>
                     </div>
                     <p className="text-xs text-gray-400 line-clamp-2">
                       {c.messages && c.messages.length > 0 
@@ -427,6 +476,13 @@ export const HistoryView: React.FC = () => {
                       <ExternalLink size={16} />
                     </a>
                   )}
+                  <button
+                    onClick={() => handleDeleteImage(selectedImage.id)}
+                    className="p-3 bg-[#18191A] hover:bg-red-900/30 text-gray-400 hover:text-red-400 rounded-xl border border-[#3E4042] hover:border-red-500/40 flex items-center justify-center transition-colors"
+                    title="Xóa ảnh này khỏi lịch sử"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -499,6 +555,30 @@ export const HistoryView: React.FC = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-4 border-t border-[#3E4042] flex items-center justify-between bg-[#242526] gap-3">
+                <button
+                  onClick={() => handleDeleteChat(selectedChat.id)}
+                  className="px-3.5 py-2 rounded-xl text-xs text-gray-400 hover:text-red-400 hover:bg-[#18191A] border border-[#3E4042] flex items-center gap-1.5 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  <span>Xóa đoạn chat</span>
+                </button>
+
+                {onSelectChat && (
+                  <button
+                    onClick={() => {
+                      onSelectChat(selectedChat.id, selectedChat);
+                      setSelectedChat(null);
+                    }}
+                    className="px-4 py-2 bg-[#1877F2] hover:bg-blue-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-colors shadow-md"
+                  >
+                    <MessageSquare size={14} />
+                    <span>Mở trong Trợ lý Chat</span>
+                  </button>
+                )}
               </div>
             </motion.div>
           </motion.div>

@@ -112,3 +112,33 @@ export async function fetchChatHistory(params?: { limit?: number; cursor?: strin
     return { items: [] };
   }
 }
+
+/**
+ * Delete chat session from server
+ */
+export async function deleteChatFromServer(id: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/history/chats/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    return response.ok;
+  } catch (error: any) {
+    console.warn("Could not delete chat session on server:", error.message);
+    return false;
+  }
+}
+
+/**
+ * Delete image record from server
+ */
+export async function deleteImageFromServer(id: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/history/images/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    return response.ok;
+  } catch (error: any) {
+    console.warn("Could not delete image record on server:", error.message);
+    return false;
+  }
+}

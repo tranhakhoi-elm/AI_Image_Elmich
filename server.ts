@@ -6,9 +6,11 @@ import {
   createUploadUrl,
   saveImageRecord,
   listImageRecords,
+  deleteImageRecord,
   saveChatSession,
   listChatSessions,
-} from "./lib/historyStore";
+  deleteChatSession,
+} from "./lib/historyStore.ts";
 
 dotenv.config();
 
@@ -226,6 +228,28 @@ app.get("/api/history/chats", async (req: any, res: any) => {
   } catch (error: any) {
     console.error("Error listing chat history:", error.message);
     res.status(200).json({ success: false, error: error.message, items: [] });
+  }
+});
+
+app.delete("/api/history/chats/:id", async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const result = await deleteChatSession(id);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error deleting chat session:", error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+app.delete("/api/history/images/:id", async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const result = await deleteImageRecord(id);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error deleting image record:", error.message);
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 

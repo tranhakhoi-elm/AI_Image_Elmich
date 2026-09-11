@@ -54,7 +54,7 @@ import {
   TONE_STYLES
 } from './constants';
 import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
-import { logGeneratedImage } from './services/historyService';
+import { logGeneratedImage, fetchChatHistory, deleteChatFromServer } from './services/historyService';
 
 const initialSettings: GenerationSettings = {
   productName: '',
@@ -338,16 +338,34 @@ const App: React.FC = () => {
     import('localforage').then((m) => {
       const lf = m.default || m;
       lf.getItem('elmich_ai_chat_sessions').then((saved) => {
+        let hasLocal = false;
         if (saved) {
           const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved as import('./types').ChatSession[];
           const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-          setChatSessions(parsed.filter((s: any) => s.timestamp > oneWeekAgo));
+          const valid = parsed.filter((s: any) => s.timestamp > oneWeekAgo);
+          if (valid.length > 0) {
+            setChatSessions(valid);
+            setIsChatLoaded(true);
+            hasLocal = true;
+          }
         }
-        setIsChatLoaded(true);
+        if (!hasLocal) {
+          fetchChatHistory({ limit: 30 }).then(res => {
+            if (res.items && res.items.length > 0) {
+              setChatSessions(res.items);
+            }
+            setIsChatLoaded(true);
+          }).catch(() => setIsChatLoaded(true));
+        }
       });
     }).catch(e => {
-       console.error('Failed to load chat sessions', e);
-       setIsChatLoaded(true);
+       console.error('Failed to load chat sessions from localForage', e);
+       fetchChatHistory({ limit: 30 }).then(res => {
+         if (res.items && res.items.length > 0) {
+           setChatSessions(res.items);
+         }
+         setIsChatLoaded(true);
+       }).catch(() => setIsChatLoaded(true));
     });
   }, []);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -2811,6 +2829,9 @@ const renderTrackSocketWorkflow = () => (
     if (activeSessionId === sessionId) {
       setActiveSessionId(null);
     }
+    deleteChatFromServer(sessionId).catch(err => {
+      console.warn('Could not delete chat session from server:', err);
+    });
   };
 
   return (
@@ -3002,7 +3023,18 @@ const renderTrackSocketWorkflow = () => (
           handleDeleteSession={handleDeleteSession}
         />
       ) : (
-        <HistoryView />
+        <HistoryView 
+          onSelectChat={(sessionId, session) => {
+            if (session) {
+              setChatSessions(prev => {
+                if (prev.some(s => s.id === session.id)) return prev;
+                return [session, ...prev];
+              });
+            }
+            setActiveSessionId(sessionId);
+            setViewMode('chat');
+          }}
+        />
       )}
 
       {/* Feedback Modal */}
