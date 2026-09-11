@@ -337,18 +337,36 @@ chung Service Account đang có (mở rộng quyền, không tạo secret mới)
   desc`) cho tính năng gợi ý tự học ở mục 8.5 — Firestore tự đưa link tạo
   index (1 click) trong thông báo lỗi ở lần đầu chạy query nếu bạn chưa tạo
   trước, không bắt buộc phải làm ngay từ đầu.
-- **BẮT BUỘC: cấu hình CORS cho bucket.** Client upload ảnh **thẳng từ
-  trình duyệt** lên Cloud Storage bằng signed URL (mục 8.3) — đây là request
-  cross-origin (origin của app khác với `storage.googleapis.com`). Nếu
-  bucket chưa có CORS policy cho phép `PUT`/`Content-Type` từ origin của
-  app, trình duyệt sẽ CHẶN request này (lỗi chỉ hiện trong Console, bị nuốt
-  âm thầm bởi thiết kế fail-soft) — hậu quả: ảnh không bao giờ lưu được lên
-  Lịch sử dù Firestore/Storage đã cấu hình đúng. Chạy 1 lần bằng `gsutil`:
-  ```bash
-  echo '[{"origin": ["https://<domain-app-cua-ban>", "http://localhost:3000"], "method": ["PUT"], "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]' > cors.json
-  gsutil cors set cors.json gs://<ten-bucket-cua-ban>
-  ```
-  Thay `<domain-app-cua-ban>` bằng domain thật khi deploy (Vercel/production).
+- **CORS cho bucket — ĐÃ CẤU HÌNH (2026-09-11).** Client upload ảnh **thẳng
+  từ trình duyệt** lên Cloud Storage bằng signed URL (mục 8.3) — đây là
+  request cross-origin (origin của app khác với `storage.googleapis.com`).
+  Không có CORS policy thì trình duyệt sẽ CHẶN request này (lỗi chỉ hiện
+  trong Console, bị nuốt âm thầm bởi thiết kế fail-soft) — hậu quả: ảnh
+  không bao giờ lưu được lên Lịch sử dù Firestore/Storage đã đúng.
+  - Project: `buyer-api-491308`, bucket: `gs://elmich-ai-history`
+    (Firestore Native `asia-southeast1`, Service Account
+    `firebase-adminsdk-fbsvc@buyer-api-491308.iam.gserviceaccount.com` đã
+    có sẵn `roles/datastore.user` + `roles/storage.objectAdmin`).
+  - Policy hiện tại: `origin: ["*"]` (mọi domain), method `PUT`, header
+    `Content-Type`, `maxAgeSeconds: 3600`. Dùng `"*"` thay vì domain cụ thể
+    vì Vercel sinh domain preview ngẫu nhiên mỗi lần deploy và GCS CORS
+    không hỗ trợ wildcard dạng `*.vercel.app` — lớp bảo vệ thật sự vẫn là
+    signed URL có thời hạn (mục 8.3–8.4), CORS chỉ quyết định trang nào
+    được phép đọc response, không phải ai được phép truy cập. Nếu sau này
+    có 1 domain production cố định, nên thu hẹp lại bằng lệnh dưới.
+  - Lệnh đã chạy (dùng lại khi cần đổi domain hoặc bucket khác):
+    ```bash
+    gsutil cors set cors.json gs://elmich-ai-history
+    gsutil cors get gs://elmich-ai-history   # xác nhận lại
+    ```
+  - **Quan sát bảo mật (chưa xử lý, cần bạn quyết định):** service account
+    trên đang có thêm `roles/owner` ở project `buyer-api-491308` (rộng hơn
+    nhiều so với 2 quyền thực sự cần dùng) — rủi ro nếu
+    `GOOGLE_SERVICE_ACCOUNT_JSON` bị lộ thì kẻ tấn công có toàn quyền trên
+    cả project, không chỉ Firestore/Storage. Đây là cấu hình có sẵn từ
+    trước (không phải do tính năng Lịch sử tạo ra), nên không tự ý thu hẹp
+    — có thể ảnh hưởng tích hợp khác (Firebase/Sheets) đang dùng chung
+    service account này.
 
 ### 8.2. Module & route mới
 
