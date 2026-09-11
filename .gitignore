@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# AI coding tool local config/scratch (not project source)
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

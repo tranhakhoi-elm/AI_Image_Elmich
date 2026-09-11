@@ -1,6 +1,81 @@
-export interface ImageHistoryInput {
-  url: string;
-  prompt: string;
+// Client-side helper cho tính năng "Lịch sử dùng chung" (server-side).
+// Mọi hàm ở đây được thiết kế để KHÔNG BAO GIỜ làm gián đoạn luồng chính
+// (tạo ảnh / chat) — lỗi mạng hay backend chưa cấu hình chỉ log ra console.
+import { ChatMessage, ChatSession } from '../types';
+
+export interface ImageHistoryRecord {
+  id: string;
+  productName?: string;
+  productCode?: string;
+  visualStyle?: string;
+  prompt?: string;
+  aspectRatio?: string;
+  imageSize?: string;
+  variant?: number;
+  costUSD?: number;
+  tokens?: number;
+  timestamp: number;
+  imageUrl: string | null;
+}
+
+export interface ChatHistoryMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  imageUrl?: string;
+  uploadedImageUrl?: string;
+}
+
+export interface ChatHistorySession {
+  id: string;
+  title: string;
+  timestamp: number;
+  messages: ChatHistoryMessage[];
+}
+
+interface HistoryListResponse<T> {
+  success: boolean;
+  items?: T[];
+  nextCursor?: string | null;
+  error?: string;
+}
+
+async function dataUriToBlob(dataUri: string): Promise<Blob> {
+  const response = await fetch(dataUri);
+  return response.blob();
+}
+
+/**
+ * Xin 1 signed URL rồi upload thẳng ảnh (base64 data URI) lên Cloud Storage,
+ * KHÔNG đi qua body của route backend — tránh giới hạn dung lượng request
+ * của Vercel Serverless Functions khi ảnh 2K/4K khá nặng.
+ */
+export async function uploadToHistoryStorage(dataUri: string, folder: 'images' | 'chat'): Promise<string> {
+  const blob = await dataUriToBlob(dataUri);
+  const contentType = blob.type || 'image/png';
+
+  const urlRes = await fetch('/api/history/upload-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folder, contentType }),
+  });
+  const urlData = await urlRes.json();
+  if (!urlData.success) throw new Error(urlData.error || 'Không lấy được upload URL.');
+
+  const putRes = await fetch(urlData.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': contentType },
+    body: blob,
+  });
+  if (!putRes.ok) throw new Error(`Upload ảnh lên Storage thất bại (HTTP ${putRes.status}).`);
+
+  return urlData.path as string;
+}
+
+export interface LogImageParams {
+  id: string; // trùng với GeneratedImage.id trong gallery cục bộ — dùng làm doc id trên server để có thể "đánh giá" (rate) đúng ảnh này sau này
+  url: string; // base64 data URI của ảnh kết quả
+  prompt?: string;
   productName?: string;
   productCode?: string;
   visualStyle?: string;
@@ -8,137 +83,169 @@ export interface ImageHistoryInput {
   imageSize?: string;
   variant?: number;
   costUSD?: number;
+  tokens?: number;
   timestamp?: number;
 }
 
-export interface ImageHistoryItem extends ImageHistoryInput {
-  id: string;
-  timestamp: number;
-  createdAt?: string;
-}
-
-export interface ChatHistoryItem {
-  id: string;
-  title: string;
-  timestamp: number;
-  messages: any[];
-  updatedAt?: string;
-}
-
-/**
- * Log a generated or edited image to the shared history backend
- */
-export async function logGeneratedImage(data: ImageHistoryInput): Promise<any> {
+/** Ghi 1 ảnh vừa tạo/sửa vào lịch sử dùng chung. Bắn-và-quên, không throw ra ngoài. */
+export async function logGeneratedImage(params: LogImageParams): Promise<void> {
   try {
-    const response = await fetch('/api/history/images', {
+    if (!params.url || !params.url.startsWith('data:')) return;
+    const gcsPath = await uploadToHistoryStorage(params.url, 'images');
+    const res = await fetch('/api/history/images', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...params, url: undefined, gcsPath }),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    const data = await res.json();
+    if (!data.success) {
+      console.warn('Ghi lịch sử ảnh thất bại (bỏ qua):', data.error);
     }
-    return await response.json();
-  } catch (error: any) {
-    console.warn("Could not log image history to server:", error.message);
-    return null;
+  } catch (err) {
+    console.error('Không ghi được lịch sử ảnh (bỏ qua, không ảnh hưởng luồng chính):', err);
   }
 }
 
-/**
- * Fetch image history list from server
- */
-export async function fetchImageHistory(params?: { limit?: number; cursor?: string }): Promise<{ items: ImageHistoryItem[]; nextCursor?: string }> {
-  try {
-    const query = new URLSearchParams();
-    if (params?.limit) query.set('limit', String(params.limit));
-    if (params?.cursor) query.set('cursor', params.cursor);
+// Cache theo id tin nhắn trong phiên tab hiện tại, tránh upload lại ảnh của
+// các tin nhắn cũ mỗi lần phiên chat có tin nhắn mới.
+const chatImageUploadCache = new Map<string, { imageGcsPath?: string; uploadedImageGcsPath?: string }>();
 
-    const response = await fetch(`/api/history/images?${query.toString()}`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const data = await response.json();
-    return {
-      items: data.items || [],
-      nextCursor: data.nextCursor,
-    };
-  } catch (error: any) {
-    console.warn("Could not fetch image history:", error.message);
-    return { items: [] };
+async function messageToRecord(msg: ChatMessage) {
+  const cached = chatImageUploadCache.get(msg.id);
+  if (cached) {
+    return { id: msg.id, role: msg.role, text: msg.text, ...cached };
   }
+
+  const entry: { imageGcsPath?: string; uploadedImageGcsPath?: string } = {};
+  if (msg.imageUrl?.startsWith('data:')) {
+    try {
+      entry.imageGcsPath = await uploadToHistoryStorage(msg.imageUrl, 'chat');
+    } catch (err) {
+      console.error('Không upload được ảnh AI trong chat:', err);
+    }
+  }
+  if (msg.uploadedImageUrl?.startsWith('data:')) {
+    try {
+      entry.uploadedImageGcsPath = await uploadToHistoryStorage(msg.uploadedImageUrl, 'chat');
+    } catch (err) {
+      console.error('Không upload được ảnh người dùng tải lên trong chat:', err);
+    }
+  }
+
+  chatImageUploadCache.set(msg.id, entry);
+  return { id: msg.id, role: msg.role, text: msg.text, ...entry };
 }
 
-/**
- * Save chat session to shared history
- */
-export async function logChatSession(session: any): Promise<any> {
+/** Ghi/đè lại 1 phiên chat vào lịch sử dùng chung. Bắn-và-quên, không throw ra ngoài. */
+export async function logChatSession(session: ChatSession): Promise<void> {
   try {
-    const response = await fetch('/api/history/chats', {
+    const messages = await Promise.all(session.messages.map(messageToRecord));
+    const res = await fetch('/api/history/chats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(session),
+      body: JSON.stringify({ id: session.id, title: session.title, timestamp: session.timestamp, messages }),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    const data = await res.json();
+    if (!data.success) {
+      console.warn('Ghi lịch sử chat thất bại (bỏ qua):', data.error);
     }
-    return await response.json();
-  } catch (error: any) {
-    console.warn("Could not log chat history to server:", error.message);
-    return null;
+  } catch (err) {
+    console.error('Không ghi được lịch sử chat (bỏ qua, không ảnh hưởng luồng chính):', err);
   }
 }
 
 /**
- * Fetch chat sessions from shared history
+ * Gắn đánh giá "Rất tốt!" / "Không hẳn" vào 1 ảnh đã ghi lịch sử (đúng id
+ * đã dùng khi gọi logGeneratedImage). Bắn-và-quên, không throw ra ngoài —
+ * lỗi ở đây không được phép làm hỏng trải nghiệm tải ảnh của người dùng.
  */
-export async function fetchChatHistory(params?: { limit?: number; cursor?: string }): Promise<{ items: ChatHistoryItem[]; nextCursor?: string }> {
+export async function rateGeneratedImage(id: string, rating: 'good' | 'bad'): Promise<void> {
   try {
-    const query = new URLSearchParams();
-    if (params?.limit) query.set('limit', String(params.limit));
-    if (params?.cursor) query.set('cursor', params.cursor);
-
-    const response = await fetch(`/api/history/chats?${query.toString()}`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    if (!id) return;
+    const res = await fetch('/api/history/images/rate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, rating }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      console.warn('Không lưu được đánh giá ảnh (bỏ qua):', data.error);
     }
-    const data = await response.json();
-    return {
-      items: data.items || [],
-      nextCursor: data.nextCursor,
-    };
-  } catch (error: any) {
-    console.warn("Could not fetch chat history:", error.message);
-    return { items: [] };
+  } catch (err) {
+    console.error('Không gửi được đánh giá ảnh (bỏ qua, không ảnh hưởng luồng chính):', err);
   }
 }
 
+export interface ApprovedPromptHint {
+  id: string;
+  visualStyle?: string;
+  prompt?: string;
+  productName?: string;
+}
+
 /**
- * Delete chat session from server
+ * Lấy các prompt từng được đội ngũ đánh giá "Rất tốt!" cho 1 phong cách cụ
+ * thể — dùng làm gợi ý định hướng cho generateProductImage(). Luôn trả về
+ * mảng rỗng thay vì throw nếu backend chưa cấu hình hoặc lỗi mạng.
  */
-export async function deleteChatFromServer(id: string): Promise<boolean> {
+export async function fetchApprovedPromptHints(visualStyle?: string, limit = 3): Promise<ApprovedPromptHint[]> {
   try {
-    const response = await fetch(`/api/history/chats/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    });
-    return response.ok;
-  } catch (error: any) {
-    console.warn("Could not delete chat session on server:", error.message);
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (visualStyle) params.set('visualStyle', visualStyle);
+    const res = await fetch(`/api/history/images/approved?${params.toString()}`);
+    const data = await res.json();
+    if (!data.success) return [];
+    return data.items || [];
+  } catch (err) {
+    console.error('Không tải được gợi ý từ lịch sử đã duyệt (bỏ qua):', err);
+    return [];
+  }
+}
+
+/** Xóa 1 ảnh khỏi Lịch sử dùng chung. Trả về true/false, không throw. */
+export async function deleteGeneratedImage(id: string): Promise<boolean> {
+  try {
+    if (!id) return false;
+    const res = await fetch(`/api/history/images?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await res.json();
+    return !!data.success;
+  } catch (err) {
+    console.error('Không xóa được ảnh khỏi Lịch sử dùng chung:', err);
     return false;
   }
 }
 
-/**
- * Delete image record from server
- */
-export async function deleteImageFromServer(id: string): Promise<boolean> {
+/** Xóa 1 phiên chat khỏi Lịch sử dùng chung. Trả về true/false, không throw. */
+export async function deleteChatHistorySession(id: string): Promise<boolean> {
   try {
-    const response = await fetch(`/api/history/images/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    });
-    return response.ok;
-  } catch (error: any) {
-    console.warn("Could not delete image record on server:", error.message);
+    if (!id) return false;
+    const res = await fetch(`/api/history/chats?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await res.json();
+    return !!data.success;
+  } catch (err) {
+    console.error('Không xóa được đoạn chat khỏi Lịch sử dùng chung:', err);
     return false;
+  }
+}
+
+export async function fetchImageHistory(cursor?: string, limit = 30): Promise<HistoryListResponse<ImageHistoryRecord>> {
+  try {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set('cursor', cursor);
+    const res = await fetch(`/api/history/images?${params.toString()}`);
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Lỗi kết nối máy chủ.' };
+  }
+}
+
+export async function fetchChatHistory(cursor?: string, limit = 30): Promise<HistoryListResponse<ChatHistorySession>> {
+  try {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set('cursor', cursor);
+    const res = await fetch(`/api/history/chats?${params.toString()}`);
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Lỗi kết nối máy chủ.' };
   }
 }

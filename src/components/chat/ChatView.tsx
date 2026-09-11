@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Zap, 
-  Trash2, 
-  Wand2, 
-  Send, 
-  X, 
+import {
+  Zap,
+  Trash2,
+  Wand2,
+  Send,
+  X,
   Image as ImageIcon,
-  MessageSquare,
   Plus,
   Menu
 } from 'lucide-react';
@@ -68,6 +67,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [chatImageAspectRatio, setChatImageAspectRatio] = useState('1:1');
   const [chatImageQuality, setChatImageQuality] = useState('1K');
   
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -78,39 +79,36 @@ export const ChatView: React.FC<ChatViewProps> = ({
     scrollToBottom();
   }, [chatMessages]);
 
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
   const handleSendMessage = async () => {
     if ((!chatInput.trim() && !chatInputImageBase64) || isChatLoading) return;
     
-    const newUserMsg: ChatMessage = { 
-      id: Date.now().toString(), 
-      role: 'user', 
-      text: chatInput, 
-      uploadedImageUrl: chatInputImageBase64 || undefined 
+    const newUserMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      text: chatInput,
+      uploadedImageUrl: chatInputImageBase64 || undefined
     };
-    
+
     let targetSessionId = activeSessionId;
-    let currentSessionTitle = 'Đoạn chat mới';
+    const sessionTitle = activeSessionId
+      ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat')
+      : (chatInput.trim().slice(0, 30) || 'Đoạn chat mới');
+    const priorMessages = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
 
     if (!targetSessionId) {
       targetSessionId = Date.now().toString();
-      currentSessionTitle = chatInput.trim().slice(0, 30) || 'Đoạn chat mới';
       setActiveSessionId(targetSessionId);
-      const newSession: ChatSession = { 
-        id: targetSessionId, 
-        title: currentSessionTitle, 
-        messages: [newUserMsg], 
-        timestamp: Date.now() 
-      };
-      setChatSessions(prev => [newSession, ...prev]);
+      setChatSessions(prev => [{
+        id: targetSessionId!,
+        title: sessionTitle,
+        messages: [newUserMsg],
+        timestamp: Date.now()
+      }, ...prev]);
     } else {
-      const existing = chatSessions.find(s => s.id === targetSessionId);
-      if (existing) currentSessionTitle = existing.title;
-      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { 
-        ...s, 
-        messages: [...s.messages, newUserMsg], 
-        timestamp: Date.now() 
+      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? {
+        ...s,
+        messages: [...s.messages, newUserMsg],
+        timestamp: Date.now()
       } : s));
     }
 
@@ -118,76 +116,79 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setChatInputImageBase64(null);
     setIsChatLoading(true);
 
+    let finalMsg: ChatMessage;
     try {
       let newModelMsg: ChatMessage;
       if (chatMode === 'image') {
         const fullPrompt = `${chatInput}`;
         const defaultImageModel = 'gemini-3.1-flash-image';
         const imageUrl = await generateImageForChat(
-          fullPrompt, 
-          defaultImageModel, 
-          chatImageAspectRatio, 
-          chatInputImageBase64 || undefined, 
+          fullPrompt,
+          defaultImageModel,
+          chatImageAspectRatio,
+          chatInputImageBase64 || undefined,
           chatImageQuality
         );
-        newModelMsg = { 
-          id: Date.now().toString() + 'm', 
-          role: 'model', 
-          text: 'Đây là hình ảnh của bạn:', 
-          imageUrl 
+        newModelMsg = {
+          id: Date.now().toString() + 'm',
+          role: 'model',
+          text: 'Đây là hình ảnh của bạn:',
+          imageUrl
         };
 
-        // Also log image to shared history
+        // Đồng bộ ảnh tạo qua Chat vào tab "Lịch sử" > "Ảnh đã tạo" chung của
+        // Studio luôn, để cả team thấy được cả ảnh tạo tự do qua Chat, không
+        // chỉ ảnh từ 15 workflow chính.
         logGeneratedImage({
+          id: newModelMsg.id,
           url: imageUrl,
           prompt: fullPrompt,
           productName: 'Trợ lý Chat AI',
           visualStyle: 'CONCEPT',
           aspectRatio: chatImageAspectRatio,
           imageSize: chatImageQuality,
-          timestamp: Date.now()
-        }).catch(err => console.warn('Could not log chat image:', err));
+          timestamp: Date.now(),
+        }).catch(() => {});
       } else {
         const currentMsgs = targetSessionId ? (chatSessions.find(s => s.id === targetSessionId)?.messages || []) : [];
         const messagesToSend = [...currentMsgs, newUserMsg];
         const defaultChatModel = 'gemini-2.5-flash';
         const replyText = await chatWithAI(messagesToSend, defaultChatModel);
-        newModelMsg = { 
-          id: Date.now().toString() + 'm', 
-          role: 'model', 
-          text: replyText 
+        newModelMsg = {
+          id: Date.now().toString() + 'm',
+          role: 'model',
+          text: replyText
         };
       }
-
-      const currentMsgs = (chatSessions.find(s => s.id === targetSessionId)?.messages || []);
-      const finalMessages = [...currentMsgs, newUserMsg, newModelMsg];
-      const updatedSessionRecord = {
-        id: targetSessionId,
-        title: currentSessionTitle,
-        messages: finalMessages,
+      finalMsg = newModelMsg;
+      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? {
+        ...s,
+        messages: [...s.messages, newModelMsg],
         timestamp: Date.now()
-      };
-
-      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? updatedSessionRecord : s));
-
-      // Persist to shared backend
-      logChatSession(updatedSessionRecord).catch(err => {
-        console.warn('Could not persist chat session to server:', err);
-      });
+      } : s));
     } catch (e: any) {
-      const errorMsg: ChatMessage = { 
-        id: Date.now().toString() + 'e', 
-        role: 'model', 
-        text: `⚠️ Lỗi: ${e.message || 'Đã xảy ra lỗi trong quá trình xử lý.'}` 
+      const errorMsg: ChatMessage = {
+        id: Date.now().toString() + 'e',
+        role: 'model',
+        text: `⚠️ Lỗi: ${e.message || 'Đã xảy ra lỗi trong quá trình xử lý.'}`
       };
-      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? { 
-        ...s, 
-        messages: [...s.messages, errorMsg], 
-        timestamp: Date.now() 
+      finalMsg = errorMsg;
+      setChatSessions(prev => prev.map(s => s.id === targetSessionId ? {
+        ...s,
+        messages: [...s.messages, errorMsg],
+        timestamp: Date.now()
       } : s));
     } finally {
       setIsChatLoading(false);
     }
+
+    // Ghi lịch sử dùng chung (bắn-và-quên, không chặn UI nếu backend chưa cấu hình)
+    logChatSession({
+      id: targetSessionId,
+      title: sessionTitle,
+      timestamp: Date.now(),
+      messages: [...priorMessages, newUserMsg, finalMsg],
+    }).catch(() => {});
   };
 
   const handleImageUploadToChat = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,37 +211,31 @@ export const ChatView: React.FC<ChatViewProps> = ({
     <main className="flex-1 flex max-w-[1920px] mx-auto w-full relative bg-[#242526]">
       {/* Mobile Drawer Backdrop */}
       {isMobileSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
-      {/* Session Sidebar (Desktop & Mobile Drawer) */}
+      {/* Session Sidebar (Desktop tĩnh & Mobile drawer trượt) */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-[300px] bg-[#242526] border-r border-[#3E4042] flex flex-col h-full shrink-0 transition-transform duration-300
         md:static md:translate-x-0
         ${isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-4 border-b border-[#3E4042] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageSquare size={18} className="text-[#1877F2]" />
-            <h2 className="font-bold text-white text-base">Lịch sử chat</h2>
-          </div>
+          <h2 className="font-bold text-white text-lg">Lịch sử chat</h2>
           <div className="flex items-center gap-1">
-            <button 
-              onClick={() => {
-                handleNewChat();
-                setIsMobileSidebarOpen(false);
-              }} 
-              className="p-2 rounded-full hover:bg-[#18191A] text-[#1877F2] transition-colors" 
+            <button
+              onClick={() => { handleNewChat(); setIsMobileSidebarOpen(false); }}
+              className="p-2 rounded-full hover:bg-[#18191A] text-[#1877F2]"
               title="Tạo đoạn chat mới"
             >
-              <Plus size={20} />
+              <Zap size={20} />
             </button>
-            <button 
-              onClick={() => setIsMobileSidebarOpen(false)} 
-              className="p-2 rounded-full hover:bg-[#18191A] text-gray-400 hover:text-white md:hidden transition-colors" 
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-2 rounded-full hover:bg-[#18191A] text-gray-400 hover:text-white md:hidden"
               title="Đóng menu"
             >
               <X size={18} />
@@ -248,42 +243,38 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-1">
-          {chatSessions.length === 0 ? (
+          {chatSessions.length === 0 && (
             <div className="p-4 text-center text-xs text-gray-400">
               Chưa có đoạn chat nào. Bắt đầu nhắn tin để lưu lịch sử!
             </div>
-          ) : (
-            chatSessions.map(s => (
-              <div
-                key={s.id}
-                onClick={() => {
-                  setActiveSessionId(s.id);
-                  setIsMobileSidebarOpen(false);
-                }}
-                className={`w-full text-left p-3 rounded-xl transition-colors cursor-pointer group flex items-start justify-between ${
-                  activeSessionId === s.id ? 'bg-[#3A3B3C] font-semibold text-white' : 'text-white hover:bg-[#18191A]'
-                }`}
-              >
-                <div className="flex-1 overflow-hidden pr-2">
-                  <div className="text-[14px] truncate">{s.title}</div>
-                  <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-2">
-                    <span>{new Date(s.timestamp).toLocaleDateString('vi-VN')}</span>
-                    <span>•</span>
-                    <span>{s.messages?.length || 0} tin nhắn</span>
-                  </div>
-                </div>
-                <button 
-                  onClick={(e) => handleDeleteSession(s.id, e)}
-                  className={`p-1.5 rounded-full hover:bg-black/10 transition-colors ${
-                    activeSessionId === s.id ? 'opacity-100 text-red-400' : 'opacity-0 text-red-400 group-hover:opacity-100'
-                  }`}
-                  title="Xóa đoạn chat này"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ))
           )}
+          {chatSessions.map(s => (
+            <div
+              key={s.id}
+              onClick={() => { setActiveSessionId(s.id); setIsMobileSidebarOpen(false); }}
+              className={`w-full text-left p-3 rounded-xl transition-colors cursor-pointer group flex items-start justify-between ${
+                activeSessionId === s.id ? 'bg-[#3A3B3C] font-semibold text-white' : 'text-white hover:bg-[#18191A]'
+              }`}
+            >
+              <div className="flex-1 overflow-hidden pr-2">
+                <div className="text-[15px] truncate">{s.title}</div>
+                <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
+                  <span>{new Date(s.timestamp).toLocaleDateString('vi-VN')}</span>
+                  <span>·</span>
+                  <span>{s.messages?.length || 0} tin nhắn</span>
+                </div>
+              </div>
+              <button
+                onClick={(e) => handleDeleteSession(s.id, e)}
+                className={`p-1.5 rounded-full hover:bg-black/10 transition-colors ${
+                  activeSessionId === s.id ? 'opacity-100 text-red-400' : 'opacity-0 text-red-400 group-hover:opacity-100'
+                }`}
+                title="Xóa đoạn chat này"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
         </div>
       </aside>
       
@@ -299,31 +290,29 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <Menu size={18} />
             </button>
             <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-xl truncate">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
+              <button
+                onClick={handleNewChat}
+                className="hidden sm:inline-flex items-center gap-1 text-[11px] bg-[#18191A] border border-[#3E4042] hover:border-[#1877F2] text-gray-300 hover:text-white px-2.5 py-1 rounded-lg transition-colors shrink-0"
+                title="Tạo đoạn chat mới"
+              >
+                <Plus size={12} className="text-[#1877F2]" />
+                <span>Đoạn chat mới</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-base md:text-xl truncate">
-                  {activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}
-                </h2>
-                <button
-                  onClick={handleNewChat}
-                  className="hidden sm:inline-flex items-center gap-1 text-[11px] bg-[#18191A] border border-[#3E4042] hover:border-[#1877F2] text-gray-300 hover:text-white px-2.5 py-1 rounded-lg transition-colors shrink-0"
-                  title="Tạo đoạn chat mới"
+                <span className="text-xs text-white font-semibold">Chế độ:</span>
+                <select 
+                  value={chatMode}
+                  onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
+                  className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
                 >
-                  <Plus size={12} className="text-[#1877F2]" />
-                  <span>Đoạn chat mới</span>
-                </button>
+                  <option value="chat">Chat & Tư vấn</option>
+                  <option value="image">Tạo ảnh AI</option>
+                </select>
               </div>
-              <div className="flex flex-wrap items-center gap-3 mt-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400 font-semibold">Chế độ:</span>
-                  <select 
-                    value={chatMode}
-                    onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
-                    className="bg-[#18191A] border border-[#3E4042] rounded-md px-2.5 py-1 text-xs outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
-                  >
-                    <option value="chat">Chat & Tư vấn</option>
-                    <option value="image">Tạo ảnh AI</option>
-                  </select>
-                </div>
               
               {chatMode === 'image' && (
                 <>
@@ -356,9 +345,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 </>
               )}
             </div>
+            </div>
           </div>
         </div>
-      </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:px-24 xl:px-48 flex flex-col gap-6 custom-scrollbar text-[15px]">
           {chatMessages.length === 0 && (

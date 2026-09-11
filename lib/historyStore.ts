@@ -1,319 +1,280 @@
-import { getFirestore, getStorage, getGCSBucketName } from './googleCloud.ts';
-import crypto from 'crypto';
+// Logic nghiệp vụ cho tính năng "Lịch sử dùng chung" (ảnh đã tạo + chat).
+// Thuần server-side, không phụ thuộc Express/Vercel — server.ts và các file
+// trong api/history/ đều gọi thẳng các hàm ở đây.
+import { randomUUID } from "crypto";
+import { getFirestore, getBucket } from "./googleCloud";
 
-export interface ImageHistoryRecord {
-  id: string;
-  url: string;
-  prompt: string;
-  productName?: string;
-  productCode?: string;
-  visualStyle?: string;
-  aspectRatio?: string;
-  imageSize?: string;
-  variant?: number;
-  costUSD?: number;
-  timestamp: number;
-  createdAt?: string;
+export const HISTORY_NOT_CONFIGURED_ERROR =
+  "Tính năng Lịch sử chưa được cấu hình (thiếu GOOGLE_SERVICE_ACCOUNT_JSON hoặc GCS_BUCKET_NAME trên server).";
+
+const READ_URL_EXPIRY_MS = 6 * 60 * 60 * 1000; // 6 giờ
+const UPLOAD_URL_EXPIRY_MS = 15 * 60 * 1000; // 15 phút
+
+function extensionForContentType(contentType: string): string {
+  if (contentType === "image/png") return "png";
+  if (contentType === "image/webp") return "webp";
+  if (contentType === "image/jpeg" || contentType === "image/jpg") return "jpg";
+  return "bin";
 }
 
-export interface ChatHistoryRecord {
-  id: string;
-  title: string;
-  timestamp: number;
-  messages: any[];
-  updatedAt?: string;
+function datePrefix(): string {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}/${mm}/${dd}`;
 }
 
-// In-memory fallback buffer (holds up to 200 items in case Firestore is unconfigured)
-const inMemoryImages: ImageHistoryRecord[] = [];
-const inMemoryChats: Map<string, ChatHistoryRecord> = new Map();
+export interface CreateUploadUrlParams {
+  folder: "images" | "chat";
+  contentType: string;
+}
 
-/**
- * Generate a signed URL for client-side direct upload to GCS
- */
-export async function createUploadUrl({ folder, contentType }: { folder: 'images' | 'chat'; contentType: string }) {
-  const bucketName = getGCSBucketName();
-  const storage = getStorage();
+/** Sinh 1 signed URL (PUT) để client upload thẳng ảnh lên Cloud Storage. */
+export async function createUploadUrl({ folder, contentType }: CreateUploadUrlParams) {
+  const bucket = getBucket();
+  if (!bucket) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
 
-  if (!bucketName || !storage) {
-    throw new Error("GCS_BUCKET_NAME hoặc Google Cloud Service Account chưa được cấu hình.");
-  }
+  const path = `${folder}/${datePrefix()}/${randomUUID()}.${extensionForContentType(contentType)}`;
 
-  const bucket = storage.bucket(bucketName);
-  const ext = contentType.includes('png') ? 'png' : contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : 'bin';
-  const fileName = `${folder}/${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${ext}`;
-  const file = bucket.file(fileName);
-
-  const [uploadUrl] = await file.getSignedUrl({
-    version: 'v4',
-    action: 'write',
-    expires: Date.now() + 15 * 60 * 1000, // 15 minutes
+  const [uploadUrl] = await bucket.file(path).getSignedUrl({
+    version: "v4",
+    action: "write",
+    expires: Date.now() + UPLOAD_URL_EXPIRY_MS,
     contentType,
   });
 
-  const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
-
-  return {
-    uploadUrl,
-    publicUrl,
-    fileKey: fileName,
-  };
+  return { path, uploadUrl };
 }
 
-/**
- * Upload a Base64 data URL to GCS if configured
- */
-async function uploadBase64ToGCS(base64DataUrl: string, folder: 'images' | 'chat'): Promise<string | null> {
-  const bucketName = getGCSBucketName();
-  const storage = getStorage();
-  if (!bucketName || !storage) return null;
-
+async function signReadUrl(bucket: NonNullable<ReturnType<typeof getBucket>>, gcsPath: string): Promise<string | null> {
+  if (!gcsPath) return null;
   try {
-    const match = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (!match) return null;
-
-    const mimeType = match[1];
-    const base64Data = match[2];
-    const buffer = Buffer.from(base64Data, 'base64');
-    const ext = mimeType.includes('png') ? 'png' : 'jpg';
-    const fileName = `${folder}/${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${ext}`;
-
-    const bucket = storage.bucket(bucketName);
-    const file = bucket.file(fileName);
-
-    await file.save(buffer, {
-      metadata: { contentType: mimeType },
-      resumable: false,
+    const [url] = await bucket.file(gcsPath).getSignedUrl({
+      version: "v4",
+      action: "read",
+      expires: Date.now() + READ_URL_EXPIRY_MS,
     });
-
-    return `https://storage.googleapis.com/${bucketName}/${fileName}`;
+    return url;
   } catch (err: any) {
-    console.warn("Could not upload Base64 image to GCS:", err.message);
+    console.error(`Không tạo được signed URL cho ${gcsPath}:`, err.message);
     return null;
   }
 }
 
-/**
- * Save an image record into Firestore (with in-memory fallback)
- */
-export async function saveImageRecord(data: Partial<ImageHistoryRecord>): Promise<ImageHistoryRecord> {
-  let finalUrl = data.url || '';
+export interface ImageRecordInput {
+  id?: string;
+  gcsPath: string;
+  productName?: string;
+  productCode?: string;
+  visualStyle?: string;
+  prompt?: string;
+  aspectRatio?: string;
+  imageSize?: string;
+  variant?: number;
+  costUSD?: number;
+  tokens?: number;
+  timestamp?: number;
+}
 
-  // If URL is a large Base64 string and GCS is available, upload to GCS first
-  if (finalUrl.startsWith('data:image/')) {
-    const gcsUrl = await uploadBase64ToGCS(finalUrl, 'images');
-    if (gcsUrl) {
-      finalUrl = gcsUrl;
-    }
-  }
-
-  const id = data.id || `img_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-  const timestamp = data.timestamp || Date.now();
-
-  const record: ImageHistoryRecord = {
-    id,
-    url: finalUrl,
-    prompt: data.prompt || '',
-    productName: data.productName || '',
-    productCode: data.productCode || '',
-    visualStyle: data.visualStyle || 'CONCEPT',
-    aspectRatio: data.aspectRatio || '1:1',
-    imageSize: data.imageSize || '1K',
-    variant: data.variant || 1,
-    costUSD: data.costUSD || 0,
-    timestamp,
-    createdAt: new Date(timestamp).toISOString(),
-  };
-
-  // Always update in-memory cache
-  inMemoryImages.unshift(record);
-  if (inMemoryImages.length > 200) inMemoryImages.pop();
-
-  // Save to Firestore if available
+export async function saveImageRecord(input: ImageRecordInput) {
   const db = getFirestore();
-  if (db) {
-    try {
-      // Don't save raw Base64 > 800KB directly in Firestore to avoid 1MB document limit
-      const firestoreData = { ...record };
-      if (firestoreData.url.startsWith('data:image/') && firestoreData.url.length > 800000) {
-        // Truncate or omit raw base64 from firestore document if not yet in GCS
-        firestoreData.url = firestoreData.url.substring(0, 100) + '...[truncated]';
-      }
-      await db.collection('elmich_history_images').doc(id).set(firestoreData);
-    } catch (err: any) {
-      console.warn("Firestore error saving image record (falling back to memory):", err.message);
-    }
-  }
+  if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
+  if (!input.gcsPath) throw new Error("Thiếu gcsPath — ảnh phải được upload lên Storage trước.");
 
-  return record;
+  // Dùng id do client cung cấp (trùng với GeneratedImage.id trong gallery cục bộ)
+  // nếu có, để sau này có thể "đánh giá" (rate) đúng bản ghi này. Nếu không có
+  // (ví dụ lời gọi cũ hơn), tự sinh 1 id mới.
+  const id = input.id || randomUUID();
+  const record = {
+    productName: input.productName || "",
+    productCode: input.productCode || "",
+    visualStyle: input.visualStyle || "",
+    prompt: input.prompt || "",
+    aspectRatio: input.aspectRatio || "",
+    imageSize: input.imageSize || "",
+    variant: input.variant || 1,
+    costUSD: input.costUSD || 0,
+    tokens: input.tokens || 0,
+    gcsPath: input.gcsPath,
+    timestamp: input.timestamp || Date.now(),
+  };
+  await db.collection("imageHistory").doc(id).set(record);
+  return { id, ...record };
+}
+
+/** Xóa 1 ảnh khỏi Lịch sử dùng chung (chỉ xóa document Firestore, không xóa
+ * file trong Cloud Storage — chấp nhận rác object mồ côi trong bucket để
+ * giữ thao tác xóa nhanh/đơn giản; dọn bucket định kỳ là việc vận hành). */
+export async function deleteImageRecord(id: string): Promise<{ id: string }> {
+  const db = getFirestore();
+  if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
+  if (!id) throw new Error("Thiếu id của ảnh cần xóa.");
+  await db.collection("imageHistory").doc(id).delete();
+  return { id };
+}
+
+/** Xóa 1 phiên chat khỏi Lịch sử dùng chung (cùng lưu ý về rác GCS như trên). */
+export async function deleteChatSession(id: string): Promise<{ id: string }> {
+  const db = getFirestore();
+  if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
+  if (!id) throw new Error("Thiếu id của phiên chat cần xóa.");
+  await db.collection("chatHistory").doc(id).delete();
+  return { id };
+}
+
+export interface RateImageParams {
+  id: string;
+  rating: "good" | "bad";
+}
+
+/** Gắn đánh giá của người dùng ("Rất tốt!" / "Không hẳn") vào 1 bản ghi ảnh đã lưu. */
+export async function rateImageRecord({ id, rating }: RateImageParams) {
+  const db = getFirestore();
+  if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
+  if (!id) throw new Error("Thiếu id của ảnh cần đánh giá.");
+
+  await db.collection("imageHistory").doc(id).set({ rating, ratedAt: Date.now() }, { merge: true });
+  return { id, rating };
+}
+
+export interface ApprovedPromptsParams {
+  visualStyle?: string;
+  limit?: number;
+}
+
+export interface ApprovedPromptHint {
+  id: string;
+  visualStyle?: string;
+  prompt?: string;
+  productName?: string;
 }
 
 /**
- * List image records from Firestore with in-memory fallback
+ * Lấy các prompt đã từng được đánh giá "Rất tốt!" — dùng làm gợi ý định
+ * hướng cho các lần tạo ảnh sau (xem generateProductImage trong
+ * geminiService.ts). Chỉ cần 1 composite index Firestore duy nhất
+ * (imageHistory: rating ASC, timestamp DESC) — lọc theo visualStyle được
+ * làm ở tầng ứng dụng (JS) để không phải tạo thêm index cho từng workflow.
  */
-export async function listImageRecords({ limit = 30, cursor }: { limit?: number; cursor?: string } = {}) {
+export async function listApprovedPrompts({ visualStyle, limit = 5 }: ApprovedPromptsParams = {}): Promise<ApprovedPromptHint[]> {
   const db = getFirestore();
+  if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
 
-  if (db) {
-    try {
-      let query = db.collection('elmich_history_images')
-        .orderBy('timestamp', 'desc')
-        .limit(limit + 1);
+  const snapshot = await db
+    .collection("imageHistory")
+    .where("rating", "==", "good")
+    .orderBy("timestamp", "desc")
+    .limit(50)
+    .get();
 
-      if (cursor) {
-        const cursorDoc = await db.collection('elmich_history_images').doc(cursor).get();
-        if (cursorDoc.exists) {
-          query = query.startAfter(cursorDoc);
-        }
-      }
+  let items: ApprovedPromptHint[] = snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      visualStyle: data.visualStyle as string,
+      prompt: data.prompt as string,
+      productName: data.productName as string,
+    };
+  });
 
-      const snapshot = await query.get();
-      const docs = snapshot.docs;
-      const hasMore = docs.length > limit;
-      const items = docs.slice(0, limit).map(d => ({ ...d.data() } as ImageHistoryRecord));
-      const nextCursor = hasMore ? docs[limit - 1]?.id : undefined;
-
-      return { items, nextCursor };
-    } catch (err: any) {
-      console.warn("Firestore error listing image records (falling back to memory):", err.message);
-    }
+  if (visualStyle) {
+    items = items.filter((item) => item.visualStyle === visualStyle);
   }
 
-  // Fallback to in-memory images
-  const startIndex = cursor ? inMemoryImages.findIndex(i => i.id === cursor) + 1 : 0;
-  const sliced = inMemoryImages.slice(startIndex, startIndex + limit);
-  const nextCursor = startIndex + limit < inMemoryImages.length ? sliced[sliced.length - 1]?.id : undefined;
-
-  return { items: sliced, nextCursor };
+  return items.slice(0, limit);
 }
 
-/**
- * Save chat session into Firestore (with in-memory fallback)
- */
-export async function saveChatSession(data: any): Promise<{ id: string; success: boolean }> {
-  const id = data.id || `chat_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-  const timestamp = data.timestamp || Date.now();
+export interface ListParams {
+  limit?: number;
+  cursor?: string;
+}
 
-  const record: ChatHistoryRecord = {
-    id,
-    title: data.title || 'Đoạn chat mới',
-    timestamp,
-    messages: data.messages || [],
-    updatedAt: new Date().toISOString(),
-  };
-
-  inMemoryChats.set(id, record);
-
+export async function listImageRecords({ limit = 30, cursor }: ListParams = {}) {
   const db = getFirestore();
-  if (db) {
-    try {
-      // Process messages: if any message has base64 image > 300KB, upload to GCS or truncate to prevent Firestore 1MB document limit
-      const sanitizedMessages = await Promise.all(
-        (data.messages || []).map(async (msg: any) => {
-          const m = { ...msg };
-          if (m.uploadedImageUrl && typeof m.uploadedImageUrl === 'string' && m.uploadedImageUrl.startsWith('data:image/')) {
-            const gcsUrl = await uploadBase64ToGCS(m.uploadedImageUrl, 'chat');
-            if (gcsUrl) {
-              m.uploadedImageUrl = gcsUrl;
-            } else if (m.uploadedImageUrl.length > 500000) {
-              m.uploadedImageUrl = m.uploadedImageUrl.substring(0, 100) + '...[truncated]';
-            }
-          }
-          if (m.imageUrl && typeof m.imageUrl === 'string' && m.imageUrl.startsWith('data:image/')) {
-            const gcsUrl = await uploadBase64ToGCS(m.imageUrl, 'chat');
-            if (gcsUrl) {
-              m.imageUrl = gcsUrl;
-            } else if (m.imageUrl.length > 500000) {
-              m.imageUrl = m.imageUrl.substring(0, 100) + '...[truncated]';
-            }
-          }
-          return m;
-        })
+  const bucket = getBucket();
+  if (!db || !bucket) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
+
+  const collection = db.collection("imageHistory");
+  let query = collection.orderBy("timestamp", "desc").limit(limit);
+  if (cursor) {
+    const cursorDoc = await collection.doc(cursor).get();
+    if (cursorDoc.exists) query = query.startAfter(cursorDoc);
+  }
+
+  const snapshot = await query.get();
+  const items = await Promise.all(
+    snapshot.docs.map(async (doc) => {
+      const data = doc.data() as Omit<ImageRecordInput, "timestamp"> & { timestamp: number };
+      const imageUrl = await signReadUrl(bucket, data.gcsPath);
+      return { id: doc.id, ...data, imageUrl };
+    })
+  );
+
+  const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1].id : null;
+  return { items, nextCursor };
+}
+
+export interface ChatMessageRecord {
+  id: string;
+  role: "user" | "model";
+  text: string;
+  imageGcsPath?: string;
+  uploadedImageGcsPath?: string;
+}
+
+export interface ChatSessionInput {
+  id: string;
+  title: string;
+  timestamp: number;
+  messages: ChatMessageRecord[];
+}
+
+export async function saveChatSession(session: ChatSessionInput) {
+  const db = getFirestore();
+  if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
+  if (!session?.id) throw new Error("Thiếu id của phiên chat.");
+
+  await db
+    .collection("chatHistory")
+    .doc(session.id)
+    .set({
+      title: session.title || "Đoạn chat",
+      timestamp: session.timestamp || Date.now(),
+      messages: session.messages || [],
+    });
+
+  return { id: session.id };
+}
+
+export async function listChatSessions({ limit = 30, cursor }: ListParams = {}) {
+  const db = getFirestore();
+  const bucket = getBucket();
+  if (!db || !bucket) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
+
+  const collection = db.collection("chatHistory");
+  let query = collection.orderBy("timestamp", "desc").limit(limit);
+  if (cursor) {
+    const cursorDoc = await collection.doc(cursor).get();
+    if (cursorDoc.exists) query = query.startAfter(cursorDoc);
+  }
+
+  const snapshot = await query.get();
+  const items = await Promise.all(
+    snapshot.docs.map(async (doc) => {
+      const data = doc.data() as { title: string; timestamp: number; messages: ChatMessageRecord[] };
+      const messages = await Promise.all(
+        (data.messages || []).map(async (msg) => ({
+          id: msg.id,
+          role: msg.role,
+          text: msg.text,
+          imageUrl: msg.imageGcsPath ? await signReadUrl(bucket, msg.imageGcsPath) : undefined,
+          uploadedImageUrl: msg.uploadedImageGcsPath ? await signReadUrl(bucket, msg.uploadedImageGcsPath) : undefined,
+        }))
       );
+      return { id: doc.id, title: data.title, timestamp: data.timestamp, messages };
+    })
+  );
 
-      const firestoreRecord = {
-        ...record,
-        messages: sanitizedMessages,
-      };
-
-      await db.collection('elmich_history_chats').doc(id).set(firestoreRecord);
-    } catch (err: any) {
-      console.warn("Firestore error saving chat session:", err.message);
-    }
-  }
-
-  return { id, success: true };
-}
-
-/**
- * Delete chat session from Firestore and in-memory fallback
- */
-export async function deleteChatSession(id: string): Promise<{ success: boolean }> {
-  inMemoryChats.delete(id);
-  const db = getFirestore();
-  if (db) {
-    try {
-      await db.collection('elmich_history_chats').doc(id).delete();
-    } catch (err: any) {
-      console.warn("Firestore error deleting chat session:", err.message);
-    }
-  }
-  return { success: true };
-}
-
-/**
- * Delete image record from Firestore and in-memory fallback
- */
-export async function deleteImageRecord(id: string): Promise<{ success: boolean }> {
-  const idx = inMemoryImages.findIndex(img => img.id === id);
-  if (idx !== -1) inMemoryImages.splice(idx, 1);
-  const db = getFirestore();
-  if (db) {
-    try {
-      await db.collection('elmich_history_images').doc(id).delete();
-    } catch (err: any) {
-      console.warn("Firestore error deleting image record:", err.message);
-    }
-  }
-  return { success: true };
-}
-
-/**
- * List chat sessions from Firestore with in-memory fallback
- */
-export async function listChatSessions({ limit = 30, cursor }: { limit?: number; cursor?: string } = {}) {
-  const db = getFirestore();
-
-  if (db) {
-    try {
-      let query = db.collection('elmich_history_chats')
-        .orderBy('timestamp', 'desc')
-        .limit(limit + 1);
-
-      if (cursor) {
-        const cursorDoc = await db.collection('elmich_history_chats').doc(cursor).get();
-        if (cursorDoc.exists) {
-          query = query.startAfter(cursorDoc);
-        }
-      }
-
-      const snapshot = await query.get();
-      const docs = snapshot.docs;
-      const hasMore = docs.length > limit;
-      const items = docs.slice(0, limit).map(d => ({ ...d.data() } as ChatHistoryRecord));
-      const nextCursor = hasMore ? docs[limit - 1]?.id : undefined;
-
-      return { items, nextCursor };
-    } catch (err: any) {
-      console.warn("Firestore error listing chat sessions:", err.message);
-    }
-  }
-
-  // Fallback to in-memory chats
-  const allChats = Array.from(inMemoryChats.values()).sort((a, b) => b.timestamp - a.timestamp);
-  const startIndex = cursor ? allChats.findIndex(c => c.id === cursor) + 1 : 0;
-  const sliced = allChats.slice(startIndex, startIndex + limit);
-  const nextCursor = startIndex + limit < allChats.length ? sliced[sliced.length - 1]?.id : undefined;
-
-  return { items: sliced, nextCursor };
+  const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1].id : null;
+  return { items, nextCursor };
 }

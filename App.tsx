@@ -54,7 +54,7 @@ import {
   TONE_STYLES
 } from './constants';
 import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
-import { logGeneratedImage, fetchChatHistory, deleteChatFromServer } from './services/historyService';
+import { logGeneratedImage, rateGeneratedImage, fetchApprovedPromptHints, fetchChatHistory, deleteChatHistorySession } from './services/historyService';
 
 const initialSettings: GenerationSettings = {
   productName: '',
@@ -337,35 +337,44 @@ const App: React.FC = () => {
   useEffect(() => {
     import('localforage').then((m) => {
       const lf = m.default || m;
-      lf.getItem('elmich_ai_chat_sessions').then((saved) => {
-        let hasLocal = false;
+      lf.getItem('elmich_ai_chat_sessions').then(async (saved) => {
+        let localSessions: import('./types').ChatSession[] = [];
         if (saved) {
           const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved as import('./types').ChatSession[];
           const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-          const valid = parsed.filter((s: any) => s.timestamp > oneWeekAgo);
-          if (valid.length > 0) {
-            setChatSessions(valid);
-            setIsChatLoaded(true);
-            hasLocal = true;
+          localSessions = parsed.filter((s: any) => s.timestamp > oneWeekAgo);
+        }
+
+        if (localSessions.length > 0) {
+          setChatSessions(localSessions);
+        } else {
+          // IndexedDB cục bộ trống (trình duyệt/thiết bị mới, tab ẩn danh,
+          // hoặc cache 7 ngày đã hết hạn) — lấy lại lịch sử chat DÙNG CHUNG
+          // từ server để không bị "mất" đoạn chat cũ. Nếu backend Lịch sử
+          // chưa cấu hình, fetchChatHistory() tự trả về success:false và
+          // chatSessions đơn giản là rỗng như trước (không crash).
+          const remote = await fetchChatHistory().catch(() => null);
+          if (remote?.success && remote.items && remote.items.length > 0) {
+            const remoteSessions: import('./types').ChatSession[] = remote.items.map(item => ({
+              id: item.id,
+              title: item.title,
+              timestamp: item.timestamp,
+              messages: item.messages.map(m => ({
+                id: m.id,
+                role: m.role,
+                text: m.text,
+                imageUrl: m.imageUrl || undefined,
+                uploadedImageUrl: m.uploadedImageUrl || undefined,
+              })),
+            }));
+            setChatSessions(remoteSessions);
           }
         }
-        if (!hasLocal) {
-          fetchChatHistory({ limit: 30 }).then(res => {
-            if (res.items && res.items.length > 0) {
-              setChatSessions(res.items);
-            }
-            setIsChatLoaded(true);
-          }).catch(() => setIsChatLoaded(true));
-        }
+        setIsChatLoaded(true);
       });
     }).catch(e => {
-       console.error('Failed to load chat sessions from localForage', e);
-       fetchChatHistory({ limit: 30 }).then(res => {
-         if (res.items && res.items.length > 0) {
-           setChatSessions(res.items);
-         }
-         setIsChatLoaded(true);
-       }).catch(() => setIsChatLoaded(true));
+       console.error('Failed to load chat sessions', e);
+       setIsChatLoaded(true);
     });
   }, []);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -711,7 +720,11 @@ const App: React.FC = () => {
     setLoadingMessage("Gemini Thinking đang chuẩn bị kiệt tác...");
     try {
       const finalSettings = { ...settings, ...overrideSettings };
-      const urls = await Promise.all(Array.from({ length: finalSettings.numImages }, (_, i) => generateProductImage(finalSettings, i + 1, successfulPrompts)));
+      // Lấy gợi ý từ các prompt đã được cả đội đánh giá "Rất tốt!" cho đúng
+      // phong cách này (Lịch sử dùng chung) — trả về [] ngay nếu backend
+      // chưa cấu hình, không làm chậm luồng tạo ảnh.
+      const approvedHints = await fetchApprovedPromptHints(finalSettings.visualStyle, 3);
+      const urls = await Promise.all(Array.from({ length: finalSettings.numImages }, (_, i) => generateProductImage(finalSettings, i + 1, successfulPrompts, approvedHints)));
       const time = Date.now();
       const newImages: GeneratedImage[] = urls.map((url, i) => ({ id: `${time}-${i}`, url, prompt: finalSettings.concept, timestamp: time, settings: { ...finalSettings }, variant: i + 1 }));
       setGallery(prev => [...newImages, ...prev]);
@@ -719,6 +732,7 @@ const App: React.FC = () => {
       // Ghi lịch sử dùng chung (bắn-và-quên, không chặn UI nếu backend chưa cấu hình)
       newImages.forEach(img => {
         logGeneratedImage({
+          id: img.id,
           url: img.url,
           prompt: img.prompt,
           productName: finalSettings.productName,
@@ -756,6 +770,7 @@ const App: React.FC = () => {
       setEditPrompt("");
       setEditReferenceImage(null);
       logGeneratedImage({
+        id: newImage.id,
         url: newImage.url,
         prompt: newImage.prompt,
         productName: newImage.settings.productName,
@@ -2829,9 +2844,21 @@ const renderTrackSocketWorkflow = () => (
     if (activeSessionId === sessionId) {
       setActiveSessionId(null);
     }
-    deleteChatFromServer(sessionId).catch(err => {
-      console.warn('Could not delete chat session from server:', err);
+    // Xóa luôn khỏi Lịch sử dùng chung (server) — nếu không, phiên vừa xóa
+    // cục bộ có thể "sống lại" ở lần sau nhờ cơ chế fallback tải từ server
+    // khi cache trình duyệt trống (xem effect load chatSessions phía trên).
+    deleteChatHistorySession(sessionId).catch(() => {});
+  };
+
+  // Mở 1 phiên chat cũ từ tab "Lịch sử" ngay trong Trợ lý Chat để xem tiếp/
+  // trả lời tiếp, không cần tìm lại từ đầu.
+  const handleOpenChatFromHistory = (sessionId: string, session: import('./types').ChatSession) => {
+    setChatSessions(prev => {
+      const exists = prev.some(s => s.id === sessionId);
+      return exists ? prev.map(s => (s.id === sessionId ? session : s)) : [session, ...prev];
     });
+    setActiveSessionId(sessionId);
+    setViewMode('chat');
   };
 
   return (
@@ -3023,18 +3050,7 @@ const renderTrackSocketWorkflow = () => (
           handleDeleteSession={handleDeleteSession}
         />
       ) : (
-        <HistoryView 
-          onSelectChat={(sessionId, session) => {
-            if (session) {
-              setChatSessions(prev => {
-                if (prev.some(s => s.id === session.id)) return prev;
-                return [session, ...prev];
-              });
-            }
-            setActiveSessionId(sessionId);
-            setViewMode('chat');
-          }}
-        />
+        <HistoryView onOpenChat={handleOpenChatFromHistory} />
       )}
 
       {/* Feedback Modal */}
@@ -3061,13 +3077,16 @@ const renderTrackSocketWorkflow = () => (
                 <p>Phản hồi của bạn giúp AI học hỏi và tạo ra kết quả tốt hơn trong những lần sau.</p>
               </div>
               <div className="flex border-t border-[#3E4042]">
-                <button 
+                <button
                   className="flex-1 py-3 font-semibold text-white hover:bg-[#18191A] transition-colors border-r border-[#3E4042]"
-                  onClick={() => setAskFeedbackImage(null)}
+                  onClick={() => {
+                    rateGeneratedImage(askFeedbackImage.id, 'bad').catch(() => {});
+                    setAskFeedbackImage(null);
+                  }}
                 >
                   Không hẳn
                 </button>
-                <button 
+                <button
                   className="flex-1 py-3 font-bold text-[#1877F2] hover:bg-[#18191A] transition-colors"
                   onClick={() => {
                     const newPrompt: SuccessfulPrompt = {
@@ -3076,6 +3095,10 @@ const renderTrackSocketWorkflow = () => (
                       timestamp: Date.now()
                     };
                     setSuccessfulPrompts(prev => [...prev, newPrompt]);
+                    // Ghi lên Lịch sử dùng chung để CẢ ĐỘI cùng hưởng gợi ý này ở lần
+                    // tạo ảnh sau (không chỉ riêng trình duyệt này) — xem
+                    // fetchApprovedPromptHints() trong startGeneration().
+                    rateGeneratedImage(askFeedbackImage.id, 'good').catch(() => {});
                     setAskFeedbackImage(null);
                   }}
                 >

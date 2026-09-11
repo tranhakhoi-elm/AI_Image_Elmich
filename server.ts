@@ -10,7 +10,9 @@ import {
   saveChatSession,
   listChatSessions,
   deleteChatSession,
-} from "./lib/historyStore.ts";
+  rateImageRecord,
+  listApprovedPrompts,
+} from "./lib/historyStore";
 
 dotenv.config();
 
@@ -231,10 +233,37 @@ app.get("/api/history/chats", async (req: any, res: any) => {
   }
 });
 
-app.delete("/api/history/chats/:id", async (req: any, res: any) => {
+// Đánh giá 1 ảnh đã tạo ("Rất tốt!" / "Không hẳn") — dùng để định hướng các
+// lần tạo ảnh sau (xem listApprovedPrompts + generateProductImage).
+app.post("/api/history/images/rate", async (req: any, res: any) => {
   try {
-    const { id } = req.params;
-    const result = await deleteChatSession(id);
+    const { id, rating } = req.body || {};
+    if (rating !== "good" && rating !== "bad") {
+      return res.status(200).json({ success: false, error: "rating phải là 'good' hoặc 'bad'." });
+    }
+    const result = await rateImageRecord({ id, rating });
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error rating image history record:", error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+app.delete("/api/history/images", async (req: any, res: any) => {
+  try {
+    const id = (req.query.id as string) || undefined;
+    const result = await deleteImageRecord(id as string);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error deleting image history record:", error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+app.delete("/api/history/chats", async (req: any, res: any) => {
+  try {
+    const id = (req.query.id as string) || undefined;
+    const result = await deleteChatSession(id as string);
     res.json({ success: true, ...result });
   } catch (error: any) {
     console.error("Error deleting chat session:", error.message);
@@ -242,14 +271,15 @@ app.delete("/api/history/chats/:id", async (req: any, res: any) => {
   }
 });
 
-app.delete("/api/history/images/:id", async (req: any, res: any) => {
+app.get("/api/history/images/approved", async (req: any, res: any) => {
   try {
-    const { id } = req.params;
-    const result = await deleteImageRecord(id);
-    res.json({ success: true, ...result });
+    const visualStyle = (req.query.visualStyle as string) || undefined;
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 5, 20);
+    const items = await listApprovedPrompts({ visualStyle, limit });
+    res.json({ success: true, items });
   } catch (error: any) {
-    console.error("Error deleting image record:", error.message);
-    res.status(200).json({ success: false, error: error.message });
+    console.error("Error listing approved prompts:", error.message);
+    res.status(200).json({ success: false, error: error.message, items: [] });
   }
 });
 

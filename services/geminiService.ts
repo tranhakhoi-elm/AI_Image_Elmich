@@ -37,6 +37,11 @@ import designPackagingMockup from '../Design_Packaging_Mockup.md?raw';
 import designWhiteBGRetouch from '../Design_WhiteBG_Retouch.md?raw';
 import render3DToPhoto from '../3DRender_To_Photo.md?raw';
 import designTechEffects from '../Design_Tech_Effects.md?raw';
+import chatAssistantHandbook from '../ChatAssistant_Handbook.md?raw';
+
+const CHAT_SYSTEM_INSTRUCTION = `${chatAssistantHandbook}
+
+Luôn ưu tiên trả lời bằng tiếng Việt, trừ khi người dùng chủ động dùng ngôn ngữ khác. Trả lời ngắn gọn, đi thẳng vào tư vấn thực tế — KHÔNG liệt kê hay trích dẫn lại nguyên văn cẩm nang trên cho người dùng đọc.`;
 
 const resizeImageToQuality = (base64Data: string, quality: '1K' | '2K' | '4K'): Promise<string> => {
   return new Promise((resolve) => {
@@ -263,21 +268,28 @@ Dưới đây là tài liệu quy chuẩn phong cách và các lỗi cần trán
 ${designLifestyleConcept}
 ========================================
 
-Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich. 
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich.
 Dựa vào quy chuẩn phong cách thiết kế phía trên, hãy đề xuất ý tưởng Lifestyle:
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
 ${refImage ? "Tôi có gửi kèm một ảnh mẫu phong cách (Style Reference). Hãy dựa vào style của ảnh này để đề xuất." : ""}
 
+BƯỚC 1 — PHÂN TÍCH SẢN PHẨM (bắt buộc làm trước khi đề xuất, không cần viết ra câu trả lời của bước này):
+- Xác định chính xác DANH MỤC sản phẩm (ví dụ: ấm siêu tốc, nồi chiên không dầu, máy xay sinh tố, chảo/nồi nấu, bình giữ nhiệt, bàn ủi, máy hút bụi, lò nướng...) và chức năng sử dụng thực tế của nó.
+- Xác định chất liệu bề mặt và tông màu chủ đạo/phụ trợ từ ảnh sản phẩm (theo Bước 3.1 của quy chuẩn).
+- Dựa vào bảng 3 phong cách nội thất (Style A: Japandi/Oakwood, Style B: Modern Industrial Charcoal, Style C: Cozy Country Farmhouse ở mục 3.2 quy chuẩn), xác định phong cách nào PHÙ HỢP NHẤT với màu/chất liệu vừa phân tích.
+
 YÊU CẦU ĐỀ XUẤT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
 1. Đề xuất 5 Ý tưởng (Concept) phối cảnh chụp ảnh Lifestyle. Tên của concept (title) BẮT BUỘC phải là tiếng Việt. Bố cục decor phải luôn duy trì sự ngăn nắp, hiện đại, trẻ trung, gọn gàng, tránh bừa bộn quá mức đời thường.
-2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
-   - [Mô tả phong cách hiện đại, gọn gàng]
-   - [Mô tả không gian bối cảnh, khoảng trống không gian âm]
-   - [Mô tả cách đánh sáng tự nhiên chân thực]
+2. BẮT BUỘC ĐA DẠNG: 5 concept phải khác biệt rõ rệt với nhau — không được lặp lại cùng 1 kiểu không gian, cùng 1 khung giờ ánh sáng, hay cùng 1 nhóm đạo cụ giữa các concept. Hãy phối hợp ít nhất 2-3 phong cách khác nhau trong số Style A/B/C nêu trên, và xen kẽ các khung giờ ánh sáng khác nhau (nắng sớm, ánh nắng xuyên tán lá/rèm cửa, hoàng hôn ấm áp) theo mục 5 quy chuẩn.
+3. Đạo cụ và nguyên liệu nhắc tới trong mỗi prompt PHẢI khớp đúng với DANH MỤC sản phẩm đã xác định ở Bước 1 (theo bảng Prop & Ingredient Taxonomy mục 3.3 quy chuẩn) — ví dụ ấm/bình trà đi với vỏ cam khô/quế, chảo/nồi đi với nguyên liệu đang chế biến, máy xay đi với trái cây/đá viên. TUYỆT ĐỐI không gán nguyên liệu/đạo cụ sai công năng.
+4. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+   - [Mô tả phong cách nội thất cụ thể (Style A/B/C) và cảm giác hiện đại, gọn gàng]
+   - [Mô tả không gian bối cảnh, đạo cụ/nguyên liệu đúng công năng sản phẩm, khoảng trống không gian âm]
+   - [Mô tả cách đánh sáng tự nhiên chân thực theo đúng khung giờ đã chọn]
    - [Mô tả cảm giác, màu sắc chủ đạo trẻ trung]
-   (Lưu ý: Sử dụng ký tự xuống dòng 
+   (Lưu ý: Sử dụng ký tự xuống dòng
  giữa các tiêu chí để định dạng)
-3. Đề xuất bộ thông số Camera (Góc chụp lệc nhẹ 1/3, tiêu cự 50mm hoặc 85mm, khẩu độ lớn) lý tưởng nhất dựa trên Quy Chuẩn Phối Cảnh Đời Sống.
+5. Đề xuất bộ thông số Camera (Góc chụp lệc nhẹ 1/3, tiêu cự 50mm hoặc 85mm, khẩu độ lớn) lý tưởng nhất dựa trên Quy Chuẩn Phối Cảnh Đời Sống.
 
 Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
 `;
@@ -344,14 +356,20 @@ ${designTechEffects}
 
 Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich.
 Dựa TRÊN QUY CHUẨN TRÊN, hãy thực hiện phân tích kỹ thuật:
-Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}. 
+Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}.
 
-Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
-YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
+BƯỚC 1 — PHÂN TÍCH TRƯỚC KHI ĐỀ XUẤT (không cần viết ra câu trả lời của bước này):
+- Xác định DANH MỤC sản phẩm (nồi chiên không dầu, quạt/máy lọc không khí, bếp từ, máy xay, ấm siêu tốc...) và cơ chế vật lý thực tế đằng sau tính năng "${techDesc}" (đối lưu khí nóng, cảm ứng điện từ, áp suất, ly tâm...) để hiệu ứng đồ họa mô tả ĐÚNG bản chất vật lý, không tưởng tượng tùy tiện.
+- Xác định 1-2 màu neon/ánh sáng phù hợp nhất với bản chất tính năng đó (nhiệt = cam/đỏ, làm mát/lọc khí = xanh dương/ngọc bích, điện từ = tím/xanh điện...).
+
+YÊU CẦU ĐỀ XUẤT:
+1. Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
+2. BẮT BUỘC ĐA DẠNG: 5 concept phải thể hiện 5 GÓC ĐỘ khác nhau của cùng 1 tính năng (ví dụ: toàn cảnh luồng khí bao quanh sản phẩm, cận cảnh mặt cắt xuyên thấu bên trong, góc từ trên xuống cho thấy vùng tác động, góc thấp nhấn mạnh sức mạnh, góc kèm biểu đồ/mũi tên chỉ hướng dòng chảy) — không lặp lại cùng 1 bố cục hiệu ứng.
+3. YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
 ), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
-- [Mô tả phong cách hiệu năng công nghệ]
+- [Mô tả phong cách hiệu năng công nghệ, đúng bản chất vật lý đã xác định ở Bước 1]
 - [Mô tả không gian hiển thị, bối cảnh tối sang trọng]
-- [Mô tả cách đánh sáng phát quang tinh tế]
+- [Mô tả cách đánh sáng phát quang tinh tế theo đúng màu đã chọn]
 - [Mô tả cảm giác, màu sắc của dải nhiệt/lạnh phù hợp]
 - [Quy chuẩn chống lòe loẹt, chống lỗi bóng mờ]`;
     const parts: any[] = [{ text: prompt }];
@@ -403,19 +421,20 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
-      contents: `Sản phẩm thực tế: ${productName}. 
+      contents: `Sản phẩm thực tế: ${productName}.
 Bối cảnh/Concept thiết kế: "${concept}".
 
 YÊU CẦU PHÂN TÍCH:
-1. Đọc kỹ tên sản phẩm và hiểu rõ chức năng, cách sử dụng thực tế của nó.
+1. Đọc kỹ tên sản phẩm, XÁC ĐỊNH DANH MỤC cụ thể (ấm/bình trà, nồi/chảo, máy xay/ép, nồi chiên không dầu, bình giữ nhiệt, bàn ủi, máy hút bụi, lò nướng, dụng cụ nhỏ...) và hiểu rõ chức năng, cách sử dụng thực tế của nó.
 2. Suy luận sâu để đề xuất 'placement': Vị trí, góc đặt sản phẩm, và cách ánh sáng tương tác tôn lên vẻ đẹp của sản phẩm.
-3. Đề xuất 10 đạo cụ (props) đi kèm. Các đạo cụ này PHẢI cực kỳ logic với công năng của sản phẩm và bối cảnh được chọn. KHÔNG liệt kê các đạo cụ nghệ thuật chung chung (như lăng kính, khối mica, v.v.) nếu nó không thực sự liên quan đến sản phẩm.
+3. Đề xuất 10 đạo cụ (props) đi kèm, viết mỗi đạo cụ dưới dạng 1 cụm mô tả CÓ CHI TIẾT CHẤT LIỆU/TRẠNG THÁI (ví dụ "vài lát cam khô xếp cạnh ấm, tỏa hơi ấm nhẹ" thay vì chỉ "lát cam khô") để prompt sinh ảnh có đủ dữ liệu hình ảnh phong phú. Các đạo cụ này PHẢI cực kỳ logic với công năng của DANH MỤC sản phẩm đã xác định ở bước 1 và bối cảnh được chọn. KHÔNG liệt kê các đạo cụ nghệ thuật chung chung (như lăng kính, khối mica, v.v.) nếu nó không thực sự liên quan đến sản phẩm.
+4. BẮT BUỘC ĐA DẠNG VÀ KHÔNG TRÙNG LẶP: 10 đạo cụ phải khác nhau rõ rệt (không liệt kê 2 biến thể của cùng 1 vật), và nên phối hợp ít nhất 2 nhóm khác nhau: (a) nguyên liệu/vật dụng gắn trực tiếp với chức năng sản phẩm, (b) vật trang trí môi trường xung quanh hợp bối cảnh (không lấn át sản phẩm chính).
 
-${mode === 'STUDIO' 
-  ? 'LƯU Ý STUDIO: Phông nền đơn sắc. Đạo cụ tập trung làm nổi bật chất liệu và kiểu dáng sản phẩm, ví dụ bục đỡ phù hợp kiểu dáng, các nguyên liệu liên quan trực tiếp đến tính năng sản phẩm (ví dụ: máy xay thì có hạt cafe, nồi chảo thì có rau củ quả tươi), và hiệu ứng bóng đổ tự nhiên.' 
-  : 'LƯU Ý LIFESTYLE (Phối cảnh): Đạo cụ phải thuộc về môi trường tự nhiên của sản phẩm. Ví dụ: Nếu là đồ gia dụng nhà bếp, đạo cụ phải là nguyên liệu nấu nướng, gia vị, thớt gỗ, bếp... Nếu là bình giữ nhiệt, đạo cụ là balo, góc làm việc, hoặc đồ thể thao... Tập trung vào tính thực tế, chân thực, tránh những đạo cụ "thơ mộng" hoặc "trừu tượng" không ăn nhập với công năng.'
+${mode === 'STUDIO'
+  ? 'LƯU Ý STUDIO: Phông nền đơn sắc. Đạo cụ tập trung làm nổi bật chất liệu và kiểu dáng sản phẩm — ví dụ: máy xay/ép đi với trái cây tươi cắt lát hoặc hạt cà phê rang; nồi/chảo đi với rau củ hoặc nguyên liệu đang chế biến; nồi chiên không dầu đi với khay thực phẩm/giỏ chiên; bàn ủi đi với vải/áo sơ mi xếp gọn; máy hút bụi đi với sàn nhà/thảm sạch bóng; bình giữ nhiệt đi với đá viên hoặc hơi nước bốc lên. Luôn kèm bục đỡ phù hợp kiểu dáng và hiệu ứng bóng đổ tự nhiên.'
+  : 'LƯU Ý LIFESTYLE (Phối cảnh): Đạo cụ phải thuộc về môi trường tự nhiên của DANH MỤC sản phẩm. Ví dụ: đồ gia dụng nhà bếp đi với nguyên liệu nấu nướng, gia vị, thớt gỗ, bếp...; bình giữ nhiệt đi với balo, góc làm việc, hoặc đồ thể thao; bàn ủi đi với góc phòng giặt ủi, quần áo treo gọn gàng; máy hút bụi đi với không gian phòng khách/thảm sạch. Tập trung vào tính thực tế, chân thực, tránh những đạo cụ "thơ mộng" hoặc "trừu tượng" không ăn nhập với công năng.'
 }
-Trả về định dạng JSON với 'placement' (string) và 'props' (mảng 10 chuỗi, mỗi chuỗi miêu tả ngắn gọn một đạo cụ hoặc yếu tố môi trường cụ thể).`,
+Trả về định dạng JSON với 'placement' (string) và 'props' (mảng 10 chuỗi, mỗi chuỗi miêu tả ngắn gọn nhưng có chi tiết hình ảnh cụ thể về một đạo cụ hoặc yếu tố môi trường).`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -438,11 +457,18 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Sản phẩm: ${productName}. Tech Concept: "${concept}". 
-      YÊU CẦU:
-      1. Suy luận sâu và đề xuất Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình).
-      2. Liệt kê 10 hiệu ứng đồ họa/visual elements đi kèm phù hợp nhất.
-      Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
+      contents: `
+=== QUY CHUẨN THAM KHẢO (Tech Effects) ===
+${designTechEffects}
+========================================
+
+Sản phẩm: ${productName}. Tech Concept: "${concept}".
+YÊU CẦU:
+1. Xác định DANH MỤC sản phẩm và cơ chế vật lý thực tế đằng sau concept trên (đối lưu khí nóng, hơi nước áp suất, cảm ứng điện từ, ly tâm, sóng âm khử khuẩn...).
+2. Suy luận sâu và đề xuất 'placement': Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình) sao cho hiệu ứng có đủ không gian hiển thị.
+3. Liệt kê 10 hiệu ứng đồ họa/visual elements đi kèm, mỗi hiệu ứng viết CÓ CHI TIẾT HÌNH ẢNH cụ thể (ví dụ "luồng khí nóng màu cam xoáy hình trôn ốc bao quanh giỏ chiên" thay vì chỉ "luồng khí nóng") và phải khớp đúng cơ chế vật lý đã xác định ở bước 1 — không dùng hiệu ứng chung chung không liên quan tính năng thật.
+4. BẮT BUỘC ĐA DẠNG: 10 hiệu ứng phải khác nhau về vị trí xuất hiện (bên trong/bên ngoài/mặt cắt), hình dạng (xoáy/tia thẳng/tỏa tròn/gợn sóng) và cường độ — không lặp lại cùng 1 kiểu hiệu ứng dưới tên gọi khác nhau.
+Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -476,6 +502,7 @@ ${designTechEffects}
 ========================================
 
 Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm theo đúng Quy Chuẩn Hiệu ứng Công nghệ.
+BẮT BUỘC ĐA DẠNG: 3 ý tưởng phải khác nhau rõ rệt về bố cục sóng (gợn nhẹ lăn tăn / xoáy cuộn mạnh / tách lớp thành dải) và tông màu neon (xanh ngọc bích / xanh dương đậm / pha ánh tím) — không lặp lại cùng 1 kiểu chuyển động sóng hay cùng 1 tông màu giữa 3 ý tưởng.
 JSON array với 'title' (tiếng Việt) và 'prompt'.
 YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
 ), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
@@ -513,7 +540,20 @@ YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT 
 export const analyzeStagingScene = async (concept: string, realSceneImg: string, refStyleImg: string): Promise<string[]> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const prompt = `Phân tích trang trí phối cảnh. Concept: "${concept}". Trả về JSON 10 vật phẩm trang trí thêm vào phòng.`;
+    const prompt = `
+=== QUY CHUẨN THAM KHẢO (Lifestyle & Scene Staging) ===
+${designLifestyleConcept}
+========================================
+
+Bạn là chuyên gia Home Staging cho ảnh sản phẩm thương mại. Bạn được cung cấp 2 ảnh: (1) ảnh không gian phòng thực tế sẽ đặt sản phẩm vào, (2) ảnh tham khảo phong cách mong muốn. Concept mô tả thêm: "${concept}".
+
+YÊU CẦU PHÂN TÍCH:
+1. Quan sát ảnh (1) để nhận diện loại không gian (bếp/phòng khách/bàn ăn...), nội thất/màu sắc sẵn có, và các vị trí trống hợp lý để thêm đạo cụ mà không che khuất sản phẩm chính.
+2. Quan sát ảnh (2) để nắm bắt tông màu, mood và loại vật dụng đặc trưng của phong cách tham khảo.
+3. Đề xuất 10 vật phẩm trang trí thêm vào phòng (1), kết hợp hài hòa giữa nội thất sẵn có của (1) và phong cách của (2) — mỗi vật phẩm viết CÓ CHI TIẾT chất liệu/vị trí đặt (ví dụ "bình gốm nhỏ men mờ đặt góc trái quầy bếp" thay vì chỉ "bình gốm").
+4. BẮT BUỘC ĐA DẠNG VÀ THỰC TẾ: không liệt kê 2 vật tương tự nhau; ưu tiên các nhóm khác nhau (cây xanh/hoa, vật dụng bếp liên quan trực tiếp tới sản phẩm nếu ảnh (1) là bếp, vải/khăn trải, ánh sáng trang trí, vật trang trí nhỏ). Tuân thủ nguyên tắc "Aesthetic Order" của quy chuẩn — không đề xuất vật gây rối mắt, không hợp không gian, hoặc làm bừa bộn (mục 2 và Defect Prevention Checklist của quy chuẩn).
+
+Trả về JSON 10 vật phẩm trang trí thêm vào phòng.`;
     const parts: any[] = [
       { text: prompt },
       { inlineData: { data: realSceneImg.split(',')[1], mimeType: 'image/png' } },
@@ -549,20 +589,26 @@ Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp
 Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy thực hiện phân tích:
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
 
+BƯỚC 1 — PHÂN TÍCH TRƯỚC KHI ĐỀ XUẤT (theo mục 3.1 quy chuẩn, không cần viết ra câu trả lời của bước này):
+- Xác định hình khối chính của sản phẩm (trụ tròn, hộp chữ nhật, dáng dài cầm tay...) để chọn góc rim light phù hợp.
+- Xác định chất liệu bề mặt (inox bóng gương / nhựa sơn tĩnh điện mờ / thủy tinh trong suốt) để chọn cách chiếu sáng đúng (diffuser mềm cho inox bóng, sáng cứng hơn cho nhựa mờ, hậu cảnh tối cho thủy tinh) theo đúng mục 3.1.
+- Xác định màu chủ đạo của sản phẩm để tính màu nền giấy tone-sur-tone tương ứng (mục 3.2).
+
 YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
 1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
-2. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
+2. BẮT BUỘC ĐA DẠNG: mỗi concept dùng 1 loại bục/plinth khác nhau theo mục 3.3 quy chuẩn (khối travertine/đá cẩm thạch, bậc thang bê tông đơn sắc, đĩa gốm mỏng lơ lửng...) và 1 sắc thái ánh sáng khác nhau (dịu nhẹ đồng đều / tương phản kịch tính / có halo hắt sáng phía sau) — không lặp lại cùng 1 loại bục hay cùng 1 kiểu ánh sáng giữa các concept.
+3. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
    - [Mô tả phong cách studio cao cấp]
    - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
    - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights)]
    - [Mô tả cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
    (Lưu ý: Sử dụng ký tự xuống dòng 
  giữa các tiêu chí để định dạng)
-3. RÀNG BUỘC BẮT BUỘC:
+4. RÀNG BUỘC BẮT BUỘC:
    - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
    - Màu nền giấy BẮT BUỘC phải CÙNG MÀU với màu của sản phẩm (Tone-on-tone, matching the product color).
    - Sản phẩm và đạo cụ nằm gọn trong khung hình, chừa khoảng trống trên nền để chèn chữ (Text) theo đúng Quy chuẩn.
-4. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
+5. Đề xuất bộ thông số Camera (Góc chụp, tiêu cự, khẩu độ, ISO) lý tưởng nhất cho Studio dựa trên Quy chuẩn.
 
 Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và 'prompt' chi tiết) và suggestedCamera.
 `;
@@ -662,16 +708,38 @@ export const editProductImage = async (base64Image: string, prompt: string, imag
   }
 };
 
+export interface ApprovedPromptHint {
+  id: string;
+  visualStyle?: string;
+  prompt?: string;
+  productName?: string;
+}
+
 // Bước cuối: Tạo Prompt và Tạo Ảnh
-export const generateProductImage = async (settings: GenerationSettings, variantSeed: number, history?: import('../types').SuccessfulPrompt[]): Promise<string> => {
+export const generateProductImage = async (
+  settings: GenerationSettings,
+  variantSeed: number,
+  history?: import('../types').SuccessfulPrompt[],
+  approvedHints?: ApprovedPromptHint[]
+): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   let finalPrompt = "";
-  
-  // Optional: Use history to optimize the generation
-  const optimizedHistoryNote = history && history.length > 0 
+
+  // Gợi ý từ lịch sử cục bộ (trình duyệt hiện tại) — cơ chế cũ, giữ để tương thích ngược
+  const localHistoryNote = history && history.length > 0
     ? `
 Note: Please align with the style of these previously successful concepts: ${history.map(h => h.imageSettings.concept || h.imageSettings.visualStyle).slice(-3).join(', ')}`
     : "";
+
+  // Gợi ý từ Lịch sử dùng chung (server) — các prompt THẬT đã được cả đội
+  // đánh giá "Rất tốt!" cho đúng phong cách này, xem lib/historyStore.ts::listApprovedPrompts
+  const sharedHistoryNote = approvedHints && approvedHints.length > 0
+    ? `
+Note: Dưới đây là các prompt đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây cho phong cách "${settings.visualStyle}" — hãy tham khảo văn phong, mức độ chi tiết và các yếu tố đã thành công của chúng khi phù hợp (không sao chép nguyên văn nếu sản phẩm khác nhau):
+${approvedHints.map((h, i) => `${i + 1}. ${(h.prompt || '').slice(0, 300)}`).join('\n')}`
+    : "";
+
+  const optimizedHistoryNote = `${localHistoryNote}${sharedHistoryNote}`;
   
   const formatProps = (props: PropConfig[]) => {
     return props.map(p => {
@@ -1150,7 +1218,13 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
 export const generateImageForChat = async (prompt: string, modelName: string = 'gemini-3.1-flash-image', aspectRatio: string = "1:1", imageBase64?: string, imageSize: string = '1K'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const parts: any[] = [{ text: prompt }];
+    const guidedPrompt = `Elmich Brand Image Standards (bắt buộc tuân thủ):
+${chatAssistantHandbook}
+
+===================================================
+
+Yêu cầu cụ thể của người dùng: ${prompt}`;
+    const parts: any[] = [{ text: guidedPrompt }];
     if (imageBase64 && typeof imageBase64 === 'string') {
       const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
       if (match) {
@@ -1215,7 +1289,7 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
       model: modelName,
       contents: contents,
       config: {
-        systemInstruction: "Bạn là một trợ lý AI tư vấn và lên ý tưởng hình ảnh sản phẩm. Luôn ưu tiên trả lời bằng tiếng Việt, trừ khi người dùng yêu cầu ngôn ngữ khác.",
+        systemInstruction: CHAT_SYSTEM_INSTRUCTION,
       }
     });
     trackGeminiUsage(response, "Trò chuyện trợ lý", modelName);

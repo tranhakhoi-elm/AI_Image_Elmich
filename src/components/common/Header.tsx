@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, MessageCircle, Clock, BookOpen, Sparkles, RefreshCw } from 'lucide-react';
+import { Layout, MessageCircle, BookOpen, Sparkles, RefreshCw, History } from 'lucide-react';
 
 interface HeaderProps {
   viewMode: 'studio' | 'chat' | 'history';
@@ -66,8 +66,8 @@ export const Header: React.FC<HeaderProps> = ({
               : 'text-gray-400 hover:text-white hover:bg-[#242526]'
           }`}
         >
-          <Clock size={14} />
-          <span>Lịch Sử</span>
+          <History size={14} />
+          <span>Lịch sử</span>
         </button>
       </div>
 

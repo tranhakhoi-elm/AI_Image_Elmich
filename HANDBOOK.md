@@ -121,10 +121,19 @@ lần gọi AI cho workflow tương ứng:
 | `Design_WhiteBG_Retouch.md` | WHITE_BG_RETOUCH |
 | `Design_Line_Art.md` | LINE_ART |
 | `3DRender_To_Photo.md` | 3D_TO_REAL_WHITE_BG |
+| `ChatAssistant_Handbook.md` | Trợ lý **Chat AI** (không thuộc 15 workflow — dùng cho cả 2 chế độ Chat & Tư vấn / Tạo ảnh AI) |
 
 5 workflow còn lại (TRACING_ASSISTANT, TRACK_SOCKET_STAGING,
 BARCODE_QR_GENERATOR, TRANSLATE_PACKAGING, PACKAGING_CHECK) dùng prompt
 inline ngắn, không có skill file riêng.
+
+**Trợ lý Chat AI** (`ChatView.tsx`) từ nay cũng có "cẩm nang" riêng —
+`ChatAssistant_Handbook.md` — đóng vai trò Giám đốc Sáng tạo khi tư vấn
+(`chatWithAI`), và chuẩn hóa vật liệu/ánh sáng Elmich cho mọi ảnh tạo tự do
+qua chat (`generateImageForChat`), kể cả khi người dùng không đi qua wizard
+nào của Studio. Cẩm nang này cố ý viết cô đọng hơn 8 skill file kia (không
+nhúng cả 8 file vào mỗi tin nhắn chat) để tránh đội chi phí token — chi
+tiết xem [SKILLS.md](SKILLS.md) mục 2.
 
 **Lưu ý quan trọng khi chỉnh sửa skill file:** nội dung được đóng gói vào
 bundle lúc `npm run build` (import kiểu `?raw`), **không đọc lại từ đĩa lúc
@@ -223,6 +232,20 @@ Các sản phẩm Elmich nhập khẩu hoặc OEM quốc tế thường có file
    - Ghi lại **ảnh kết quả** của mọi lần tạo/sửa ảnh, và **toàn bộ tin
      nhắn chat**, dùng chung cho cả team, xem được ở bất kỳ trình duyệt
      nào (không giới hạn 7 ngày như gallery cục bộ).
+   - **Tự học từ phản hồi:** khi người dùng bấm "Rất tốt!" ở modal phản hồi
+     sau khi tải ảnh về, đánh giá đó được lưu chung cho cả team (không chỉ
+     riêng máy đang dùng). Ở lần tạo ảnh tiếp theo cho cùng workflow, hệ
+     thống tự lấy tối đa 3 prompt đã được duyệt tốt nhất để tham khảo văn
+     phong — càng nhiều người dùng bấm "Rất tốt!", gợi ý càng sát. Đây là
+     kỹ thuật tăng cường prompt bằng dữ liệu đã duyệt, không phải fine-tune
+     mô hình. Chi tiết: ARCHITECTURE.md mục 8.5.
+   - **Tab "Trợ lý Chat" tự lấy lại lịch sử từ server khi cache trình duyệt
+     trống** (trình duyệt mới, tab ẩn danh, hoặc cache đã quá 7 ngày) — sửa
+     lỗi trước đó khiến chat cũ "biến mất" khi mở app ở máy khác dù dữ liệu
+     vẫn còn trên server. Chi tiết: ARCHITECTURE.md mục 8.6.
+   - **Bắt buộc cấu hình CORS cho bucket** khi provisioning (mục 8.1) — nếu
+     bỏ qua bước này, ảnh sẽ không lưu được lên Lịch sử dù Firestore/Storage
+     đã bật đúng, vì trình duyệt chặn request upload cross-origin.
    - Chi tiết thiết kế, các bước cấu hình GCP thủ công, và giới hạn đã
      biết: xem [ARCHITECTURE.md](ARCHITECTURE.md) mục 8.
 
@@ -245,10 +268,13 @@ an toàn hiện tại của hệ thống:
   trình duyệt, không đồng bộ giữa các máy.
 - **Không có bộ test tự động.** `npm run lint` chỉ chạy `tsc --noEmit`
   (kiểm tra kiểu, không phát hiện lỗi logic).
-- **Route ghi Lịch sử (`POST /api/history/images`, `/api/history/chats`)
-  không có xác thực riêng** ngoài việc chạy trên cùng domain với app —
-  chấp nhận được cho công cụ nội bộ đã có PIN chặn ở tầng UI, nhưng không
-  phải hàng rào bảo mật thật ở tầng API (xem ARCHITECTURE.md mục 8.5).
+- **Route ghi Lịch sử (`POST /api/history/images`, `/api/history/chats`,
+  `/api/history/images/rate`) không có xác thực riêng** ngoài việc chạy
+  trên cùng domain với app — chấp nhận được cho công cụ nội bộ đã có PIN
+  chặn ở tầng UI, nhưng không phải hàng rào bảo mật thật ở tầng API. Vì
+  đánh giá "Rất tốt!" ảnh hưởng trực tiếp đến gợi ý cho cả team (mục 9.3),
+  dữ liệu `rating` giả mạo có thể làm lệch chất lượng gợi ý (xem
+  ARCHITECTURE.md mục 8.7).
 - Danh sách đầy đủ nợ kỹ thuật (App.tsx monolith, code trùng lặp backend,
   hàm/route mồ côi...) xem ARCHITECTURE.md mục 7.
 

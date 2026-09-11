@@ -1,87 +1,86 @@
-import { Firestore } from '@google-cloud/firestore';
-import { Storage } from '@google-cloud/storage';
+// Module dùng chung cho mọi route backend cần truy cập Google Cloud
+// (Firestore + Cloud Storage) bằng cùng 1 Service Account đang được dùng
+// cho tích hợp Google Sheets. Cả server.ts (Express) và api/*.ts (Vercel)
+// đều import từ đây để tránh lặp lại logic parse credentials.
+import { Firestore } from "@google-cloud/firestore";
+import { Storage, Bucket } from "@google-cloud/storage";
 
-export interface ServiceAccountCredentials {
-  type?: string;
+interface ServiceAccountCredentials {
   project_id?: string;
-  private_key_id?: string;
-  private_key?: string;
-  client_email?: string;
-  client_id?: string;
-  auth_uri?: string;
-  token_uri?: string;
-  auth_provider_x509_cert_url?: string;
-  client_x509_cert_url?: string;
+  client_email: string;
+  private_key: string;
 }
 
+let cachedCredentials: ServiceAccountCredentials | null | undefined;
+
 export function getServiceAccountCredentials(): ServiceAccountCredentials | null {
+  if (cachedCredentials !== undefined) return cachedCredentials;
+
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (serviceAccountJson) {
     try {
-      return JSON.parse(serviceAccountJson);
-    } catch (e: any) {
-      console.warn("GOOGLE_SERVICE_ACCOUNT_JSON parse error in lib/googleCloud:", e.message);
+      cachedCredentials = JSON.parse(serviceAccountJson);
+    } catch (err: any) {
+      console.error("GOOGLE_SERVICE_ACCOUNT_JSON không phải JSON hợp lệ:", err.message);
+      cachedCredentials = null;
     }
+    return cachedCredentials;
   }
 
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-  let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+  let privateKey = process.env.GOOGLE_PRIVATE_KEY || "";
   if (clientEmail && privateKey) {
     if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-      privateKey = privateKey.replace(/^"|"$/g, '');
+      privateKey = privateKey.replace(/^"|"$/g, "");
     }
-    privateKey = privateKey.replace(/\\n/g, '\n');
-    return {
+    privateKey = privateKey.replace(/\\n/g, "\n");
+    cachedCredentials = {
+      project_id: process.env.GOOGLE_CLOUD_PROJECT_ID,
       client_email: clientEmail,
       private_key: privateKey,
-      project_id: process.env.GOOGLE_PROJECT_ID || process.env.GCP_PROJECT_ID,
     };
+    return cachedCredentials;
   }
 
+  cachedCredentials = null;
   return null;
 }
 
-let firestoreInstance: Firestore | null = null;
-let storageInstance: Storage | null = null;
+let firestoreClient: Firestore | null = null;
 
+/** Trả về client Firestore, hoặc null nếu chưa cấu hình đủ credentials. */
 export function getFirestore(): Firestore | null {
-  if (firestoreInstance) return firestoreInstance;
   const credentials = getServiceAccountCredentials();
   if (!credentials) return null;
-  try {
-    firestoreInstance = new Firestore({
-      projectId: credentials.project_id,
+
+  if (!firestoreClient) {
+    firestoreClient = new Firestore({
+      projectId: credentials.project_id || process.env.GOOGLE_CLOUD_PROJECT_ID,
       credentials: {
         client_email: credentials.client_email,
         private_key: credentials.private_key,
       },
     });
-    return firestoreInstance;
-  } catch (err: any) {
-    console.warn("Could not initialize Firestore:", err.message);
-    return null;
   }
+  return firestoreClient;
 }
 
-export function getStorage(): Storage | null {
-  if (storageInstance) return storageInstance;
+let storageClient: Storage | null = null;
+
+/** Trả về Bucket đã cấu hình, hoặc null nếu thiếu credentials hoặc GCS_BUCKET_NAME. */
+export function getBucket(): Bucket | null {
   const credentials = getServiceAccountCredentials();
-  if (!credentials) return null;
-  try {
-    storageInstance = new Storage({
-      projectId: credentials.project_id,
+  const bucketName = process.env.GCS_BUCKET_NAME;
+  if (!credentials || !bucketName) return null;
+
+  if (!storageClient) {
+    storageClient = new Storage({
+      projectId: credentials.project_id || process.env.GOOGLE_CLOUD_PROJECT_ID,
       credentials: {
         client_email: credentials.client_email,
         private_key: credentials.private_key,
       },
     });
-    return storageInstance;
-  } catch (err: any) {
-    console.warn("Could not initialize Cloud Storage:", err.message);
-    return null;
   }
-}
-
-export function getGCSBucketName(): string | null {
-  return process.env.GCS_BUCKET_NAME || null;
+  return storageClient.bucket(bucketName);
 }
