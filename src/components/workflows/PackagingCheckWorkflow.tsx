@@ -67,6 +67,7 @@ export const PackagingCheckWorkflow: React.FC<PackagingCheckWorkflowProps> = ({
 }) => {
   const [packagingCheckStep, setPackagingCheckStep] = useState<number>(1);
   const [packagingInputMode, setPackagingInputMode] = useState<'EXCEL' | 'MANUAL'>('EXCEL');
+  const [pastedText, setPastedText] = useState<string>('');
   const [standardParams, setStandardParams] = useState<PackagingStandardParam[]>([]);
   const [packagingFiles, setPackagingFiles] = useState<{ name: string; data: string }[]>([]);
   const [packagingCheckResult, setPackagingCheckResult] = useState<any>(null);
@@ -76,6 +77,7 @@ export const PackagingCheckWorkflow: React.FC<PackagingCheckWorkflowProps> = ({
     const files = 'target' in filesOrEvent ? filesOrEvent.target.files : filesOrEvent;
     const file = files?.[0];
     if (!file) return;
+    if (appState !== AppState.READY) return; // tránh chọn file khác trong lúc file trước đang được AI phân tích
     setLoadingMessage("AI đang phân tích dữ liệu Excel...");
     setAppState(AppState.ANALYZING);
     try {
@@ -93,31 +95,35 @@ export const PackagingCheckWorkflow: React.FC<PackagingCheckWorkflowProps> = ({
       
       const aiParams = await extractStandardParamsWithAI(textData);
       setStandardParams(aiParams);
-      setAppState(AppState.READY);
     } catch (err: any) {
       console.error(err);
       setAlertMessage("Lỗi khi đọc file Excel: " + err.message);
+    } finally {
       setAppState(AppState.READY);
     }
     if ('target' in filesOrEvent && filesOrEvent.target) filesOrEvent.target.value = '';
   };
 
-  const handlePastedExcelData = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    if (!text.trim()) return;
-    
+  const handleAnalyzePastedData = async () => {
+    // Khóa lại nếu đang có 1 lần phân tích khác chạy dở (tránh gọi AI trùng
+    // lặp/song song dẫn đến race condition khi kết quả trả về không theo
+    // đúng thứ tự) — nút bên dưới cũng đã disable theo appState, đây là
+    // lớp bảo vệ thứ 2 phòng trường hợp gọi hàm trực tiếp.
+    if (appState !== AppState.READY) return;
+    const text = pastedText.trim();
+    if (!text) return;
+
     setLoadingMessage("AI đang phân tích dữ liệu văn bản...");
     setAppState(AppState.ANALYZING);
     try {
       const aiParams = await extractStandardParamsWithAI(text);
       setStandardParams(aiParams);
-      setAppState(AppState.READY);
     } catch (err: any) {
       console.error(err);
       setAlertMessage("Lỗi phân tích: " + err.message);
+    } finally {
       setAppState(AppState.READY);
     }
-    e.target.value = '';
   };
 
   const addStandardParam = () => setStandardParams(prev => [...prev, { key: '', value: '' }]);
@@ -239,23 +245,34 @@ export const PackagingCheckWorkflow: React.FC<PackagingCheckWorkflowProps> = ({
               {packagingInputMode === 'EXCEL' ? (
                 <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-6 text-center">
                   <div className="mb-4 text-white text-sm">Tải lên file Excel (.xlsx) chứa dữ liệu chuẩn của bao bì</div>
-                  <input 
-                    type="file" 
-                    accept=".xlsx, .xls, .csv" 
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
                     onChange={handleExcelUpload}
-                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1877F2]/10 file:text-[#1877F2] hover:file:bg-[#1877F2]/20 cursor-pointer"
+                    disabled={appState !== AppState.READY}
+                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1877F2]/10 file:text-[#1877F2] hover:file:bg-[#1877F2]/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               ) : (
                 <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-4">
                   <span className="text-white text-xs font-bold block mb-2">Dán dữ liệu từ Excel (Copy các cột Tên thông số, Giá trị):</span>
-                  <textarea 
-                    className="w-full h-24 bg-[#3A3B3C] border border-[#3E4042] rounded-lg p-2 text-white text-xs outline-none focus:border-[#1877F2] resize-none"
-                    placeholder="Dán nội dung bảng vào đây..."
-                    onChange={handlePastedExcelData}
+                  <textarea
+                    className="w-full h-24 bg-[#3A3B3C] border border-[#3E4042] rounded-lg p-2 text-white text-xs outline-none focus:border-[#1877F2] resize-none disabled:opacity-50"
+                    placeholder="Dán nội dung bảng vào đây, sau đó bấm Phân tích..."
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    disabled={appState !== AppState.READY}
                   ></textarea>
-                  <div className="flex justify-end mt-2">
+                  <div className="flex justify-end gap-2 mt-2">
                     <button onClick={addStandardParam} className="px-3 py-1 bg-[#3A3B3C] hover:bg-[#4A4B4C] text-white rounded-lg text-xs font-bold transition-all border border-[#3E4042]">+ Thêm 1 dòng trống</button>
+                    <button
+                      onClick={handleAnalyzePastedData}
+                      disabled={!pastedText.trim() || appState !== AppState.READY}
+                      className="px-3 py-1 bg-[#1877F2] hover:brightness-110 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      {appState === AppState.ANALYZING ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                      Phân tích
+                    </button>
                   </div>
                 </div>
               )}
