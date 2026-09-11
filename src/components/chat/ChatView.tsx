@@ -297,8 +297,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
             >
               <Menu size={18} />
             </button>
-            <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="min-w-0 flex items-center gap-2">
               <h2 className="font-bold text-xl truncate">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
               <button
                 onClick={handleNewChat}
@@ -308,51 +307,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 <Plus size={12} className="text-[#1877F2]" />
                 <span>Đoạn chat mới</span>
               </button>
-            </div>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white font-semibold">Chế độ:</span>
-                <select 
-                  value={chatMode}
-                  onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
-                  className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
-                >
-                  <option value="chat">Chat & Tư vấn</option>
-                  <option value="image">Tạo ảnh AI</option>
-                </select>
-              </div>
-              
-              {chatMode === 'image' && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white font-semibold">Tỷ lệ:</span>
-                    <select 
-                      value={chatImageAspectRatio}
-                      onChange={e => setChatImageAspectRatio(e.target.value)}
-                      className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
-                    >
-                      <option value="1:1">1:1 (Vuông)</option>
-                      <option value="16:9">16:9 (Ngang)</option>
-                      <option value="9:16">9:16 (Dọc)</option>
-                      <option value="4:3">4:3</option>
-                      <option value="3:4">3:4</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white font-semibold">Chất lượng:</span>
-                    <select 
-                      value={chatImageQuality}
-                      onChange={e => setChatImageQuality(e.target.value)}
-                      className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
-                    >
-                      <option value="1K">1K</option>
-                      <option value="2K">2K</option>
-                      <option value="4K">4K</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
             </div>
           </div>
         </div>
@@ -410,6 +364,50 @@ export const ChatView: React.FC<ChatViewProps> = ({
         </div>
 
         <div className="p-4 md:p-6 lg:px-24 xl:px-48 border-t border-[#3E4042] bg-[#242526] shrink-0">
+          <div className="flex items-center flex-wrap gap-4 mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white font-semibold">Chế độ:</span>
+              <select
+                value={chatMode}
+                onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
+                className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
+              >
+                <option value="chat">Chat & Tư vấn</option>
+                <option value="image">Tạo ảnh AI</option>
+              </select>
+            </div>
+
+            {chatMode === 'image' && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white font-semibold">Tỷ lệ:</span>
+                  <select
+                    value={chatImageAspectRatio}
+                    onChange={e => setChatImageAspectRatio(e.target.value)}
+                    className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
+                  >
+                    <option value="1:1">1:1 (Vuông)</option>
+                    <option value="16:9">16:9 (Ngang)</option>
+                    <option value="9:16">9:16 (Dọc)</option>
+                    <option value="4:3">4:3</option>
+                    <option value="3:4">3:4</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white font-semibold">Chất lượng:</span>
+                  <select
+                    value={chatImageQuality}
+                    onChange={e => setChatImageQuality(e.target.value)}
+                    className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
+                  >
+                    <option value="1K">1K</option>
+                    <option value="2K">2K</option>
+                    <option value="4K">4K</option>
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
           <div className="flex flex-col gap-3 bg-[#18191A] p-3 rounded-2xl border border-[#3E4042] focus-within:border-[#1877F2] focus-within:ring-1 focus-within:ring-[#1877F2] transition-colors shadow-sm">
             {chatInputImageBase64 && (
               <div className="relative inline-block w-20 h-20 bg-[#242526] rounded-lg border border-[#3E4042] p-1 shadow-sm">
