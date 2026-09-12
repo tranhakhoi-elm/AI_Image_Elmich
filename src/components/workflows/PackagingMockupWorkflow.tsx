@@ -75,12 +75,16 @@ export const PackagingMockupWorkflow: React.FC<PackagingMockupWorkflowProps> = (
           )}
           {packagingStep === 3 && (
             <div className="space-y-4">
-               <label className="block text-[9px] font-bold text-white uppercase">Kiểu xuất bản</label>
-               <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.packagingOutputStyle} onChange={e => setSettings({ ...settings, packagingOutputStyle: e.target.value as any })}>
-                 <option value="WHITE_BG_ROTATED" className="bg-[#242526]">Nền trắng xoay</option>
-                 <option value="CONTEXTUAL" className="bg-[#242526]">Lifestyle Context</option>
-               </select>
-               <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} imageModel={settings.imageModel} onModelChange={(model) => setSettings({ ...settings, imageModel: model })} />
+               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                 <div className="space-y-4">
+                   <label className="block text-[9px] font-bold text-white uppercase">Kiểu xuất bản</label>
+                   <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2]" value={settings.packagingOutputStyle} onChange={e => setSettings({ ...settings, packagingOutputStyle: e.target.value as any })}>
+                     <option value="WHITE_BG_ROTATED" className="bg-[#242526]">Nền trắng xoay</option>
+                     <option value="CONTEXTUAL" className="bg-[#242526]">Lifestyle Context</option>
+                   </select>
+                 </div>
+                 <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} imageModel={settings.imageModel} onModelChange={(model) => setSettings({ ...settings, imageModel: model })} />
+               </div>
                <div className="flex gap-2">
                  <button onClick={() => setPackagingStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
                  <button onClick={() => startGeneration()} className="flex-[2] py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs">Tạo ảnh</button>

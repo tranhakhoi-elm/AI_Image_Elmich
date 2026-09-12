@@ -242,86 +242,92 @@ export const PackagingCheckWorkflow: React.FC<PackagingCheckWorkflowProps> = ({
                 <button onClick={() => setPackagingInputMode('MANUAL')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${packagingInputMode === 'MANUAL' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'}`}>Nhập thủ công</button>
               </div>
 
-              {packagingInputMode === 'EXCEL' ? (
-                <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-6 text-center">
-                  <div className="mb-4 text-white text-sm">Tải lên file Excel (.xlsx) chứa dữ liệu chuẩn của bao bì</div>
-                  <input
-                    type="file"
-                    accept=".xlsx, .xls, .csv"
-                    onChange={handleExcelUpload}
-                    disabled={appState !== AppState.READY}
-                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1877F2]/10 file:text-[#1877F2] hover:file:bg-[#1877F2]/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                <div className="space-y-4">
+                  {packagingInputMode === 'EXCEL' ? (
+                    <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-6 text-center">
+                      <div className="mb-4 text-white text-sm">Tải lên file Excel (.xlsx) chứa dữ liệu chuẩn của bao bì</div>
+                      <input
+                        type="file"
+                        accept=".xlsx, .xls, .csv"
+                        onChange={handleExcelUpload}
+                        disabled={appState !== AppState.READY}
+                        className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1877F2]/10 file:text-[#1877F2] hover:file:bg-[#1877F2]/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-4">
+                      <span className="text-white text-xs font-bold block mb-2">Dán dữ liệu từ Excel (Copy các cột Tên thông số, Giá trị):</span>
+                      <textarea
+                        className="w-full h-24 bg-[#3A3B3C] border border-[#3E4042] rounded-lg p-2 text-white text-xs outline-none focus:border-[#1877F2] resize-none disabled:opacity-50"
+                        placeholder="Dán nội dung bảng vào đây, sau đó bấm Phân tích..."
+                        value={pastedText}
+                        onChange={(e) => setPastedText(e.target.value)}
+                        disabled={appState !== AppState.READY}
+                      ></textarea>
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button onClick={addStandardParam} className="px-3 py-1 bg-[#3A3B3C] hover:bg-[#4A4B4C] text-white rounded-lg text-xs font-bold transition-all border border-[#3E4042]">+ Thêm 1 dòng trống</button>
+                        <button
+                          onClick={handleAnalyzePastedData}
+                          disabled={!pastedText.trim() || appState !== AppState.READY}
+                          className="px-3 py-1 bg-[#1877F2] hover:brightness-110 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          {appState === AppState.ANALYZING ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                          Phân tích
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="bg-[#242526] border border-[#3E4042] rounded-xl p-4">
-                  <span className="text-white text-xs font-bold block mb-2">Dán dữ liệu từ Excel (Copy các cột Tên thông số, Giá trị):</span>
-                  <textarea
-                    className="w-full h-24 bg-[#3A3B3C] border border-[#3E4042] rounded-lg p-2 text-white text-xs outline-none focus:border-[#1877F2] resize-none disabled:opacity-50"
-                    placeholder="Dán nội dung bảng vào đây, sau đó bấm Phân tích..."
-                    value={pastedText}
-                    onChange={(e) => setPastedText(e.target.value)}
-                    disabled={appState !== AppState.READY}
-                  ></textarea>
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button onClick={addStandardParam} className="px-3 py-1 bg-[#3A3B3C] hover:bg-[#4A4B4C] text-white rounded-lg text-xs font-bold transition-all border border-[#3E4042]">+ Thêm 1 dòng trống</button>
-                    <button
-                      onClick={handleAnalyzePastedData}
-                      disabled={!pastedText.trim() || appState !== AppState.READY}
-                      className="px-3 py-1 bg-[#1877F2] hover:brightness-110 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
-                    >
-                      {appState === AppState.ANALYZING ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                      Phân tích
-                    </button>
-                  </div>
-                </div>
-              )}
 
-              {standardParams.length > 0 && (
-                <div className="bg-[#242526] border border-[#3E4042] rounded-xl overflow-hidden">
-                  <div className="p-4 border-b border-[#3E4042] flex justify-between items-center">
-                    <h3 className="text-white text-sm font-bold">Dữ liệu chuẩn trích xuất ({standardParams.length} thông số)</h3>
-                    <button onClick={addStandardParam} className="text-xs text-[#1877F2] hover:underline font-bold">+ Thêm thông số</button>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                    <table className="w-full text-left text-xs text-white">
-                      <thead className="bg-[#3A3B3C] sticky top-0">
-                        <tr>
-                          <th className="p-3 font-semibold">Thông số</th>
-                          <th className="p-3 font-semibold">Giá trị chuẩn</th>
-                          <th className="p-3 w-10"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {standardParams.map((param, index) => (
-                          <tr key={index} className="border-b border-[#3E4042]">
-                            <td className="p-2">
-                              <input 
-                                value={param.key} 
-                                onChange={(e) => updateStandardParam(index, 'key', e.target.value)} 
-                                className="w-full bg-transparent border-none outline-none focus:ring-1 focus:ring-[#1877F2] rounded px-2 py-1"
-                              />
-                            </td>
-                            <td className="p-2">
-                              <input 
-                                value={param.value} 
-                                onChange={(e) => updateStandardParam(index, 'value', e.target.value)} 
-                                className="w-full bg-transparent border-none outline-none focus:ring-1 focus:ring-[#1877F2] rounded px-2 py-1"
-                              />
-                            </td>
-                            <td className="p-2 text-center">
-                              <button onClick={() => removeStandardParam(index)} className="text-red-400 hover:text-red-300">
-                                <Trash2 size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                <div className="space-y-4">
+                  {standardParams.length > 0 && (
+                    <div className="bg-[#242526] border border-[#3E4042] rounded-xl overflow-hidden">
+                      <div className="p-4 border-b border-[#3E4042] flex justify-between items-center">
+                        <h3 className="text-white text-sm font-bold">Dữ liệu chuẩn trích xuất ({standardParams.length} thông số)</h3>
+                        <button onClick={addStandardParam} className="text-xs text-[#1877F2] hover:underline font-bold">+ Thêm thông số</button>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                        <table className="w-full text-left text-xs text-white">
+                          <thead className="bg-[#3A3B3C] sticky top-0">
+                            <tr>
+                              <th className="p-3 font-semibold">Thông số</th>
+                              <th className="p-3 font-semibold">Giá trị chuẩn</th>
+                              <th className="p-3 w-10"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {standardParams.map((param, index) => (
+                              <tr key={index} className="border-b border-[#3E4042]">
+                                <td className="p-2">
+                                  <input
+                                    value={param.key}
+                                    onChange={(e) => updateStandardParam(index, 'key', e.target.value)}
+                                    className="w-full bg-transparent border-none outline-none focus:ring-1 focus:ring-[#1877F2] rounded px-2 py-1"
+                                  />
+                                </td>
+                                <td className="p-2">
+                                  <input
+                                    value={param.value}
+                                    onChange={(e) => updateStandardParam(index, 'value', e.target.value)}
+                                    className="w-full bg-transparent border-none outline-none focus:ring-1 focus:ring-[#1877F2] rounded px-2 py-1"
+                                  />
+                                </td>
+                                <td className="p-2 text-center">
+                                  <button onClick={() => removeStandardParam(index)} className="text-red-400 hover:text-red-300">
+                                    <Trash2 size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              <button 
+              </div>
+              <button
                 disabled={standardParams.length === 0} 
                 onClick={() => setPackagingCheckStep(2)} 
                 className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg disabled:opacity-50 hover:brightness-110 transition-all"
@@ -333,53 +339,59 @@ export const PackagingCheckWorkflow: React.FC<PackagingCheckWorkflowProps> = ({
 
           {packagingCheckStep === 2 && (
             <div className="space-y-4">
-              <label className="block text-[9px] font-bold text-white uppercase mt-4">Tải lên các file thiết kế bao bì (Ảnh hoặc PDF)</label>
-              <div 
-                onClick={() => productFilesRef.current?.click()} 
-                className="h-32 w-full bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all"
-              >
-                <span className="text-white font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Chọn file thiết kế (Hộp màu, Tem phụ, Thùng carton...)</span>
-              </div>
-              <input 
-                type="file" 
-                hidden 
-                multiple 
-                ref={productFilesRef} 
-                accept="image/*, application/pdf" 
-                onChange={e => {
-                  const files = Array.from(e.target.files || []) as File[];
-                  if (files.length > 0) {
-                    files.forEach(file => {
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        setPackagingFiles(prev => [...prev, { name: file.name, data: reader.result as string }]);
-                      };
-                      reader.readAsDataURL(file);
-                    });
-                  }
-                  e.target.value = '';
-                }} 
-              />
-
-              {packagingFiles.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  {packagingFiles.map((f, i) => (
-                    <div key={i} className="relative bg-[#242526] border border-[#3E4042] rounded-xl p-2 flex items-center gap-2">
-                      {f.data.startsWith('data:application/pdf') ? (
-                        <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center shrink-0">
-                          <Box size={20} className="text-[#1877F2]" />
-                        </div>
-                      ) : (
-                        <img src={f.data} className="w-10 h-10 rounded object-cover shrink-0" referrerPolicy="no-referrer" alt={f.name} />
-                      )}
-                      <span className="text-white text-xs truncate flex-1">{f.name}</span>
-                      <button onClick={() => setPackagingFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-300 p-1 shrink-0">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                <div className="space-y-4">
+                  <label className="block text-[9px] font-bold text-white uppercase mt-4">Tải lên các file thiết kế bao bì (Ảnh hoặc PDF)</label>
+                  <div
+                    onClick={() => productFilesRef.current?.click()}
+                    className="h-32 w-full bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-[#1877F2] transition-all"
+                  >
+                    <span className="text-white font-bold uppercase text-[10px] group-hover:text-[#1877F2]">+ Chọn file thiết kế (Hộp màu, Tem phụ, Thùng carton...)</span>
+                  </div>
+                  <input
+                    type="file"
+                    hidden
+                    multiple
+                    ref={productFilesRef}
+                    accept="image/*, application/pdf"
+                    onChange={e => {
+                      const files = Array.from(e.target.files || []) as File[];
+                      if (files.length > 0) {
+                        files.forEach(file => {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setPackagingFiles(prev => [...prev, { name: file.name, data: reader.result as string }]);
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                      }
+                      e.target.value = '';
+                    }}
+                  />
                 </div>
-              )}
+
+                <div className="space-y-4">
+                  {packagingFiles.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mt-4">
+                      {packagingFiles.map((f, i) => (
+                        <div key={i} className="relative bg-[#242526] border border-[#3E4042] rounded-xl p-2 flex items-center gap-2">
+                          {f.data.startsWith('data:application/pdf') ? (
+                            <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center shrink-0">
+                              <Box size={20} className="text-[#1877F2]" />
+                            </div>
+                          ) : (
+                            <img src={f.data} className="w-10 h-10 rounded object-cover shrink-0" referrerPolicy="no-referrer" alt={f.name} />
+                          )}
+                          <span className="text-white text-xs truncate flex-1">{f.name}</span>
+                          <button onClick={() => setPackagingFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-300 p-1 shrink-0">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <div className="flex gap-2 mt-4">
                 <button onClick={() => setPackagingCheckStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526]">Quay lại</button>

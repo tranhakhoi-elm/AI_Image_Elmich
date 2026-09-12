@@ -48,33 +48,39 @@ export const Render3DToPhotoWorkflow: React.FC<Render3DToPhotoWorkflowProps> = (
         >
           {render3DStep === 1 && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Tên Sản Phẩm (Bắt buộc)</label>
-                <input type="text" placeholder="Ví dụ: Nồi inox 304, Sofa da..." className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
-              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-white uppercase mb-2">Tên Sản Phẩm (Bắt buộc)</label>
+                    <input type="text" placeholder="Ví dụ: Nồi inox 304, Sofa da..." className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+                  </div>
 
-              <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Mô tả đặc tính vật liệu (Quan trọng để khử CGI)</label>
-                <textarea
-                  rows={3}
-                  placeholder="Ví dụ: Inox xước hairline mờ, tay cầm nhựa nhám, nắp kính cường lực..."
-                  className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#1877F2] resize-none transition-all placeholder:text-gray-500"
-                  value={settings.whiteBGMaterialsDescription || ''}
-                  onChange={e => setSettings({...settings, whiteBGMaterialsDescription: e.target.value})}
-                />
-              </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-white uppercase mb-2">Mô tả đặc tính vật liệu (Quan trọng để khử CGI)</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Ví dụ: Inox xước hairline mờ, tay cầm nhựa nhám, nắp kính cường lực..."
+                      className="w-full bg-[#242526] border border-[#3E4042] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#1877F2] resize-none transition-all placeholder:text-gray-500"
+                      value={settings.whiteBGMaterialsDescription || ''}
+                      onChange={e => setSettings({...settings, whiteBGMaterialsDescription: e.target.value})}
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh 3D Render gốc</label>
-                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
-                   {settings.referenceImage ? (
-                     <>
-                       <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                       <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
-                     </>
-                   ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh 3D gốc</span>}
-                </FileDropzone>
-                <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh 3D Render gốc</label>
+                    <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'reference')} onClick={() => refFileRef.current?.click()} className="h-48 bg-[#242526] border-2 border-dashed border-[#3E4042] rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group relative hover:border-[#1877F2] transition-all">
+                       {settings.referenceImage ? (
+                         <>
+                           <img src={settings.referenceImage} className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                           <div className="absolute inset-0 bg-[#242526] shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-xs font-bold">Thay ảnh</div>
+                         </>
+                       ) : <span className="text-white text-xs font-bold uppercase group-hover:text-[#1877F2]">+ Tải ảnh 3D gốc</span>}
+                    </FileDropzone>
+                    <input type="file" hidden ref={refFileRef} accept="image/*" onChange={e => onImageUpload(e, 'reference')} />
+                  </div>
+                </div>
               </div>
 
               <button

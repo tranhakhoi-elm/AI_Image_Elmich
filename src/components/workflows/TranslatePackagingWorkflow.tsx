@@ -52,7 +52,7 @@ export const TranslatePackagingWorkflow: React.FC<TranslatePackagingWorkflowProp
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Left Column: Upload English packaging */}
         <div className="space-y-4 bg-[#242526] border border-[#3E4042] rounded-2xl p-5">
           <label className="block text-sm font-bold text-white">1. Tải lên bao bì Tiếng Anh</label>

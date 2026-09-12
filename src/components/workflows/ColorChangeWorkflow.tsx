@@ -50,14 +50,16 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
         >
           {colorChangeStep === 1 && (
             <div className="space-y-4">
-              <input type="text" placeholder="Tên SP..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                <input type="text" placeholder="Tên SP..." className="w-full bg-[#242526]  border border-[#3E4042] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#1877F2] transition-colors" value={settings.productName} onChange={e => setSettings({...settings, productName: e.target.value})} />
 
-              <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-white uppercase">Ảnh sản phẩm gốc</label>
-                <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="h-40 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
-                  {settings.productImages[0] ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white font-bold text-xs uppercase group-hover:text-[#1877F2]">+ Ảnh gốc</span>}
-                </FileDropzone>
-                <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-white uppercase">Ảnh sản phẩm gốc</label>
+                  <FileDropzone onFilesDrop={(f) => onImageUpload(f, 'product')} onClick={() => productFilesRef.current?.click()} className="h-40 w-full bg-[#242526]  border-2 border-dashed border-[#3E4042] rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#1877F2] transition-all">
+                    {settings.productImages[0] ? <img src={settings.productImages[0]} className="h-full object-contain" referrerPolicy="no-referrer" /> : <span className="text-white font-bold text-xs uppercase group-hover:text-[#1877F2]">+ Ảnh gốc</span>}
+                  </FileDropzone>
+                  <input type="file" hidden ref={productFilesRef} accept="image/*" onChange={e => onImageUpload(e, 'product')} />
+                </div>
               </div>
               <button disabled={!settings.productImages[0]} onClick={() => setColorChangeStep(2)} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs disabled:opacity-50">Tiếp tục</button>
             </div>
@@ -65,21 +67,23 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
 
           {colorChangeStep === 2 && (
             <div className="space-y-4">
-              <div className="space-y-3">
-                  <label className="block text-[10px] font-bold text-white uppercase">Danh sách thay đổi màu</label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                    {settings.colorChanges.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-[#242526]  rounded-xl border border-white/5 text-[10px]">
-                        <div className="flex items-center gap-3">
-                          {c.sampleImage && <img src={c.sampleImage} className="w-8 h-8 rounded object-cover border border-[#3E4042]" referrerPolicy="no-referrer" />}
-                          <div>
-                            <div className="font-bold text-white">{c.partName}</div>
-                            <div className="text-white">{c.pantoneCode || 'Không có mã Pantone'}</div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-bold text-white uppercase">Danh sách thay đổi màu</label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                      {settings.colorChanges.map((c, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-[#242526]  rounded-xl border border-white/5 text-[10px]">
+                          <div className="flex items-center gap-3">
+                            {c.sampleImage && <img src={c.sampleImage} className="w-8 h-8 rounded object-cover border border-[#3E4042]" referrerPolicy="no-referrer" />}
+                            <div>
+                              <div className="font-bold text-white">{c.partName}</div>
+                              <div className="text-white">{c.pantoneCode || 'Không có mã Pantone'}</div>
+                            </div>
                           </div>
+                          <button onClick={()=>setSettings(s=>({...s, colorChanges:s.colorChanges.filter((_,idx)=>idx!==i)}))} className="text-red-400 hover:text-red-300">✕</button>
                         </div>
-                        <button onClick={()=>setSettings(s=>({...s, colorChanges:s.colorChanges.filter((_,idx)=>idx!==i)}))} className="text-red-400 hover:text-red-300">✕</button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
                   <div className="bg-[#242526]  p-4 rounded-2xl border border-[#3E4042] space-y-3">
@@ -132,16 +136,16 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
 
           {colorChangeStep === 3 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold text-white uppercase">Tỉ lệ khung hình</label>
                   <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-[10px] text-white outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
                     {['1:1', '3:4', '4:3', '9:16', '16:9', '1:4', '4:1'].map(r => <option key={r} value={r} className="bg-[#242526]">{r}</option>)}
                   </select>
                 </div>
-              </div>
 
-              <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} imageModel={settings.imageModel} onModelChange={(model) => setSettings({ ...settings, imageModel: model })} />
+                <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} imageModel={settings.imageModel} onModelChange={(model) => setSettings({ ...settings, imageModel: model })} />
+              </div>
 
               <div className="flex gap-2">
                 <button onClick={() => setColorChangeStep(2)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
