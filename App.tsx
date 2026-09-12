@@ -35,7 +35,8 @@ import {
   ChevronDown,
   Trash2,
   QrCode,
-  AlertCircle, Languages
+  AlertCircle, Languages,
+  BookOpen
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, ImageModelTier, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
 import { BarcodeGenerator } from './src/components/BarcodeGenerator';
@@ -51,7 +52,6 @@ import { TrackSocketWorkflow } from './src/components/workflows/TrackSocketWorkf
 import { ConceptWorkflow } from './src/components/workflows/ConceptWorkflow';
 import { StudioWorkflow } from './src/components/workflows/StudioWorkflow';
 import { ChatView } from './src/components/chat/ChatView';
-import { Header } from './src/components/common/Header';
 import { HandbookModal } from './src/components/common/HandbookModal';
 import { LockScreen } from './src/components/common/LockScreen';
 import { LoadingModal } from './src/components/common/LoadingModal';
@@ -72,15 +72,15 @@ import { logGeneratedImage, rateGeneratedImage, fetchApprovedPromptHints, fetchC
 // mỗi công cụ là 1 icon vuông màu đặc, giống springboard iPhone.
 const APP_TOOLS: AppTile[] = [
   // Thứ tự 1-5 cố định theo yêu cầu, các phần sau tự do sắp xếp.
-  { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={30} />, title: 'Làm ảnh nền trắng', color: 'bg-blue-500' },
-  { id: 'STUDIO', icon: <Camera size={30} />, title: 'Làm ảnh trong studio', color: 'bg-emerald-500' },
+  { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={30} />, title: 'Ảnh nền trắng', color: 'bg-blue-500' },
+  { id: 'STUDIO', icon: <Camera size={30} />, title: 'Ảnh studio nền trơn', color: 'bg-emerald-500' },
   { id: 'CONCEPT', icon: <Layout size={30} />, title: 'Ảnh phối cảnh', color: 'bg-cyan-500' },
   { id: 'COLOR_CHANGE', icon: <Palette size={30} />, title: 'Làm màu sản phẩm', color: 'bg-purple-500' },
   { id: 'BARCODE_QR_GENERATOR', icon: <QrCode size={30} />, title: 'Tạo QR & Barcode', color: 'bg-teal-500' },
   { id: 'TRACING_ASSISTANT', icon: <PenTool size={30} />, title: 'Trợ lý Tracing', color: 'bg-amber-500' },
-  { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={30} />, title: '3D Render sang Ảnh Thật', color: 'bg-indigo-500' },
+  { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={30} />, title: 'Ảnh 3D - Ảnh chụp', color: 'bg-indigo-500' },
   { id: 'LINE_ART', icon: <PenTool size={30} />, title: 'Chuyển thành Line Art', color: 'bg-slate-500' },
-  { id: 'PACKAGING_MOCKUP', icon: <Box size={30} />, title: 'Dựng mockup sản phẩm', color: 'bg-orange-500' },
+  { id: 'PACKAGING_MOCKUP', icon: <Box size={30} />, title: 'Mockup bao bì', color: 'bg-orange-500' },
   { id: 'TRANSLATE_PACKAGING', icon: <Languages size={30} />, title: 'Dịch bao bì tự động', color: 'bg-green-500' },
   { id: 'PACKAGING_CHECK', icon: <Check size={30} />, title: 'Kiểm tra bao bì', color: 'bg-rose-500' },
 ];
@@ -1828,13 +1828,15 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#18191A] text-white font-sans flex flex-col relative animate-fade-in">
-      <Header
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        onOpenHandbook={() => setIsHandbookOpen(true)}
-        onResetToMenu={() => setCurrentStep(1)}
-        galleryCount={gallery.length}
-      />
+      {/* Nút Handbook nổi nhỏ gọn — thay cho Header đã ẩn, không chiếm chỗ
+          như 1 thanh header đầy đủ. */}
+      <button
+        onClick={() => setIsHandbookOpen(true)}
+        className="fixed top-3 right-3 z-40 w-10 h-10 rounded-full bg-[#242526] border border-[#3E4042] text-[#1877F2] hover:bg-[#3A3B3C] flex items-center justify-center shadow-lg transition-colors"
+        title="Xem Handbook & Hướng dẫn kỹ thuật"
+      >
+        <BookOpen size={18} />
+      </button>
 
       <HandbookModal
         isOpen={isHandbookOpen}
@@ -2032,9 +2034,10 @@ const App: React.FC = () => {
           activeSessionId={activeSessionId}
           setActiveSessionId={setActiveSessionId}
           handleDeleteSession={handleDeleteSession}
+          onBackToHome={() => { setViewMode('studio'); setCurrentStep(1); }}
         />
       ) : (
-        <HistoryView onOpenChat={handleOpenChatFromHistory} />
+        <HistoryView onOpenChat={handleOpenChatFromHistory} onBackToHome={() => { setViewMode('studio'); setCurrentStep(1); }} />
       )}
 
       {/* Feedback Modal */}

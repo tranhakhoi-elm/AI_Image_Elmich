@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, MessageCircle, Loader2, X, RefreshCw, Search, Trash2, Copy, Check, Send } from 'lucide-react';
+import { Image as ImageIcon, MessageCircle, Loader2, X, RefreshCw, Search, Trash2, Copy, Check, Send, ArrowLeft } from 'lucide-react';
 import {
   fetchImageHistory,
   fetchChatHistory,
@@ -58,9 +58,10 @@ export interface HistoryViewProps {
   /** Gọi khi người dùng bấm "Mở trong Trợ lý Chat" ở 1 phiên chat cũ — App.tsx
    * chịu trách nhiệm nạp session này vào state chatSessions và chuyển viewMode. */
   onOpenChat?: (sessionId: string, session: ChatHistorySession) => void;
+  onBackToHome: () => void;
 }
 
-export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat }) => {
+export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHome }) => {
   const [tab, setTab] = useState<HistoryTab>('images');
   const [searchQuery, setSearchQuery] = useState('');
   const [styleFilter, setStyleFilter] = useState<string>('ALL');
@@ -160,11 +161,20 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat }) => {
   return (
     <main className="flex-1 flex flex-col max-w-[1400px] mx-auto w-full p-4 md:p-6 gap-4 text-white overflow-y-auto custom-scrollbar">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">Lịch sử dùng chung</h1>
-          <p className="text-xs text-gray-400 mt-1">
-            Ảnh và đoạn chat được lưu trên máy chủ chung của team — xem được ở bất kỳ máy/trình duyệt nào.
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBackToHome}
+            className="p-2 rounded-xl bg-[#18191A] border border-[#3E4042] text-gray-300 hover:text-white shrink-0"
+            title="Quay lại màn hình chọn công cụ"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold">Lịch sử dùng chung</h1>
+            <p className="text-xs text-gray-400 mt-1">
+              Ảnh và đoạn chat được lưu trên máy chủ chung của team — xem được ở bất kỳ máy/trình duyệt nào.
+            </p>
+          </div>
         </div>
         <button
           onClick={() => (tab === 'images' ? loadImages() : loadChats())}

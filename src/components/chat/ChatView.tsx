@@ -7,7 +7,8 @@ import {
   X,
   Image as ImageIcon,
   Plus,
-  Menu
+  Menu,
+  ArrowLeft
 } from 'lucide-react';
 import { ChatMessage, ChatSession } from '../../../types';
 import { generateImageForChat, chatWithAI } from '../../../services/geminiService';
@@ -48,6 +49,7 @@ interface ChatViewProps {
   activeSessionId: string | null;
   setActiveSessionId: (id: string | null) => void;
   handleDeleteSession: (sessionId: string, e: React.MouseEvent) => void;
+  onBackToHome: () => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -55,7 +57,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   setChatSessions,
   activeSessionId,
   setActiveSessionId,
-  handleDeleteSession
+  handleDeleteSession,
+  onBackToHome
 }) => {
   const currentSession = chatSessions.find(s => s.id === activeSessionId);
   const chatMessages = currentSession?.messages || [];
@@ -291,6 +294,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
       <div className="flex-1 flex flex-col h-screen bg-[#242526] text-white min-w-0">
         <div className="px-4 md:px-6 py-3 border-b border-[#3E4042] flex items-center justify-between bg-[#242526] z-10 shrink-0 shadow-sm">
           <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={onBackToHome}
+              className="p-2 rounded-xl bg-[#18191A] border border-[#3E4042] text-gray-300 hover:text-white shrink-0"
+              title="Quay lại màn hình chọn công cụ"
+            >
+              <ArrowLeft size={18} />
+            </button>
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
               className="md:hidden p-2 rounded-xl bg-[#18191A] border border-[#3E4042] text-gray-300 hover:text-white shrink-0"
