@@ -71,17 +71,18 @@ import { logGeneratedImage, rateGeneratedImage, fetchApprovedPromptHints, fetchC
 // Danh sách công cụ hiển thị trên màn hình chọn công cụ (AppHomeScreen) —
 // mỗi công cụ là 1 icon vuông màu đặc, giống springboard iPhone.
 const APP_TOOLS: AppTile[] = [
-  { id: 'TRACING_ASSISTANT', icon: <PenTool size={26} />, title: 'Trợ lý Tracing', color: 'bg-amber-500' },
-  { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={26} />, title: '3D Render sang Ảnh Thật', color: 'bg-indigo-500' },
-  { id: 'COLOR_CHANGE', icon: <Palette size={26} />, title: 'Làm màu sản phẩm', color: 'bg-purple-500' },
-  { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={26} />, title: 'Làm ảnh nền trắng', color: 'bg-blue-500' },
-  { id: 'LINE_ART', icon: <PenTool size={26} />, title: 'Chuyển thành Line Art', color: 'bg-slate-500' },
-  { id: 'CONCEPT', icon: <Layout size={26} />, title: 'Ảnh phối cảnh', color: 'bg-cyan-500' },
-  { id: 'STUDIO', icon: <Camera size={26} />, title: 'Làm ảnh trong studio', color: 'bg-emerald-500' },
-  { id: 'PACKAGING_MOCKUP', icon: <Box size={26} />, title: 'Dựng mockup sản phẩm', color: 'bg-orange-500' },
-  { id: 'BARCODE_QR_GENERATOR', icon: <QrCode size={26} />, title: 'Tạo QR & Barcode', color: 'bg-teal-500' },
-  { id: 'TRANSLATE_PACKAGING', icon: <Languages size={26} />, title: 'Dịch bao bì tự động', color: 'bg-green-500' },
-  { id: 'PACKAGING_CHECK', icon: <Check size={26} />, title: 'Kiểm tra bao bì', color: 'bg-rose-500' },
+  // Thứ tự 1-5 cố định theo yêu cầu, các phần sau tự do sắp xếp.
+  { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={30} />, title: 'Làm ảnh nền trắng', color: 'bg-blue-500' },
+  { id: 'STUDIO', icon: <Camera size={30} />, title: 'Làm ảnh trong studio', color: 'bg-emerald-500' },
+  { id: 'CONCEPT', icon: <Layout size={30} />, title: 'Ảnh phối cảnh', color: 'bg-cyan-500' },
+  { id: 'COLOR_CHANGE', icon: <Palette size={30} />, title: 'Làm màu sản phẩm', color: 'bg-purple-500' },
+  { id: 'BARCODE_QR_GENERATOR', icon: <QrCode size={30} />, title: 'Tạo QR & Barcode', color: 'bg-teal-500' },
+  { id: 'TRACING_ASSISTANT', icon: <PenTool size={30} />, title: 'Trợ lý Tracing', color: 'bg-amber-500' },
+  { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={30} />, title: '3D Render sang Ảnh Thật', color: 'bg-indigo-500' },
+  { id: 'LINE_ART', icon: <PenTool size={30} />, title: 'Chuyển thành Line Art', color: 'bg-slate-500' },
+  { id: 'PACKAGING_MOCKUP', icon: <Box size={30} />, title: 'Dựng mockup sản phẩm', color: 'bg-orange-500' },
+  { id: 'TRANSLATE_PACKAGING', icon: <Languages size={30} />, title: 'Dịch bao bì tự động', color: 'bg-green-500' },
+  { id: 'PACKAGING_CHECK', icon: <Check size={30} />, title: 'Kiểm tra bao bì', color: 'bg-rose-500' },
 ];
 
 const initialSettings: GenerationSettings = {

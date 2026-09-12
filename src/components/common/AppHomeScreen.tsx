@@ -23,16 +23,15 @@ interface AppHomeScreenProps {
  * hay panel nào khác chen vào màn hình này.
  */
 export const AppHomeScreen: React.FC<AppHomeScreenProps> = ({ tools, onSelectTool, onSelectChat, onSelectHistory }) => {
-  const tiles: (AppTile & { onClick: () => void })[] = [
+  const squareTiles: (AppTile & { onClick: () => void })[] = [
     ...tools.map(t => ({ ...t, onClick: () => onSelectTool(t.id) })),
-    { id: '__chat', icon: <MessageCircle size={26} />, title: 'Trợ lý Chat AI', color: 'bg-pink-500', onClick: onSelectChat },
-    { id: '__history', icon: <History size={26} />, title: 'Lịch sử', color: 'bg-gray-500', onClick: onSelectHistory },
+    { id: '__history', icon: <History size={30} />, title: 'Lịch sử', color: 'bg-gray-500', onClick: onSelectHistory },
   ];
 
   return (
     <div className="flex-1 w-full flex items-start justify-center overflow-y-auto custom-scrollbar px-6 py-10 xl:py-16">
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-4 gap-y-8 max-w-3xl w-full">
-        {tiles.map(tile => (
+        {squareTiles.map(tile => (
           <motion.button
             key={tile.id}
             onClick={tile.onClick}
@@ -45,6 +44,17 @@ export const AppHomeScreen: React.FC<AppHomeScreenProps> = ({ tools, onSelectToo
             <span className="text-[11px] font-medium text-white text-center leading-tight line-clamp-2">{tile.title}</span>
           </motion.button>
         ))}
+
+        {/* Trợ lý Chat AI: đặt cuối cùng, dạng 1 thanh ngang chiếm trọn
+            chiều rộng lưới (bằng đúng số cột đang hiển thị) thay vì 1 ô vuông. */}
+        <motion.button
+          onClick={onSelectChat}
+          whileTap={{ scale: 0.97 }}
+          className="col-span-full flex items-center justify-center gap-3 h-16 sm:h-20 rounded-2xl bg-pink-500 text-white shadow-lg hover:brightness-110 transition-all"
+        >
+          <MessageCircle size={30} />
+          <span className="font-semibold text-[15px] sm:text-base">Trợ lý Chat AI</span>
+        </motion.button>
       </div>
     </div>
   );
