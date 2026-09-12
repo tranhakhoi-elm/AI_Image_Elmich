@@ -19,14 +19,16 @@ export function updateSessionStats(tokens: number, costUSD: number) {
 }
 
 export function calculateGeminiCost(modelName: string, promptTokens: number, candidatesTokens: number): { tokens: number; costUSD: number } {
-  // Bảng giá Gemini (Cập nhật cho Flash và Pro)
-  let inputPricePerM = 0.075;
-  let outputPricePerM = 0.300;
+  // Bảng giá Gemini text — cập nhật theo https://ai.google.dev/gemini-api/docs/pricing
+  // (Standard tier, ≤200K token/prompt — mọi prompt trong app đều nằm trong ngưỡng này):
+  // - gemini-2.5-flash: $0.30 / 1M input (text/image/video), $2.50 / 1M output.
+  // - gemini-2.5-pro (và các bản "pro" khác): $1.25 / 1M input, $10.00 / 1M output.
+  let inputPricePerM = 0.30;
+  let outputPricePerM = 2.50;
 
   if (modelName.includes("pro")) {
-    // Gemini 1.5/2.5 Pro pricing: $1.25 per 1M input, $5.00 per 1M output
     inputPricePerM = 1.25;
-    outputPricePerM = 5.00;
+    outputPricePerM = 10.00;
   }
 
   const costUSD = (promptTokens * inputPricePerM / 1000000) + (candidatesTokens * outputPricePerM / 1000000);
@@ -36,22 +38,18 @@ export function calculateGeminiCost(modelName: string, promptTokens: number, can
   };
 }
 
-export function calculateImagenCost(modelName: string, numImages: number = 1, imageSize?: string): { tokens: number; costUSD: number } {
-  // Imagen 3 Pricing: ~$0.03 per image. 
-  // Nếu có tính năng upscale/chất lượng cao, giá có thể gấp đôi, nhưng mặc định chuẩn là 0.03.
-  let perImageUSD = 0.03; 
-  
-  const isHighQuality = 
-    imageSize === "4K" ||
-    imageSize === "2K";
+// Giá xuất ảnh theo độ phân giải (Standard tier) — cập nhật theo
+// https://ai.google.dev/gemini-api/docs/pricing:
+// - gemini-3.1-flash-image (Nano Banana 2): output ảnh $60/1M token.
+//   1K (1120 token) = $0.067/ảnh, 2K (1680 token) = $0.101/ảnh, 4K (2520 token) = $0.151/ảnh.
+// - gemini-3-pro-image (Nano Banana Pro): output ảnh $120/1M token.
+//   1K/2K (1120 token) = $0.134/ảnh, 4K (2000 token) = $0.24/ảnh.
+const FLASH_IMAGE_PRICE_PER_IMAGE: Record<string, number> = { '1K': 0.067, '2K': 0.101, '4K': 0.151 };
+const PRO_IMAGE_PRICE_PER_IMAGE: Record<string, number> = { '1K': 0.134, '2K': 0.134, '4K': 0.24 };
 
-  if (isHighQuality) {
-    if (imageSize === "4K") {
-      perImageUSD = 0.06; // Estimated upscale cost
-    } else if (imageSize === "2K") {
-      perImageUSD = 0.045;
-    }
-  }
+export function calculateImagenCost(modelName: string, numImages: number = 1, imageSize?: string): { tokens: number; costUSD: number } {
+  const priceTable = modelName.includes("pro") ? PRO_IMAGE_PRICE_PER_IMAGE : FLASH_IMAGE_PRICE_PER_IMAGE;
+  const perImageUSD = priceTable[imageSize || '1K'] ?? priceTable['1K'];
 
   const costUSD = perImageUSD * numImages;
   return {

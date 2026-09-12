@@ -1807,9 +1807,10 @@ const App: React.FC = () => {
     else if (image.settings.imageSize === '2K') cost = 0.101;
     else cost = 0.067;
     
-    // Prompt generation cost (Step 1)
+    // Prompt generation cost (Step 1, dùng gemini-2.5-pro) — ước tính gần
+    // đúng cho 1 lượt "thinking" (nhúng 3 file manual + prompt sinh ra).
     if (image.settings.visualStyle === 'CONCEPT' || image.settings.visualStyle === 'STUDIO') {
-      cost += 0.002; // Cost for gemini-2.5-flash
+      cost += 0.01;
     }
 
     // Lượt AI nâng chi tiết thêm khi xuất 4K cho các phong cách premium
