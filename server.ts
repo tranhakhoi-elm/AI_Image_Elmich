@@ -111,67 +111,6 @@ app.post("/api/sheets/report", async (req: any, res: any) => {
   }
 });
 
-// Lark Bitable integration API
-app.post("/api/lark/report", async (req: any, res: any) => {
-  const { appToken, tableId: requestedTableId, fields } = req.body || {};
-  const appId = process.env.LARK_APP_ID;
-  const appSecret = process.env.LARK_APP_SECRET;
-
-  if (!appId || !appSecret) {
-    return res.status(200).json({ 
-      success: false, 
-      error: "Lark credentials (LARK_APP_ID/LARK_APP_SECRET) are missing." 
-    });
-  }
-
-  try {
-    const tokenRes = await fetch("https://open.larksuite.com/open-apis/auth/v3/tenant_access_token/internal", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
-    });
-    
-    const tokenData: any = await tokenRes.json();
-    if (tokenData.code !== 0) {
-      throw new Error(`Failed to get Lark access token: ${tokenData.msg}`);
-    }
-    const token = tokenData.tenant_access_token;
-
-    let tableId = requestedTableId;
-
-    if (!tableId) {
-      const tablesRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${appToken}/tables`, {
-        method: "GET",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const tablesData: any = await tablesRes.json();
-      if (tablesData.code !== 0 || !tablesData.data?.items || tablesData.data.items.length === 0) {
-        throw new Error(`Failed to list Lark tables: ${tablesData.msg || "Unknown error"}`);
-      }
-      tableId = tablesData.data.items[0].table_id;
-    }
-
-    const recordRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/records`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json; charset=utf-8"
-      },
-      body: JSON.stringify({ fields })
-    });
-    
-    const recordData: any = await recordRes.json();
-    if (recordData.code !== 0) {
-      throw new Error(`Failed to insert Lark record: ${recordData.msg || "Unknown error"}`);
-    }
-
-    return res.status(200).json({ success: true, tableId, record: recordData.data?.record });
-  } catch (error: any) {
-    console.error("Error reporting to Lark Base:", error.message);
-    return res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 // Lịch sử dùng chung (ảnh đã tạo & chat) — lưu qua Firestore + Cloud Storage,
 // dùng chung Service Account với tích hợp Google Sheets ở trên.
 // Xem lib/historyStore.ts và ARCHITECTURE.md để biết chi tiết thiết kế.

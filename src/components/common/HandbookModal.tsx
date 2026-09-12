@@ -266,7 +266,6 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
                     </div>
                     <p className="text-gray-400">Express server (`server.ts`) chạy cổng 3000 kết hợp Vite middleware.</p>
                     <p className="text-gray-400">Tích hợp <strong>Google Sheets API</strong> qua Service Account ghi nhật ký tạo ảnh và chi phí token.</p>
-                    <p className="text-gray-400">Tích hợp <strong>Lark Suite Bitable API</strong> đồng bộ theo dõi dự án tự động.</p>
                   </div>
                 </div>
               </div>
