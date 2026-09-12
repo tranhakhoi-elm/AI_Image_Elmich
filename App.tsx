@@ -58,6 +58,7 @@ import { LoadingModal } from './src/components/common/LoadingModal';
 import { GalleryRail } from './src/components/common/GalleryRail';
 import { FileDropzone } from './src/components/common/FileDropzone';
 import { ModelSelection } from './src/components/common/ModelSelection';
+import { AppHomeScreen, AppTile } from './src/components/common/AppHomeScreen';
 import { HistoryView } from './src/components/history/HistoryView';
 import {
   CAMERA_APERTURES,
@@ -66,6 +67,22 @@ import {
 } from './constants';
 import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
 import { logGeneratedImage, rateGeneratedImage, fetchApprovedPromptHints, fetchChatHistory, deleteChatHistorySession } from './services/historyService';
+
+// Danh sách công cụ hiển thị trên màn hình chọn công cụ (AppHomeScreen) —
+// mỗi công cụ là 1 icon vuông màu đặc, giống springboard iPhone.
+const APP_TOOLS: AppTile[] = [
+  { id: 'TRACING_ASSISTANT', icon: <PenTool size={26} />, title: 'Trợ lý Tracing', color: 'bg-amber-500' },
+  { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={26} />, title: '3D Render sang Ảnh Thật', color: 'bg-indigo-500' },
+  { id: 'COLOR_CHANGE', icon: <Palette size={26} />, title: 'Làm màu sản phẩm', color: 'bg-purple-500' },
+  { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={26} />, title: 'Làm ảnh nền trắng', color: 'bg-blue-500' },
+  { id: 'LINE_ART', icon: <PenTool size={26} />, title: 'Chuyển thành Line Art', color: 'bg-slate-500' },
+  { id: 'CONCEPT', icon: <Layout size={26} />, title: 'Ảnh phối cảnh', color: 'bg-cyan-500' },
+  { id: 'STUDIO', icon: <Camera size={26} />, title: 'Làm ảnh trong studio', color: 'bg-emerald-500' },
+  { id: 'PACKAGING_MOCKUP', icon: <Box size={26} />, title: 'Dựng mockup sản phẩm', color: 'bg-orange-500' },
+  { id: 'BARCODE_QR_GENERATOR', icon: <QrCode size={26} />, title: 'Tạo QR & Barcode', color: 'bg-teal-500' },
+  { id: 'TRANSLATE_PACKAGING', icon: <Languages size={26} />, title: 'Dịch bao bì tự động', color: 'bg-green-500' },
+  { id: 'PACKAGING_CHECK', icon: <Check size={26} />, title: 'Kiểm tra bao bì', color: 'bg-rose-500' },
+];
 
 const initialSettings: GenerationSettings = {
   productName: '',
@@ -1477,53 +1494,15 @@ const App: React.FC = () => {
       </div>
     </div>
   );
-  const renderSidebar = () => {
-    if (currentStep === 1) {
-      const modes = [
-        { id: 'TRACING_ASSISTANT', icon: <PenTool size={20} />, title: 'Trợ lý Tracing', desc: 'Làm nét logo/ảnh mờ để vẽ lại vector.', color: 'bg-yellow-50 text-yellow-500', hover: 'hover:bg-yellow-100' },
-        { id: '3D_TO_REAL_WHITE_BG', icon: <Box size={20} />, title: '3D Render sang Ảnh Thật', desc: 'Chuyển ảnh 3D thành ảnh chụp thật nền trắng.', color: 'bg-indigo-50 text-indigo-400', hover: 'hover:bg-indigo-100' },
-        { id: 'COLOR_CHANGE', icon: <Palette size={20} />, title: 'Làm màu sản phẩm', desc: 'Đổi màu giữ nguyên texture.', color: 'bg-purple-50 text-purple-400', hover: 'hover:bg-purple-100' },
-        { id: 'WHITE_BG_RETOUCH', icon: <ImageIcon size={20} />, title: 'Làm ảnh nền trắng', desc: 'Làm sạch & tái tạo ánh sáng studio.', color: 'bg-blue-50 text-blue-400', hover: 'hover:bg-blue-100' },
-        { id: 'LINE_ART', icon: <PenTool size={20} />, title: 'Chuyển thành Line Art', desc: 'Chuyển ảnh nền trắng thành nét vẽ.', color: 'bg-gray-100 text-gray-300', hover: 'hover:bg-gray-200' },
-        { id: 'CONCEPT', icon: <Layout size={20} />, title: 'Ảnh phối cảnh', desc: 'Sáng tạo phối cảnh, tìm props & không gian.', color: 'bg-cyan-50 text-cyan-400', hover: 'hover:bg-cyan-100' },
-        { id: 'STUDIO', icon: <Camera size={20} />, title: 'Làm ảnh trong studio', desc: 'Tạo ảnh sản phẩm nền giấy cùng màu.', color: 'bg-emerald-50 text-emerald-400', hover: 'hover:bg-emerald-100' },
-        { id: 'PACKAGING_MOCKUP', icon: <Box size={20} />, title: 'Dựng mockup sản phẩm', desc: 'Dựng hộp 3D từ file phẳng.', color: 'bg-orange-50 text-orange-400', hover: 'hover:bg-orange-100' },
-        { id: 'BARCODE_QR_GENERATOR', icon: <QrCode size={20} />, title: 'Tạo QR & Barcode', desc: 'Tạo SVG cho Code 128, EAN, QR.', color: 'bg-teal-50 text-teal-400', hover: 'hover:bg-teal-100' },
-        { id: 'TRANSLATE_PACKAGING', icon: <Languages size={20} />, title: 'Dịch bao bì tự động', desc: 'Dịch nội dung tiếng Anh sang Việt, giữ nguyên thiết kế.', color: 'bg-emerald-50 text-emerald-500', hover: 'hover:bg-emerald-100' },
-        { id: 'PACKAGING_CHECK', icon: <Check size={20} />, title: 'Kiểm tra bao bì', desc: 'Kiểm tra nội dung từ file chuẩn.', color: 'bg-rose-50 text-rose-400', hover: 'hover:bg-rose-100' },
-      ];
+  // Chọn 1 công cụ từ màn hình chọn công cụ (AppHomeScreen) và chuyển sang
+  // bước 2 (thiết lập chi tiết) của công cụ đó.
+  const handleSelectTool = (id: string) => {
+    setSettings(s => ({ ...s, visualStyle: id as VisualStyle }));
+    setConceptStep(1); setTechStep(1); setPackagingStep(1); setTechEffectStep(1); setWhiteBgStep(1); setRender3DStep(1); setWhiteBgWebStep(1); setStagingStep(1); setStudioStep(1); setTrackSocketStep(1);
+    setCurrentStep(2);
+  };
 
-      return (
-        <div className="space-y-6 animate-fade-in pb-4">
-          <div className="grid grid-cols-1 gap-2 px-2">
-            {modes.map((mode, idx) => (
-              <motion.button 
-                key={mode.id}
-                onClick={() => { 
-                  setSettings(s => ({...s, visualStyle: mode.id as VisualStyle})); 
-                  // Reset steps for the selected mode
-                  setConceptStep(1); setTechStep(1); setPackagingStep(1); setTechEffectStep(1); setWhiteBgStep(1); setRender3DStep(1); setWhiteBgWebStep(1); setStagingStep(1); setStudioStep(1); setTrackSocketStep(1);
-                  setCurrentStep(2); 
-                }} 
-                className={`w-full text-left p-3 rounded-xl bg-[#242526] border border-[#3E4042] ${mode.hover} transition-all group relative overflow-hidden shadow-sm`}
-              >
-                <div className="flex items-center gap-3 relative z-10">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${mode.color}`}>
-                    {mode.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-white text-[15px] group-hover:text-[#1877F2] transition-colors">{mode.title}</h3>
-                    <p className="text-[13px] text-white mt-0.5 line-clamp-1">{mode.desc}</p>
-                  </div>
-                  <ChevronRight size={16} className="text-white group-hover:text-[#1877F2] group-hover:translate-x-1 transition-all" />
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    
+  const renderSidebar = () => {
     return (
       <div className="animate-fade-in h-full flex flex-col">
          <div className="mb-8 flex items-center justify-between">
@@ -1878,6 +1857,15 @@ const App: React.FC = () => {
 
       {viewMode === 'studio' ? (
       <main className="flex-1 flex flex-col max-w-[1920px] mx-auto w-full relative xl:h-screen bg-[#18191A] xl:bg-[#242526] xl:py-0">
+        {currentStep === 1 ? (
+          <AppHomeScreen
+            tools={APP_TOOLS}
+            onSelectTool={handleSelectTool}
+            onSelectChat={() => setViewMode('chat')}
+            onSelectHistory={() => setViewMode('history')}
+          />
+        ) : (
+        <>
         <div className="flex-1 flex flex-col xl:flex-row overflow-hidden min-h-0">
         {/* Left Sidebar Layout */}
         {settings.visualStyle !== 'PACKAGING_CHECK' && (
@@ -2033,7 +2021,8 @@ const App: React.FC = () => {
           }}
         />
       )}
-  
+        </>
+        )}
       </main>
       ) : viewMode === 'chat' ? (
         <ChatView
