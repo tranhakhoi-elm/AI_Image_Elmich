@@ -1,4 +1,6 @@
-export type AIModel = "gemini-2.5-flash-image" | "gemini-3.1-flash-image" | "imagen-3.0-fast-generate-001" | "imagen-3.0-generate-002";
+// Người dùng tự chọn "tầng" model tạo ảnh cho mỗi lượt tạo/sửa ảnh:
+// FLASH = gemini-3.1-flash-image (rẻ, nhanh), PRO = gemini-3-pro-image (đắt hơn, chất lượng cao hơn).
+export type ImageModelTier = "FLASH" | "PRO";
 export type AspectRatio = "1:1" | "3:4" | "4:3" | "9:16" | "16:9" | "1:4" | "4:1";
 export type ImageSize = "1K" | "2K" | "4K";
 export type VisualStyle = "CONCEPT" | "TECH_PS" | "COLOR_CHANGE" | "PACKAGING_MOCKUP" | "TECH_EFFECTS" | "WHITE_BG_RETOUCH" | "SCENE_STAGING" | "STUDIO" | "TRACK_SOCKET_STAGING" | "LINE_ART" | "3D_TO_REAL_WHITE_BG" | "BARCODE_QR_GENERATOR" | "PACKAGING_CHECK" | "TRACING_ASSISTANT" | "TRANSLATE_PACKAGING";
@@ -133,7 +135,7 @@ export interface GenerationSettings {
   tone: string;
   aspectRatio: AspectRatio;
   imageSize: ImageSize;
-  aiModel: AIModel;
+  imageModel: ImageModelTier;
   numImages: number;
 }
 

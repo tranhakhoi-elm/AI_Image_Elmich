@@ -735,7 +735,7 @@ Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và '
   }
 };
 
-export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K', referenceImage?: string | null, sourceSettings?: GenerationSettings): Promise<string> => {
+export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K', referenceImage?: string | null, sourceSettings?: GenerationSettings, imageModel: 'FLASH' | 'PRO' = 'FLASH'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
   const mimeTypeMatch = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -762,7 +762,7 @@ export const editProductImage = async (base64Image: string, prompt: string, imag
     let imageConfig: any = {};
     imageConfig.imageSize = imageSize === '4K' ? '2K' : imageSize;
 
-    const fallbackModel = 'gemini-3-pro-image';
+    const fallbackModel = imageModel === 'PRO' ? 'gemini-3-pro-image' : 'gemini-3.1-flash-image';
 
     const response = await ai.models.generateContent({
       model: fallbackModel,
@@ -1273,7 +1273,7 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
   }
 
   try {
-    const modelName = 'gemini-3-pro-image';
+    const modelName = settings.imageModel === 'PRO' ? 'gemini-3-pro-image' : 'gemini-3.1-flash-image';
     let imageConfig: any = { aspectRatio: settings.aspectRatio };
 
     // imageSize handling (API supports native 1K, 2K but we upscale to 4K manually if requested)

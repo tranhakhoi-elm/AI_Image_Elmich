@@ -61,7 +61,7 @@ export const LineArtWorkflow: React.FC<LineArtWorkflowProps> = ({
            </select>
         </div>
 
-        <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} />
+        <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} imageModel={settings.imageModel} onModelChange={(model) => setSettings({ ...settings, imageModel: model })} />
 
         <div className="flex gap-2 pt-2">
           <button disabled={appState !== AppState.READY} onClick={() => { if (!settings.referenceImage) { setAlertMessage("Vui lòng tải ảnh sản phẩm gốc (nền trắng) trước khi tạo ảnh Line Art."); } else { startGeneration(); } }} className="w-full py-4 bg-[#1877F2] text-white font-bold rounded-xl uppercase text-xs shadow-lg hover:brightness-110 transition-all disabled:opacity-50 flex justify-center items-center gap-2">

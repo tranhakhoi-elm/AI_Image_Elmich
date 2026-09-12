@@ -37,7 +37,7 @@ import {
   QrCode,
   AlertCircle, Languages
 } from 'lucide-react';
-import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
+import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, ImageModelTier, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
 import { BarcodeGenerator } from './src/components/BarcodeGenerator';
 import { PackagingCheckWorkflow } from './src/components/workflows/PackagingCheckWorkflow';
 import { TranslatePackagingWorkflow } from './src/components/workflows/TranslatePackagingWorkflow';
@@ -102,8 +102,8 @@ const initialSettings: GenerationSettings = {
   tone: TONE_STYLES[0],
   aspectRatio: '1:1',
   imageSize: '1K',
-  aiModel: 'gemini-3.1-flash-image',
-  numImages: 1 
+  imageModel: 'FLASH',
+  numImages: 1
 };
 
 function useSettingsHistory(initialState: GenerationSettings) {
@@ -307,6 +307,7 @@ const App: React.FC = () => {
 
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [editQuality, setEditQuality] = useState<ImageSize>('1K');
+  const [editModel, setEditModel] = useState<ImageModelTier>('FLASH');
   
   const [viewMode, setViewMode] = useState<'studio' | 'chat' | 'history'>('studio');
   const [isHandbookOpen, setIsHandbookOpen] = useState(false);
@@ -654,14 +655,14 @@ const App: React.FC = () => {
     if (!activeImage || !editPrompt.trim()) return;
     setIsEditingImage(true);
     try {
-      const newUrl = await editProductImage(activeImage.url, editPrompt, editQuality, editReferenceImage, activeImage.settings);
+      const newUrl = await editProductImage(activeImage.url, editPrompt, editQuality, editReferenceImage, activeImage.settings, editModel);
       const time = Date.now();
       const newImage: GeneratedImage = {
         id: `${time}-edited`,
         url: newUrl,
         prompt: editPrompt,
         timestamp: time,
-        settings: { ...activeImage.settings, imageSize: editQuality },
+        settings: { ...activeImage.settings, imageSize: editQuality, imageModel: editModel },
         variant: activeImage.variant + 1
       };
       setGallery(prev => [newImage, ...prev]);
@@ -1703,7 +1704,12 @@ const App: React.FC = () => {
   // để các workflow còn lại vẫn gọi renderModelSelection() như cũ, không phải
   // sửa từng chỗ gọi ngay lúc này.
   const renderModelSelection = () => (
-    <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} />
+    <ModelSelection
+      imageSize={settings.imageSize}
+      onChange={(size) => setSettings({ ...settings, imageSize: size })}
+      imageModel={settings.imageModel}
+      onModelChange={(model) => setSettings({ ...settings, imageModel: model })}
+    />
   );
 
   // 13. Kiểm tra bao bì
@@ -1801,9 +1807,12 @@ const App: React.FC = () => {
   };
 
   const calculateCost = (image: GeneratedImage) => {
-    // Ảnh tạo/sửa qua generateProductImage & editProductImage đều dùng
-    // gemini-3-pro-image — giá theo ảnh (Standard tier): 1K/2K = $0.134, 4K = $0.24.
-    let cost = image.settings.imageSize === '4K' ? 0.24 : 0.134;
+    // Giá theo ảnh (Standard tier), phụ thuộc tầng model người dùng đã chọn:
+    // FLASH (gemini-3.1-flash-image): 1K=$0.067, 2K=$0.101, 4K=$0.151.
+    // PRO (gemini-3-pro-image): 1K/2K=$0.134, 4K=$0.24.
+    let cost = image.settings.imageModel === 'PRO'
+      ? (image.settings.imageSize === '4K' ? 0.24 : 0.134)
+      : (image.settings.imageSize === '4K' ? 0.151 : image.settings.imageSize === '2K' ? 0.101 : 0.067);
 
     // Prompt generation cost (Step 1, dùng gemini-2.5-pro) — ước tính gần
     // đúng cho 1 lượt "thinking" (nhúng 3 file manual + prompt sinh ra).
@@ -1961,7 +1970,7 @@ const App: React.FC = () => {
                   <div className="p-4 bg-[#18191A] rounded-b-lg flex flex-col gap-3">
                     <p className="font-semibold text-[13px] text-white">Chỉnh sửa ảnh với AI</p>
                     <div className="flex flex-col sm:flex-row gap-2">
-                       <select 
+                       <select
                          value={editQuality}
                          onChange={e => setEditQuality(e.target.value as ImageSize)}
                          disabled={isEditingImage}
@@ -1970,6 +1979,15 @@ const App: React.FC = () => {
                          <option value="1K">1K Standard</option>
                          <option value="2K">2K Pro</option>
                          <option value="4K">4K Ultra</option>
+                       </select>
+                       <select
+                         value={editModel}
+                         onChange={e => setEditModel(e.target.value as ImageModelTier)}
+                         disabled={isEditingImage}
+                         className="flex-1 bg-[#242526] border border-[#3E4042] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#1877F2]"
+                       >
+                         <option value="FLASH">Flash (nhanh, rẻ)</option>
+                         <option value="PRO">Pro (chất lượng cao)</option>
                        </select>
                     </div>
 

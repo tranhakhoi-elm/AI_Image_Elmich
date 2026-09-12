@@ -66,6 +66,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [chatMode, setChatMode] = useState<'chat' | 'image'>('chat');
   const [chatImageAspectRatio, setChatImageAspectRatio] = useState('1:1');
   const [chatImageQuality, setChatImageQuality] = useState('1K');
+  const [chatImageModel, setChatImageModel] = useState<'FLASH' | 'PRO'>('FLASH');
   
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   // Chỉ tin nhắn VỪA được tạo trong phiên component hiện tại mới chạy hiệu
@@ -129,10 +130,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
     try {
       let newModelMsg: ChatMessage;
       if (chatMode === 'image') {
-        const defaultImageModel = 'gemini-3.1-flash-image';
+        const selectedImageModel = chatImageModel === 'PRO' ? 'gemini-3-pro-image' : 'gemini-3.1-flash-image';
         const imageUrl = await generateImageForChat(
           messagesToSend,
-          defaultImageModel,
+          selectedImageModel,
           chatImageAspectRatio,
           chatImageQuality
         );
@@ -402,6 +403,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   >
                     <option value="1K">1K</option>
                     <option value="2K">2K</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white font-semibold">Model:</span>
+                  <select
+                    value={chatImageModel}
+                    onChange={e => setChatImageModel(e.target.value as 'FLASH' | 'PRO')}
+                    className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
+                  >
+                    <option value="FLASH">Flash (nhanh, rẻ)</option>
+                    <option value="PRO">Pro (chất lượng cao)</option>
                   </select>
                 </div>
               </>

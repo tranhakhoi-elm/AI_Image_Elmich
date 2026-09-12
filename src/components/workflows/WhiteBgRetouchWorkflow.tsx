@@ -179,7 +179,7 @@ export const WhiteBgRetouchWorkflow: React.FC<WhiteBgRetouchWorkflowProps> = ({
                 />
               </div>
 
-              <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} />
+              <ModelSelection imageSize={settings.imageSize} onChange={(size) => setSettings({ ...settings, imageSize: size })} imageModel={settings.imageModel} onModelChange={(model) => setSettings({ ...settings, imageModel: model })} />
 
               <div className="flex gap-2 mb-4">
                 <button onClick={() => setWhiteBgStep(1)} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl text-[10px] font-bold hover:bg-[#242526] ">Quay lại</button>
