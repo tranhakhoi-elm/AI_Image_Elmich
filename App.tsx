@@ -1306,148 +1306,6 @@ const App: React.FC = () => {
 // src/components/workflows/TrackSocketWorkflow.tsx (xem dispatch JSX bên
 // dưới, tìm '<TrackSocketWorkflow').
 
-  const renderInstructions = () => {
-    if (currentStep === 1) {
-      return (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-lg z-10 space-y-4 px-6"
-        >
-          <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Bắt đầu quy trình sáng tạo</h3>
-          <p className="text-white font-medium text-sm leading-relaxed">Chọn một trong các chế độ phía bên trái để trải nghiệm quy trình làm việc chuyên nghiệp được tối ưu bởi Gemini 3 Pro.</p>
-        </motion.div>
-      );
-    }
-
-    let title = "";
-    let steps: string[] = [];
-
-    switch (settings.visualStyle) {
-      case 'TRACING_ASSISTANT':
-        title = "Hướng dẫn: Trợ lý Tracing";
-        steps = [
-          "Tải lên hình ảnh logo hoặc hình vẽ chất lượng thấp.",
-          "Cấu hình mức độ chi tiết và màu sắc mong muốn.",
-          "Hệ thống sẽ tái tạo hình ảnh thành phiên bản 4K sắc nét để dễ dàng tracing trong Illustrator."
-        ];
-        break;
-      case 'COLOR_CHANGE':
-        title = "Hướng dẫn: Làm màu sản phẩm";
-        steps = [
-          "Tải lên hình ảnh sản phẩm cần đổi màu.",
-          "Nhập màu sắc mong muốn (ví dụ: Đỏ mận, Xanh navy).",
-          "Nhấn 'Tạo ảnh' để hệ thống xử lý đổi màu giữ nguyên chất liệu."
-        ];
-        break;
-      case '3D_TO_REAL_WHITE_BG':
-        title = "Hướng dẫn: 3D Render sang Ảnh Thật";
-        steps = [
-          "Tải lên hình ảnh 3D Render của sản phẩm.",
-          "Mô tả chất liệu để hệ thống khử CGI và thêm vật liệu thật.",
-          "Nhấn 'Tạo ảnh' để nhận kết quả ảnh thật chụp studio."
-        ];
-        break;
-      case 'WHITE_BG_RETOUCH':
-        title = "Hướng dẫn: Làm ảnh nền trắng";
-        steps = [
-          "Tải lên hình ảnh sản phẩm cần tách nền.",
-          "Hệ thống sẽ tự động tách nền và tái tạo ánh sáng studio.",
-          "Nhấn 'Tạo ảnh' để nhận kết quả nền trắng chuyên nghiệp."
-        ];
-        break;
-      case 'LINE_ART':
-        title = "Hướng dẫn: Chuyển thành Line Art";
-        steps = [
-          "Tải lên hình ảnh sản phẩm trên nền trắng.",
-          "Chọn tỷ lệ hình ảnh mong muốn.",
-          "Nhấn 'Tạo ảnh Line Art' để chuyển đổi sang dạng nét vẽ (netline) đơn giản."
-        ];
-        break;
-      case 'STUDIO':
-        title = "Hướng dẫn: Làm ảnh trong studio";
-        steps = [
-          "Nhập tên sản phẩm và tải lên hình ảnh sản phẩm gốc.",
-          "Hệ thống AI sẽ phân tích và đề xuất các concept chụp ảnh studio phù hợp.",
-          "Lựa chọn đạo cụ (props) trang trí đi kèm để làm nổi bật sản phẩm.",
-          "Thiết lập góc máy camera và nhấn 'Tạo ảnh' để kết xuất kết quả cuối cùng."
-        ];
-        break;
-      case 'TECH_PS':
-        title = "Hướng dẫn: Làm ảnh USP";
-        steps = [
-          "Nhập tên sản phẩm và mô tả tính năng kỹ thuật nổi bật.",
-          "Tải lên ảnh sản phẩm.",
-          "Chọn hiệu ứng hình ảnh (Visual Elements) để làm nổi bật USP.",
-          "Nhấn 'Tạo ảnh' để hoàn tất."
-        ];
-        break;
-      case 'PACKAGING_MOCKUP':
-        title = "Hướng dẫn: Dựng mockup sản phẩm";
-        steps = [
-          "Tải lên file thiết kế phẳng của bao bì.",
-          "Chọn loại hộp và tỷ lệ khung hình.",
-          "Chọn góc nhìn và bối cảnh đặt mockup.",
-          "Nhấn 'Tạo ảnh' để dựng hình 3D."
-        ];
-        break;
-      case 'TRACK_SOCKET_STAGING':
-        title = "Hướng dẫn: Làm ảnh Thanh ray ổ cắm";
-        steps = [
-          "Chọn chế độ tạo (Dựng phối cảnh AI hoặc Ghép vào ảnh thực tế).",
-          "Tải lên ảnh thanh ray và ổ cắm.",
-          "Thiết lập bối cảnh và góc máy.",
-          "Nhấn 'Tạo ảnh' để render."
-        ];
-        break;
-      case 'SCENE_STAGING':
-        title = "Hướng dẫn: Xây dựng phối cảnh";
-        steps = [
-          "Tải lên ảnh không gian thực tế và ảnh sản phẩm.",
-          "Nhập mô tả concept mong muốn.",
-          "AI sẽ phân tích và đề xuất các vật dụng trang trí (props).",
-          "Nhấn 'Tạo ảnh' để ghép sản phẩm vào không gian."
-        ];
-        break;
-      case 'TECH_EFFECTS':
-        title = "Hướng dẫn: Xử lý ảnh có chữ ký";
-        steps = [
-          "Chọn loại xử lý (Xóa Watermark hoặc Tạo hiệu ứng mặt biển).",
-          "Tải lên hình ảnh cần xử lý.",
-          "Nhấn 'Tạo ảnh' để hệ thống thực hiện."
-        ];
-        break;
-      case 'CONCEPT':
-        title = "Hướng dẫn: Ảnh phối cảnh";
-        steps = [
-          "Nhập tên sản phẩm và tải lên ảnh sản phẩm.",
-          "AI sẽ phân tích và đề xuất các phối cảnh sáng tạo.",
-          "Chọn đạo cụ và góc máy phù hợp với phối cảnh.",
-          "Nhấn 'Tạo ảnh' để render."
-        ];
-        break;
-      default:
-        title = "Hướng dẫn sử dụng";
-        steps = ["Vui lòng làm theo các bước ở thanh công cụ bên trái."];
-    }
-
-    return (
-      <div className="text-left max-w-2xl z-10 space-y-6 px-8 py-8 bg-[#242526] shadow-sm  rounded-3xl border border-[#3E4042] shadow-2xl animate-fade-in">
-        <h3 className="text-2xl font-bold text-white uppercase tracking-tighter border-b border-[#3E4042] pb-4">{title}</h3>
-        <ul className="space-y-4">
-          {steps.map((step, idx) => (
-            <li key={idx} className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#caf0f8] to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20">
-                <span className="text-white text-sm font-black">{idx + 1}</span>
-              </div>
-              <span className="text-white font-medium text-[15px] leading-relaxed pt-1">{step}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
   const renderBarcodeQrSidebar = () => (
     <div className="space-y-6">
       <div className="bg-[#242526] p-6 rounded-2xl border border-[#3E4042]">
@@ -1911,13 +1769,14 @@ const App: React.FC = () => {
                  setAlertMessage={setAlertMessage} 
                />
             </div>
-          ) : (
+          ) : activeImage ? (
+            // Chỉ hiện panel này khi đã có kết quả (activeImage) — trước đó
+            // (đang điền form/thiết lập) không hiện gì ở cột này nữa.
             <div className="bg-[#242526] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.2)] xl:shadow-none xl:border xl:border-[#3E4042]">
                <div className="border-b border-[#3E4042] p-4 font-semibold text-[17px] text-white flex justify-between items-center">
                    Trạng thái làm việc
                </div>
                {/* Feed / Main Image section */}
-             {activeImage ? (
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between p-4 px-4">
                      <div className="flex items-center gap-2">
@@ -2001,13 +1860,8 @@ const App: React.FC = () => {
                     </button>
                   </div>
                 </div>
-             ) : (
-                <div className="p-8 text-center text-white font-semibold">
-                   {renderInstructions()}
-                </div>
-             )}
           </div>
-          )}
+          ) : null}
 
           </section>
         </div>
