@@ -775,7 +775,7 @@ Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và '
   }
 };
 
-export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K', referenceImage?: string | null): Promise<string> => {
+export const editProductImage = async (base64Image: string, prompt: string, imageSize: string = '1K', referenceImage?: string | null, sourceSettings?: GenerationSettings): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
   const mimeTypeMatch = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -814,8 +814,18 @@ export const editProductImage = async (base64Image: string, prompt: string, imag
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
         trackImagenUsage(fallbackModel, 1, "Chỉnh sửa ảnh", imageSize);
-        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        return await resizeImageToQuality(base64Data, imageSize as '1K' | '2K' | '4K');
+        let base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        // Đồng bộ với generateProductImage: nếu ảnh gốc là WHITE_BG_RETOUCH,
+        // áp dụng cùng lượt nâng chi tiết (4K) + làm sạch nền như luồng tạo ảnh chính.
+        const isWhiteBgRetouch = sourceSettings?.visualStyle === "WHITE_BG_RETOUCH";
+        if (isWhiteBgRetouch && imageSize === '4K') {
+          base64Data = await enhanceWhiteBgImageDetail(base64Data, sourceSettings as GenerationSettings);
+        }
+        let finalImage = await resizeImageToQuality(base64Data, imageSize as '1K' | '2K' | '4K');
+        if (isWhiteBgRetouch) {
+          finalImage = await whitenNearWhiteBackground(finalImage);
+        }
+        return finalImage;
       }
     }
     throw new Error("Không có ảnh.");  } catch (error: any) {

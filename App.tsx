@@ -654,7 +654,7 @@ const App: React.FC = () => {
     if (!activeImage || !editPrompt.trim()) return;
     setIsEditingImage(true);
     try {
-      const newUrl = await editProductImage(activeImage.url, editPrompt, editQuality, editReferenceImage);
+      const newUrl = await editProductImage(activeImage.url, editPrompt, editQuality, editReferenceImage, activeImage.settings);
       const time = Date.now();
       const newImage: GeneratedImage = {
         id: `${time}-edited`,

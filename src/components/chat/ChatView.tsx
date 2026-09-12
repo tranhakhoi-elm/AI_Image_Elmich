@@ -402,7 +402,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   >
                     <option value="1K">1K</option>
                     <option value="2K">2K</option>
-                    <option value="4K">4K</option>
                   </select>
                 </div>
               </>
