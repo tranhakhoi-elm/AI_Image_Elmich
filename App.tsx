@@ -1684,6 +1684,13 @@ const App: React.FC = () => {
     setViewMode('chat');
   };
 
+  // 3 workflow này luôn có nội dung riêng ở cột "Center Feed" (không phụ
+  // thuộc activeImage) — các workflow còn lại chỉ cần cột này khi đã có
+  // kết quả; nếu chưa có, ẩn hẳn cột này để form bên trái dùng full chiều
+  // ngang, đỡ phải kéo thanh trượt dọc.
+  const isSpecialFullFeedStyle = settings.visualStyle === 'BARCODE_QR_GENERATOR' || settings.visualStyle === 'TRANSLATE_PACKAGING' || settings.visualStyle === 'PACKAGING_CHECK';
+  const showResultSection = isSpecialFullFeedStyle || !!activeImage;
+
   return (
     <div className="min-h-screen bg-[#18191A] text-white font-sans flex flex-col relative animate-fade-in">
       {/* Nút Handbook nổi nhỏ gọn — thay cho Header đã ẩn, không chiếm chỗ
@@ -1730,7 +1737,7 @@ const App: React.FC = () => {
         <div className="flex-1 flex flex-col xl:flex-row overflow-hidden min-h-0">
         {/* Left Sidebar Layout */}
         {settings.visualStyle !== 'PACKAGING_CHECK' && (
-        <aside className="w-full xl:w-[480px] shrink-0 xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mb-8 xl:mb-0 xl:pt-4 xl:border-r xl:border-[#3E4042] bg-[#242526] xl:bg-transparent flex flex-col">
+        <aside className={`w-full ${showResultSection ? 'xl:w-[480px] shrink-0 xl:border-r xl:border-[#3E4042]' : 'xl:flex-1'} xl:h-full xl:overflow-y-auto custom-scrollbar px-2 mb-8 xl:mb-0 xl:pt-4 bg-[#242526] xl:bg-transparent flex flex-col`}>
           <div className="space-y-1">
              <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#3A3B3C] text-left transition-colors" onClick={() => setCurrentStep(1)}>
                 <div className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">AE</div>
@@ -1748,8 +1755,9 @@ const App: React.FC = () => {
         )}
 
         {/* Center Feed Layout */}
+        {showResultSection && (
         <section className={`flex-1 w-full mx-auto px-0 sm:px-4 flex flex-col gap-4 pb-20 mt-4 xl:mt-0 xl:h-full xl:overflow-y-auto custom-scrollbar xl:pt-4 bg-[#18191A] xl:bg-transparent ${settings.visualStyle === 'PACKAGING_CHECK' ? 'max-w-[1400px]' : 'max-w-[1000px]'}`}>
-          
+
           {settings.visualStyle === 'BARCODE_QR_GENERATOR' ? (
             <BarcodeGenerator />
           ) : settings.visualStyle === 'TRANSLATE_PACKAGING' ? (
@@ -1864,6 +1872,7 @@ const App: React.FC = () => {
           ) : null}
 
           </section>
+        )}
         </div>
 
       {/* Footer Gallery Rail */}
