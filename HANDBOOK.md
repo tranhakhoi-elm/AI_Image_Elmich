@@ -1,6 +1,6 @@
 # ELMICH AI DESIGN STUDIO — SỔ TAY HƯỚNG DẪN & KỸ NĂNG (HANDBOOK & SKILLS)
 
-> **Phiên bản:** 2.6 — cập nhật khớp với code thực tế (2026-09-10)
+> **Phiên bản:** 2.7 — cập nhật khớp với code thực tế (2026-09-12)
 > **Đơn vị phát triển:** Elmich Vietnam — Bộ phận Thiết kế Đồ họa & Công nghệ Sáng tạo
 > **Nền tảng:** React 19 + Vite + Express + Google Gemini Multimodal SDK (`@google/genai`)
 >
@@ -15,13 +15,13 @@
 
 1. [TỔNG QUAN HỆ THỐNG & SỨ MỆNH](#1-tổng-quan-hệ-thống--sứ-mệnh)
 2. [KIẾN TRÚC KỸ THUẬT (TÓM TẮT)](#2-kiến-trúc-kỹ-thuật-tóm-tắt)
-3. [15 WORKFLOW CHUYÊN BIỆT CỦA STUDIO](#3-15-workflow-chuyên-biệt-của-studio)
+3. [11 CÔNG CỤ CHUYÊN BIỆT CỦA STUDIO](#3-11-công-cụ-chuyên-biệt-của-studio)
 4. [HỆ THỐNG SKILL FILE (PROMPT CHUẨN HÓA)](#4-hệ-thống-skill-file-prompt-chuẩn-hóa)
 5. [KỸ NĂNG CHUYÊN SÂU: DỊCH BAO BÌ TỰ ĐỘNG CHO CONTENT](#5-kỹ-năng-chuyên-sâu-dịch-bao-bì-tự-động-cho-content)
 6. [KỸ NĂNG CHUYÊN SÂU: KIỂM DUYỆT BAO BÌ ĐỐI CHIẾU EXCEL](#6-kỹ-năng-chuyên-sâu-kiểm-duyệt-bao-bì-đối-chiếu-excel)
 7. [QUY TẮC PROMPT ENGINEERING CHUẨN ELMICH](#7-quy-tắc-prompt-engineering-chuẩn-elmich)
 8. [DỰ TOÁN CHI PHÍ & TÍNH TOÁN TOKEN (ANALYTICS)](#8-dự-toán-chi-phí--tính-toán-token-analytics)
-9. [TÍCH HỢP DOANH NGHIỆP: GOOGLE SHEETS & LARK SUITE](#9-tích-hợp-doanh-nghiệp-google-sheets--lark-suite)
+9. [TÍCH HỢP DOANH NGHIỆP: GOOGLE SHEETS & LỊCH SỬ DÙNG CHUNG](#9-tích-hợp-doanh-nghiệp-google-sheets--lịch-sử-dùng-chung)
 10. [BẢO MẬT & GIỚI HẠN ĐÃ BIẾT](#10-bảo-mật--giới-hạn-đã-biết)
 11. [HƯỚNG DẪN VẬN HÀNH & BẢO TRÌ (OPERATIONS)](#11-hướng-dẫn-vận-hành--bảo-trì-operations)
 
@@ -45,29 +45,36 @@
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     TRÌNH DUYỆT (SPA — 1 trang duy nhất)                │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  React 19 + Tailwind CSS v4 + Motion — toàn bộ trong App.tsx (~2850     │
-│  dòng) + 4 component tách riêng (Barcode, PackagingCheck,               │
-│  TranslatePackaging, Chat)                                              │
+│  React 19 + Tailwind CSS v4 + Motion — App.tsx (~1970 dòng, điều phối   │
+│  state + dispatch) + 11 component workflow tách riêng trong             │
+│  src/components/workflows/ + BarcodeGenerator, ChatView, HistoryView    │
+│                                                                         │
+│  Màn hình chính sau khi mở khóa: lưới icon vuông kiểu springboard       │
+│  (AppHomeScreen.tsx) — không còn header/sidebar danh sách cố định,      │
+│  mỗi công cụ + Trợ lý Chat AI + Lịch sử là 1 ô bấm để vào wizard riêng  │
 │                                                                         │
 │  services/geminiService.ts  ──▶  gọi TRỰC TIẾP Google Gemini API        │
 │  (@google/genai chạy trong trình duyệt, KHÔNG qua backend của dự án)    │
 │                                                                         │
 │  Lưu cục bộ: localStorage (cờ nhỏ) + localforage/IndexedDB (ảnh, chat)  │
 └────────────────────────────────────▲────────────────────────────────────┘
-                                     │ chỉ 2 route: ghi log chi phí
+                                     │ chỉ 1 route: ghi log chi phí
 ┌────────────────────────────────────▼────────────────────────────────────┐
 │         BACKEND (chỉ để ghi log — không tham gia luồng tạo ảnh)         │
 │  server.ts (Express, cổng 3000, dùng khi tự host)  — hoặc —              │
-│  api/sheets/report.ts, api/lark/report.ts (khi deploy Vercel)           │
+│  api/sheets/report.ts (khi deploy Vercel)                               │
 │    * POST /api/sheets/report  → Google Sheets (ĐANG DÙNG THẬT)         │
-│    * POST /api/lark/report    → Lark Bitable (code có sẵn, CHƯA được   │
-│                                   gọi từ bất kỳ đâu trong frontend)     │
+│    (tích hợp Lark Bitable đã bị GỠ BỎ HOÀN TOÀN — không còn code,       │
+│     không còn route /api/lark/report)                                  │
 └────────────────────────────────────▲────────────────────────────────────┘
                                      │
 ┌────────────────────────────────────▼────────────────────────────────────┐
-│  Google Gemini: gemini-3.1-flash-image (sinh/sửa ảnh), gemini-2.5-flash  │
-│  (phân tích/OCR), gemini-2.5-pro (suy luận prompt, chat, gợi ý đạo cụ)   │
-│  Google Sheets API (Service Account) · Lark Suite Bitable API (dự phòng)│
+│  Google Gemini — người dùng tự chọn tier trước khi tạo ảnh:              │
+│    Flash: gemini-3.1-flash-image (mặc định) · gemini-2.5-flash (phân    │
+│    tích/gợi ý prompt)                                                   │
+│    Pro:   gemini-3-pro-image · gemini-2.5-pro (phân tích/dịch bao bì)   │
+│  Google Sheets API (Service Account) · Firestore + Cloud Storage        │
+│  (Lịch sử dùng chung — ảnh & chat, tùy chọn, xem mục 9)                 │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -76,31 +83,43 @@ backend song song, build/deploy, nợ kỹ thuật) xem tại **[ARCHITECTURE.md
 
 ---
 
-## 3. 15 WORKFLOW CHUYÊN BIỆT CỦA STUDIO
+## 3. 11 CÔNG CỤ CHUYÊN BIỆT CỦA STUDIO
 
-Hệ thống được tổ chức thành 15 phân hệ chuyên sâu (giá trị của kiểu `VisualStyle` trong `types.ts`), tương ứng các nhu cầu thực tế:
+Màn hình chính (springboard) hiển thị đúng 11 ô công cụ theo thứ tự dưới đây,
+cộng thêm thanh "Trợ lý Chat AI" (chế độ Chat & Tư vấn hoặc Tạo ảnh AI bằng
+prompt tự do) và ô "Lịch sử" (xem lại ảnh/chat dùng chung cho cả team) — 2 mục
+này không phải `VisualStyle` nên không nằm trong bảng:
 
-| STT | Mã phân hệ (`VisualStyle`) | Tên tiếng Việt | Mục đích & Ứng dụng | Nơi cài đặt UI |
+| STT | Mã phân hệ (`VisualStyle`) | Tên hiển thị trên UI | Mục đích & Ứng dụng | Nơi cài đặt UI |
 |---|---|---|---|---|
-| **1** | `CONCEPT` | Concept Lifestyle | Phối cảnh sản phẩm trong không gian sống (bếp hiện đại, bàn ăn sáng, phòng khách). Tùy biến ống kính camera và đạo cụ. | App.tsx |
-| **2** | `SCENE_STAGING` | Phối cảnh Thực tế | Đưa ảnh chụp sản phẩm thực tế vào một ảnh bối cảnh kiến trúc có sẵn, hòa trộn ánh sáng và đổ bóng vật lý chuẩn xác. | App.tsx |
-| **3** | `TECH_PS` | Điểm mạnh Kỹ thuật | Làm nổi bật công nghệ độc quyền (đáy từ 5 lớp, mâm nhiệt kép, quạt tản nhiệt, van xả áp kép) bằng hiệu ứng đồ họa cao cấp. | App.tsx |
-| **4** | `COLOR_CHANGE` | Đổi màu theo Pantone | Thử nghiệm các phiên bản màu sắc mới theo mã màu Pantone hoặc ảnh tham chiếu màu sắc thực tế trước khi đặt hàng sản xuất. | App.tsx |
-| **5** | `PACKAGING_MOCKUP`| Mockup Bao bì 3D | Giả lập hộp sản phẩm dạng 3D từ các mặt thiết kế phẳng (Front, Back, Left, Right, Top) trên phông trắng hoặc quầy kệ. | App.tsx |
-| **6** | `TECH_EFFECTS` | Hiệu ứng Công nghệ | Tạo các luồng nhiệt, đối lưu không khí, hơi nước áp suất cao, bọt khí khử khuẩn cho máy ép, nồi chiên không dầu, ấm siêu tốc. | App.tsx |
-| **7** | `WHITE_BG_RETOUCH`| Retouch Phông trắng TMĐT| Tách nền trắng tinh khiết chuẩn Shopee/Lazada/Tiki (#FFFFFF), tối ưu tương phản mép kim loại và độ trong suốt thủy tinh. | App.tsx |
-| **8** | `3D_TO_REAL_WHITE_BG`| Render 3D sang Ảnh Thật| Biến bản vẽ phối cảnh 3D CAD/SolidWorks/3ds Max thô thành ảnh chụp studio chân thật với độ chân thực bề mặt cao. | App.tsx |
-| **9** | `TRACING_ASSISTANT`| Trợ lý Đồ lại nét | Làm sắc nét ảnh/logo mờ, phẳng màu, xóa nhiễu để hỗ trợ đồ lại vector trong Illustrator/Corel. | App.tsx |
-| **10**| `LINE_ART` | Bản vẽ Kỹ thuật & Bóc tách| Tạo sơ đồ cấu tạo linh kiện (exploded view diagram) phục vụ sách hướng dẫn sử dụng và kiểm định chất lượng. | App.tsx |
-| **11**| `STUDIO` | Chụp Studio Nghệ thuật | Bố trí sản phẩm trên các bục bệ hình học (podium), ánh sáng kịch tính, phong cách tối giản châu Âu phục vụ banner quảng cáo. | App.tsx |
-| **12**| `TRACK_SOCKET_STAGING`| Ray Ổ Cắm Đa Năng | Ghép thanh ray trượt và cắm đồng thời các thiết bị Elmich trên bề mặt bếp cao cấp. | App.tsx |
-| **13**| `BARCODE_QR_GENERATOR`| Tạo Mã vạch & QR Code | Sinh mã vạch chuẩn quốc tế Code 128, EAN-13 (tính check-digit tự động) và mã QR dẫn về link sản phẩm Elmich, xuất file SVG in ấn. **Không gọi AI.** | `src/components/BarcodeGenerator.tsx` |
-| **14**| `TRANSLATE_PACKAGING`| Dịch Bao bì Tự động | Dịch bao bì tiếng Anh sang tiếng Việt trong 1 chạm cho Content team, giữ nguyên dieline, xuất ảnh 1K tức thì. | `src/components/workflows/TranslatePackagingWorkflow.tsx` |
-| **15**| `PACKAGING_CHECK` | Kiểm duyệt Bao bì & Excel| Soi lỗi sai lệch thông tin trên các file thiết kế bao bì dựa trên bảng tiêu chuẩn Excel của phòng R&D. Xuất báo cáo ĐẠT/KHÔNG ĐẠT. | `src/components/workflows/PackagingCheckWorkflow.tsx` |
+| **1** | `WHITE_BG_RETOUCH` | Ảnh nền trắng | Tách nền trắng tinh khiết chuẩn Shopee/Lazada/Tiki (#FFFFFF), tối ưu tương phản mép kim loại và độ trong suốt thủy tinh. | `src/components/workflows/WhiteBgRetouchWorkflow.tsx` |
+| **2** | `STUDIO` | Ảnh studio nền trơn | Bố trí sản phẩm trên các bục bệ hình học (podium), ánh sáng kịch tính, phong cách tối giản châu Âu phục vụ banner quảng cáo. | `src/components/workflows/StudioWorkflow.tsx` |
+| **3** | `CONCEPT` | Ảnh phối cảnh | Phối cảnh sản phẩm trong không gian sống (bếp hiện đại, bàn ăn sáng, phòng khách). Tùy biến ống kính camera và đạo cụ. | `src/components/workflows/ConceptWorkflow.tsx` |
+| **4** | `COLOR_CHANGE` | Làm màu sản phẩm | Thử nghiệm các phiên bản màu sắc mới theo mã màu Pantone hoặc ảnh tham chiếu màu sắc thực tế trước khi đặt hàng sản xuất. | `src/components/workflows/ColorChangeWorkflow.tsx` |
+| **5** | `BARCODE_QR_GENERATOR` | Tạo QR & Barcode | Sinh mã vạch chuẩn quốc tế Code 128, EAN-13 (tính check-digit tự động) và mã QR dẫn về link sản phẩm Elmich, xuất file SVG in ấn. **Không gọi AI.** | `src/components/BarcodeGenerator.tsx` |
+| **6** | `TRACING_ASSISTANT` | Trợ lý Tracing | Làm sắc nét ảnh/logo mờ, phẳng màu, xóa nhiễu để hỗ trợ đồ lại vector trong Illustrator/Corel. | Inline `renderTracingAssistantWorkflow()` trong `App.tsx` |
+| **7** | `3D_TO_REAL_WHITE_BG` | Ảnh 3D - Ảnh chụp | Biến bản vẽ phối cảnh 3D CAD/SolidWorks/3ds Max thô thành ảnh chụp studio chân thật với độ chân thực bề mặt cao. | `src/components/workflows/Render3DToPhotoWorkflow.tsx` |
+| **8** | `LINE_ART` | Chuyển thành Line Art | Tạo sơ đồ cấu tạo linh kiện (exploded view diagram) phục vụ sách hướng dẫn sử dụng và kiểm định chất lượng. | `src/components/workflows/LineArtWorkflow.tsx` |
+| **9** | `PACKAGING_MOCKUP` | Mockup bao bì | Giả lập hộp sản phẩm dạng 3D từ các mặt thiết kế phẳng (Front, Back, Left, Right, Top) trên phông trắng hoặc quầy kệ. | `src/components/workflows/PackagingMockupWorkflow.tsx` |
+| **10** | `TRANSLATE_PACKAGING` | Dịch bao bì tự động | Dịch bao bì tiếng Anh sang tiếng Việt trong 1 chạm cho Content team, giữ nguyên dieline, xuất ảnh tức thì. | `src/components/workflows/TranslatePackagingWorkflow.tsx` |
+| **11** | `PACKAGING_CHECK` | Kiểm tra bao bì | Soi lỗi sai lệch thông tin trên các file thiết kế bao bì dựa trên bảng tiêu chuẩn Excel của phòng R&D. Xuất báo cáo ĐẠT/KHÔNG ĐẠT. | `src/components/workflows/PackagingCheckWorkflow.tsx` |
 
-> Chỉ 4/15 workflow (13, 14, 15 và chế độ Chat) có component React riêng.
-> 11 workflow còn lại dùng chung state và JSX ngay trong `App.tsx` — xem
-> ARCHITECTURE.md mục 7 (nợ kỹ thuật) nếu cần tách nhỏ trong tương lai.
+> **10/11 workflow đã có component React riêng** trong
+> `src/components/workflows/`, mỗi form được bố trí lưới 1 cột (mobile) /
+> 2 cột (`xl:`) để giảm chiều cao cuộn. Chỉ còn `TRACING_ASSISTANT` vẫn dùng
+> JSX inline trong `App.tsx` (~1970 dòng).
+>
+> **3 `VisualStyle` mồ côi — code còn tồn tại nhưng KHÔNG còn truy cập được
+> từ UI** kể từ khi màn hình chính đổi sang lưới icon springboard (mảng
+> `APP_TOOLS` trong `App.tsx` không còn liệt kê chúng):
+> - `SCENE_STAGING` (Phối cảnh Thực tế) — `renderStagingWorkflow()` inline.
+> - `TECH_PS` (Điểm mạnh Kỹ thuật) — `renderTechWorkflow()` inline.
+> - `TRACK_SOCKET_STAGING` (Ray Ổ Cắm Đa Năng) — đã có component riêng
+>   `src/components/workflows/TrackSocketWorkflow.tsx` (kể cả đã được tối ưu
+>   layout 2 cột), nhưng chưa được gắn lại vào `APP_TOOLS`.
+>
+> Đây là nợ kỹ thuật cần quyết định: xóa hẳn 3 workflow này, hoặc thêm lại
+> vào lưới công cụ ở màn hình chính — xem ARCHITECTURE.md mục 7.
 
 ---
 
@@ -121,11 +140,12 @@ lần gọi AI cho workflow tương ứng:
 | `Design_WhiteBG_Retouch.md` | WHITE_BG_RETOUCH |
 | `Design_Line_Art.md` | LINE_ART |
 | `3DRender_To_Photo.md` | 3D_TO_REAL_WHITE_BG |
-| `ChatAssistant_Handbook.md` | Trợ lý **Chat AI** (không thuộc 15 workflow — dùng cho cả 2 chế độ Chat & Tư vấn / Tạo ảnh AI) |
+| `ChatAssistant_Handbook.md` | Trợ lý **Chat AI** (không thuộc danh sách công cụ ở mục 3 — dùng cho cả 2 chế độ Chat & Tư vấn / Tạo ảnh AI) |
 
-5 workflow còn lại (TRACING_ASSISTANT, TRACK_SOCKET_STAGING,
-BARCODE_QR_GENERATOR, TRANSLATE_PACKAGING, PACKAGING_CHECK) dùng prompt
-inline ngắn, không có skill file riêng.
+Các công cụ còn lại (TRACING_ASSISTANT, BARCODE_QR_GENERATOR,
+TRANSLATE_PACKAGING, PACKAGING_CHECK, cùng 3 workflow mồ côi SCENE_STAGING/
+TECH_PS/TRACK_SOCKET_STAGING) dùng prompt inline ngắn, không có skill file
+riêng.
 
 **Trợ lý Chat AI** (`ChatView.tsx`) từ nay cũng có "cẩm nang" riêng —
 `ChatAssistant_Handbook.md` — đóng vai trò Giám đốc Sáng tạo khi tư vấn
@@ -196,35 +216,57 @@ Các sản phẩm Elmich nhập khẩu hoặc OEM quốc tế thường có file
 ## 8. DỰ TOÁN CHI PHÍ & TÍNH TOÁN TOKEN (ANALYTICS)
 
 > **Lưu ý:** các con số dưới đây là **ước tính hiển thị cho người dùng**,
-> tính bằng bảng giá hard-code trong `services/metricsService.ts`, **không
-> phải số liệu billing thật lấy từ Google Cloud**. Model sinh ảnh trong mọi
-> trường hợp là `gemini-3.1-flash-image` — hệ thống không thực sự gọi dòng
-> model Imagen dù tên hàm ước tính chi phí là `calculateImagenCost`.
+> tính bằng bảng giá hard-code trong `services/metricsService.ts` (khớp với
+> https://ai.google.dev/gemini-api/docs/pricing), **không phải số liệu
+> billing thật lấy từ Google Cloud**. Dùng hàm `calculateImagenCost()` cho
+> phần tạo ảnh (tên hàm giữ từ thời còn dùng Imagen, nay tính giá theo đúng
+> 2 model Gemini image bên dưới) và `calculateGeminiCost()` cho phần phân
+> tích văn bản.
 
-| Tác vụ | Mô hình sử dụng | Chi phí ước tính |
+Từ khi có lựa chọn **Flash / Pro** trước mỗi lần tạo ảnh (mặc định Flash),
+chi phí phụ thuộc vào tier người dùng chọn:
+
+**Giá tạo ảnh theo model & độ phân giải (mỗi ảnh):**
+
+| Model | 1K | 2K | 4K |
+|---|---|---|---|
+| **Flash** — `gemini-3.1-flash-image` (Nano Banana 2, mặc định) | $0.067 | $0.101 | $0.151 |
+| **Pro** — `gemini-3-pro-image` (Nano Banana Pro) | $0.134 | $0.134 | $0.24 |
+
+**Giá xử lý văn bản (phân tích ảnh, gợi ý prompt, dịch/kiểm bao bì) — theo 1 triệu token:**
+
+| Model | Input | Output |
 |---|---|---|
-| Phân tích bối cảnh & gợi ý Concept | `gemini-2.5-flash` | ~$0.002 |
-| Phân tích kiểm duyệt bao bì (OCR + Check) | `gemini-2.5-flash` | ~$0.005 – $0.015 / lần check |
-| Tạo ảnh chuẩn 1K (1024x1024) | `gemini-3.1-flash-image` | ~$0.067 |
-| Tạo ảnh sắc nét 2K (2048x2048) | `gemini-3.1-flash-image` | ~$0.101 |
-| Tạo ảnh siêu nét 4K (thực chất render 2K rồi upscale bằng canvas phía client) | `gemini-3.1-flash-image` | ~$0.151 |
+| **Flash** — `gemini-2.5-flash` / `gemini-3.1-flash` | $0.30 | $2.50 |
+| **Pro** — `gemini-2.5-pro` / `gemini-3-pro` | $1.25 | $10.00 |
+
+Model dùng cho từng tác vụ phân tích:
+
+| Tác vụ | Model | Ghi chú |
+|---|---|---|
+| Gợi ý Concept, gợi ý đạo cụ, suy luận prompt trước khi tạo ảnh | `gemini-2.5-flash` | ~$0.001 – $0.003 / lần |
+| Phân tích & dịch nội dung bao bì (OCR, đối chiếu Excel) | `gemini-2.5-pro` | ~$0.005 – $0.02 / lần, ưu tiên độ chính xác OCR |
+| Tạo/sửa ảnh chính, Trợ lý Chat AI (chế độ tạo ảnh) | `gemini-3.1-flash-image` hoặc `gemini-3-pro-image` | Theo lựa chọn Flash/Pro của người dùng, xem bảng trên |
+
+Chi phí mỗi lần tạo ảnh = giá tạo ảnh (theo model & độ phân giải) + phí phân
+tích văn bản đi kèm (thường không đáng kể so với phí tạo ảnh). Toàn bộ được
+cộng dồn và ghi log tự động vào Google Sheets dùng chung — xem mục 9.
 
 ---
 
-## 9. TÍCH HỢP DOANH NGHIỆP: GOOGLE SHEETS & LARK SUITE
+## 9. TÍCH HỢP DOANH NGHIỆP: GOOGLE SHEETS & LỊCH SỬ DÙNG CHUNG
 
 1. **Google Sheets Integration (`/api/sheets/report`) — ĐANG HOẠT ĐỘNG:**
    - Sử dụng Google Service Account xác thực tự động (`GOOGLE_SERVICE_ACCOUNT_JSON` hoặc cặp `GOOGLE_CLIENT_EMAIL`/`GOOGLE_PRIVATE_KEY`).
-   - Được gọi từ hàm `reportToLark()` trong `metricsService.ts` (tên hàm gây
-     hiểu nhầm — thực chất ghi vào Google Sheets, không phải Lark).
+   - Được gọi từ hàm `reportToLark()` trong `metricsService.ts` (tên hàm giữ
+     nguyên từ thời còn định dùng Lark — thực chất ghi vào Google Sheets,
+     không liên quan Lark).
    - Ghi nhận: Mã sản phẩm, Tên sản phẩm, Số token, Chi phí ($), Ngày, Tên tác vụ.
-2. **Lark Suite Bitable Integration (`/api/lark/report`) — CÓ SẴN, CHƯA KÍCH HOẠT:**
-   - Code backend đầy đủ (tạo tenant token, tìm bảng, ghi record, xử lý lỗi
-     phân quyền) tồn tại ở cả `server.ts` và `api/lark/report.ts`.
-   - **Không có nơi nào trong frontend gọi tới endpoint này** — nếu muốn
-     dùng, cần bổ sung lời gọi `fetch('/api/lark/report', ...)` phía
-     `metricsService.ts` hoặc nơi phù hợp, kèm `LARK_APP_ID`/`LARK_APP_SECRET`
-     trong biến môi trường.
+2. **Lark Suite Bitable — ĐÃ GỠ BỎ HOÀN TOÀN (không còn dùng):** route
+   `/api/lark/report` (cả ở `server.ts` lẫn `api/lark/report.ts`) đã bị xóa
+   khỏi codebase vì không còn nhu cầu sử dụng. Nếu tài liệu cũ hoặc code
+   review nào còn nhắc tới, đó là tham chiếu lỗi thời — không có route này
+   nữa.
 3. **Google Cloud Firestore + Cloud Storage (tab "Lịch sử") — ĐANG HOẠT ĐỘNG
    (khi đã cấu hình `GCS_BUCKET_NAME`):**
    - Dùng chung Service Account với mục 1, chỉ cấp thêm quyền IAM
@@ -291,11 +333,6 @@ GEMINI_API_KEY=your_gemini_api_key_here
 # Tích hợp Google Sheets (Tùy chọn, chỉ dùng ở backend)
 GOOGLE_SHEET_ID=your_spreadsheet_id
 GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-
-# Tích hợp Lark Suite (Tùy chọn — backend đã sẵn sàng nhưng frontend
-# chưa gọi tới, xem mục 9)
-LARK_APP_ID=cli_xxxxxxxxxxxx
-LARK_APP_SECRET=xxxxxxxxxxxxxxxxxxxx
 
 # Lịch sử dùng chung — Ảnh & Chat (Tùy chọn, xem ARCHITECTURE.md mục 8 để
 # biết các bước cấu hình Firestore/Storage/IAM trên GCP Console trước khi
