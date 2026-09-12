@@ -64,7 +64,7 @@ import {
   CAMERA_ISO,
   TONE_STYLES
 } from './constants';
-import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI, STYLES_WITH_4K_DETAIL_ENHANCE } from './services/geminiService';
+import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
 import { logGeneratedImage, rateGeneratedImage, fetchApprovedPromptHints, fetchChatHistory, deleteChatHistorySession } from './services/historyService';
 
 const initialSettings: GenerationSettings = {
@@ -1801,23 +1801,14 @@ const App: React.FC = () => {
   };
 
   const calculateCost = (image: GeneratedImage) => {
-    let cost = 0;
-    // Image generation cost (using implicitly selected high quality models)
-    if (image.settings.imageSize === '4K') cost = 0.151;
-    else if (image.settings.imageSize === '2K') cost = 0.101;
-    else cost = 0.067;
-    
+    // Ảnh tạo/sửa qua generateProductImage & editProductImage đều dùng
+    // gemini-3-pro-image — giá theo ảnh (Standard tier): 1K/2K = $0.134, 4K = $0.24.
+    let cost = image.settings.imageSize === '4K' ? 0.24 : 0.134;
+
     // Prompt generation cost (Step 1, dùng gemini-2.5-pro) — ước tính gần
     // đúng cho 1 lượt "thinking" (nhúng 3 file manual + prompt sinh ra).
     if (image.settings.visualStyle === 'CONCEPT' || image.settings.visualStyle === 'STUDIO') {
       cost += 0.01;
-    }
-
-    // Lượt AI nâng chi tiết thêm khi xuất 4K cho các phong cách premium
-    // (xem STYLES_WITH_4K_DETAIL_ENHANCE trong geminiService.ts) — tốn thêm
-    // 1 lượt gọi ở mức giá 2K.
-    if (image.settings.imageSize === '4K' && STYLES_WITH_4K_DETAIL_ENHANCE.includes(image.settings.visualStyle)) {
-      cost += 0.101;
     }
 
     return cost;

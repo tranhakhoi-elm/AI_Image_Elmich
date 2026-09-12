@@ -241,78 +241,6 @@ const whitenNearWhiteBackground = (base64Data: string, tolerance = 18): Promise<
   });
 };
 
-/**
- * Lượt gọi AI thứ 2 (chỉ dùng khi xuất WHITE_BG_RETOUCH ở chất lượng 4K):
- * ảnh Gemini chỉ xuất native tối đa 2K, "4K" thực chất là phóng to bằng
- * canvas (resizeImageToQuality) — không thêm chi tiết thật. Lượt này gửi
- * lại ảnh 2K vừa tạo, yêu cầu AI làm nét/tăng chi tiết bề mặt (giữ nguyên
- * 100% khung hình, màu sắc, hình dạng) TRƯỚC khi phóng to, để bản 4K cuối
- * cùng nhìn sắc nét hơn thay vì chỉ là ảnh 2K bị kéo giãn.
- */
-// Danh sách các phong cách được coi là "premium" đủ để chịu thêm 1 lượt gọi
-// AI nâng chi tiết khi xuất 4K (xem runDetailEnhancePass) — dùng chung giữa
-// generateProductImage (điều kiện áp dụng) và App.tsx (ước tính chi phí hiển thị).
-export const STYLES_WITH_4K_DETAIL_ENHANCE = ["WHITE_BG_RETOUCH", "CONCEPT", "STUDIO"];
-
-const runDetailEnhancePass = async (
-  base64Data: string,
-  settings: GenerationSettings,
-  sceneDescription: string,
-  preserveExtra: string,
-  taskLabel: string
-): Promise<string> => {
-  try {
-    const match = base64Data.match(/^data:(image\/[a-z]+);base64,(.+)$/);
-    if (!match) return base64Data;
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const parts: any[] = [
-      {
-        text: `This is an already-finished ${sceneDescription} of "${settings.productName || 'the product'}". Perform a DETAIL-ENHANCEMENT pass only: sharpen fine surface textures (metal brushing/reflections, plastic grain, glass clarity, fabric weave), increase micro-contrast and clarity to a hyper-detailed 8K commercial catalog standard.
-STRICT PRESERVATION (MANDATORY): Do NOT change the product's shape, proportions, camera angle, composition, colors, ${preserveExtra} in any way. Do NOT add, remove, or move any object. Output must keep the exact same framing — only sharper and more detailed.`
-      },
-      { inlineData: { mimeType: match[1], data: match[2] } },
-    ];
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-image',
-      contents: { parts },
-      config: { imageConfig: { aspectRatio: settings.aspectRatio, imageSize: '2K' } },
-    });
-    const outParts = response.candidates?.[0]?.content?.parts;
-    if (outParts) {
-      for (const part of outParts) {
-        if (part.inlineData) {
-          // Lượt gọi AI thứ 2 này tốn thêm chi phí thật — ghi nhận riêng để
-          // tổng chi phí báo cáo (Lark) phản ánh đúng 2 lượt gọi, không bị thiếu.
-          trackImagenUsage('gemini-3.1-flash-image', 1, taskLabel, '2K');
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-      }
-    }
-    return base64Data;
-  } catch (err) {
-    console.error("Detail-enhance pass failed, falling back to original image:", err);
-    return base64Data;
-  }
-};
-
-const enhanceWhiteBgImageDetail = (base64Data: string, settings: GenerationSettings): Promise<string> =>
-  runDetailEnhancePass(
-    base64Data,
-    settings,
-    "pure-white-background commercial product photo",
-    "or the pure white (#FFFFFF) background",
-    "Nâng chi tiết ảnh nền trắng (4K)"
-  );
-
-const enhanceImageDetail = (base64Data: string, settings: GenerationSettings): Promise<string> =>
-  runDetailEnhancePass(
-    base64Data,
-    settings,
-    "commercial product photo",
-    "background, props, or lighting setup",
-    "Nâng chi tiết ảnh (4K)"
-  );
-
 // Tự động phân tích chất liệu từ ảnh
 export const analyzeProductMaterials = async (imageBase64: string): Promise<{ categories: string[], description: string }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -567,7 +495,7 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: `Sản phẩm thực tế: ${productName}.
 Bối cảnh/Concept thiết kế: "${concept}".
 
@@ -593,7 +521,7 @@ Trả về định dạng JSON với 'placement' (string) và 'props' (mảng 10
         }
       }
     });
-    trackGeminiUsage(response, productName || "Đạo cụ Concept", "gemini-2.5-pro");
+    trackGeminiUsage(response, productName || "Đạo cụ Concept", "gemini-2.5-flash");
     return JSON.parse(response.text || "{}");
   } catch (error) { return { props: [], placement: "" }; }
 };
@@ -834,30 +762,21 @@ export const editProductImage = async (base64Image: string, prompt: string, imag
     let imageConfig: any = {};
     imageConfig.imageSize = imageSize === '4K' ? '2K' : imageSize;
 
-    const fallbackModel = 'gemini-3.1-flash-image';
+    const fallbackModel = 'gemini-3-pro-image';
 
     const response = await ai.models.generateContent({
       model: fallbackModel,
       contents: { parts },
       config: { imageConfig }
     });
-    
+
     if (!response.candidates?.[0]?.content?.parts) throw new Error("AI không phản hồi.");
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
         trackImagenUsage(fallbackModel, 1, "Chỉnh sửa ảnh", imageSize);
-        let base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        // Đồng bộ với generateProductImage: nếu ảnh gốc thuộc nhóm phong cách
-        // "premium" (xem STYLES_WITH_4K_DETAIL_ENHANCE), áp dụng cùng lượt
-        // nâng chi tiết (4K) như luồng tạo ảnh chính; riêng WHITE_BG_RETOUCH
-        // còn được làm sạch nền.
+        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        // Đồng bộ với generateProductImage: ảnh gốc WHITE_BG_RETOUCH còn được làm sạch nền.
         const isWhiteBgRetouch = sourceSettings?.visualStyle === "WHITE_BG_RETOUCH";
-        const sourceStyle = sourceSettings?.visualStyle;
-        if (imageSize === '4K' && sourceStyle && STYLES_WITH_4K_DETAIL_ENHANCE.includes(sourceStyle)) {
-          base64Data = isWhiteBgRetouch
-            ? await enhanceWhiteBgImageDetail(base64Data, sourceSettings as GenerationSettings)
-            : await enhanceImageDetail(base64Data, sourceSettings as GenerationSettings);
-        }
         let finalImage = await resizeImageToQuality(base64Data, imageSize as '1K' | '2K' | '4K');
         if (isWhiteBgRetouch) {
           finalImage = await whitenNearWhiteBackground(finalImage);
@@ -1354,9 +1273,9 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
   }
 
   try {
-    const modelName = 'gemini-3.1-flash-image';
+    const modelName = 'gemini-3-pro-image';
     let imageConfig: any = { aspectRatio: settings.aspectRatio };
-    
+
     // imageSize handling (API supports native 1K, 2K but we upscale to 4K manually if requested)
     imageConfig.imageSize = settings.imageSize === '4K' ? '2K' : settings.imageSize;
 
@@ -1369,16 +1288,8 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
         trackImagenUsage(modelName, 1, `Tạo ảnh: ${settings.visualStyle || "N/A"}`, settings.imageSize);
-        let base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         const isWhiteBgRetouch = settings.visualStyle === "WHITE_BG_RETOUCH";
-        // Chỉ làm thêm 1 lượt "nâng chi tiết" ở chất lượng 4K cho các phong
-        // cách "premium" (xem STYLES_WITH_4K_DETAIL_ENHANCE) — không áp dụng
-        // cho các workflow còn lại để tránh phát sinh chi phí/thời gian ngoài ý muốn.
-        if (settings.imageSize === '4K' && STYLES_WITH_4K_DETAIL_ENHANCE.includes(settings.visualStyle)) {
-          base64Data = isWhiteBgRetouch
-            ? await enhanceWhiteBgImageDetail(base64Data, settings)
-            : await enhanceImageDetail(base64Data, settings);
-        }
         let finalImage = await resizeImageToQuality(base64Data, settings.imageSize as '1K' | '2K' | '4K');
         if (isWhiteBgRetouch) {
           finalImage = await whitenNearWhiteBackground(finalImage);
@@ -1534,7 +1445,7 @@ LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:
     if (parts.length === 1) throw new Error("Invalid files");
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: {
         parts: parts
       },
@@ -1573,7 +1484,7 @@ LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:
       }
     });
 
-    trackGeminiUsage(response, "Kiểm tra bao bì");
+    trackGeminiUsage(response, "Kiểm tra bao bì", "gemini-2.5-pro");
     return JSON.parse(response.text || '{"params": []}');
   } catch (error) {
     console.error("Lỗi kiểm tra bao bì:", error);
@@ -1619,7 +1530,7 @@ LƯU Ý:
 }
 `;
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -1641,6 +1552,7 @@ LƯU Ý:
         }
       }
     });
+    trackGeminiUsage(response, "Trích xuất thông số chuẩn", "gemini-2.5-pro");
     const res = JSON.parse(response.text || '{"params": []}');
     return res.params || [];
   } catch (error) {
@@ -1680,7 +1592,7 @@ Trả về một JSON có cấu trúc sau:
     ];
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -1688,7 +1600,7 @@ Trả về một JSON có cấu trúc sau:
     });
 
     if (response.text) {
-      trackGeminiUsage(response, "Dịch và OCR bao bì", "gemini-2.5-flash");
+      trackGeminiUsage(response, "Dịch và OCR bao bì", "gemini-2.5-pro");
       return JSON.parse(response.text);
     }
     throw new Error("Không có phản hồi");
