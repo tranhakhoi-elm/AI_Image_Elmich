@@ -15,6 +15,9 @@ dist-ssr
 # AI coding tool local config/scratch (not project source)
 .claude/
 
+# Ảnh test cục bộ dùng để thử nghiệm tính năng, không phải asset của dự án
+ảnh để test.jpg
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

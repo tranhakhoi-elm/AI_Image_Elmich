@@ -166,6 +166,121 @@ const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor
   });
 };
 
+/**
+ * Ép các vùng gần-trắng nối liền với viền ảnh thành trắng tuyệt đối #FFFFFF
+ * bằng flood-fill (BFS) — dọn nốt bóng xám/viền mà AI generate còn sót lại,
+ * không tốn thêm lượt gọi AI nào. Chỉ lan từ viền vào trong, nên không đụng
+ * tới các vùng trắng/sáng NẰM TRÊN sản phẩm (không nối liền với viền qua
+ * đường toàn pixel gần-trắng) — dùng cho WHITE_BG_RETOUCH.
+ */
+const whitenNearWhiteBackground = (base64Data: string, tolerance = 18): Promise<string> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      resolve(base64Data);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(base64Data); return; }
+        ctx.drawImage(img, 0, 0);
+
+        const { width, height } = canvas;
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const { data } = imageData;
+        const visited = new Uint8Array(width * height);
+        const queue = new Int32Array(width * height);
+        let qTail = 0;
+
+        const isNearWhite = (p: number) => (255 - data[p]) <= tolerance && (255 - data[p + 1]) <= tolerance && (255 - data[p + 2]) <= tolerance;
+
+        const trySeed = (x: number, y: number) => {
+          const idx = y * width + x;
+          if (visited[idx]) return;
+          if (isNearWhite(idx * 4)) {
+            visited[idx] = 1;
+            queue[qTail++] = idx;
+          }
+        };
+
+        for (let x = 0; x < width; x++) { trySeed(x, 0); trySeed(x, height - 1); }
+        for (let y = 0; y < height; y++) { trySeed(0, y); trySeed(width - 1, y); }
+
+        let qHead = 0;
+        while (qHead < qTail) {
+          const idx = queue[qHead++];
+          const x = idx % width;
+          const y = (idx / width) | 0;
+          if (x > 0) trySeed(x - 1, y);
+          if (x < width - 1) trySeed(x + 1, y);
+          if (y > 0) trySeed(x, y - 1);
+          if (y < height - 1) trySeed(x, y + 1);
+        }
+
+        for (let i = 0; i < visited.length; i++) {
+          if (visited[i]) {
+            const p = i * 4;
+            data[p] = 255; data[p + 1] = 255; data[p + 2] = 255;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (err) {
+        console.error("Whiten background failed:", err);
+        resolve(base64Data);
+      }
+    };
+    img.onerror = () => resolve(base64Data);
+    img.src = base64Data;
+  });
+};
+
+/**
+ * Lượt gọi AI thứ 2 (chỉ dùng khi xuất WHITE_BG_RETOUCH ở chất lượng 4K):
+ * ảnh Gemini chỉ xuất native tối đa 2K, "4K" thực chất là phóng to bằng
+ * canvas (resizeImageToQuality) — không thêm chi tiết thật. Lượt này gửi
+ * lại ảnh 2K vừa tạo, yêu cầu AI làm nét/tăng chi tiết bề mặt (giữ nguyên
+ * 100% khung hình, màu sắc, hình dạng) TRƯỚC khi phóng to, để bản 4K cuối
+ * cùng nhìn sắc nét hơn thay vì chỉ là ảnh 2K bị kéo giãn.
+ */
+const enhanceWhiteBgImageDetail = async (base64Data: string, settings: GenerationSettings): Promise<string> => {
+  try {
+    const match = base64Data.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    if (!match) return base64Data;
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const parts: any[] = [
+      {
+        text: `This is an already-finished pure-white-background commercial product photo of "${settings.productName || 'the product'}". Perform a DETAIL-ENHANCEMENT pass only: sharpen fine surface textures (metal brushing/reflections, plastic grain, glass clarity), increase micro-contrast and clarity to a hyper-detailed 8K commercial catalog standard.
+STRICT PRESERVATION (MANDATORY): Do NOT change the product's shape, proportions, camera angle, composition, colors, or the pure white (#FFFFFF) background in any way. Do NOT add, remove, or move any object. Output must keep the exact same framing — only sharper and more detailed.`
+      },
+      { inlineData: { mimeType: match[1], data: match[2] } },
+    ];
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.1-flash-image',
+      contents: { parts },
+      config: { imageConfig: { aspectRatio: settings.aspectRatio, imageSize: '2K' } },
+    });
+    const outParts = response.candidates?.[0]?.content?.parts;
+    if (outParts) {
+      for (const part of outParts) {
+        if (part.inlineData) {
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+    }
+    return base64Data;
+  } catch (err) {
+    console.error("Detail-enhance pass failed, falling back to original image:", err);
+    return base64Data;
+  }
+};
+
 // Tự động phân tích chất liệu từ ảnh
 export const analyzeProductMaterials = async (imageBase64: string): Promise<{ categories: string[], description: string }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -868,19 +983,19 @@ DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible insid
     let materialDirectives = "";
     if (selectedCats.includes("METAL")) {
       materialDirectives += `
-- Metallic Parts (Kim loại): Auto-detect and render highly realistic, pristine, and clean metallic surfaces (such as polished chrome, brushed stainless steel, or aluminum). Apply soft specular highlights, clean rim light reflections, and realistic metallic luster. Ensure the metallic finish is perfectly uniform, clean, flawless, and pristine.`;
+- Metallic Parts (Kim loại): STRICT PRESERVATION of the exact original metal type, color, and finish (polished chrome, brushed stainless steel, or aluminum) — do NOT invent a different finish. Fresnel Physics: strong, bright specular reflections along high-curvature profile edges, fading to soft diffuse values on surfaces perpendicular to the camera. Structured Specular Highlights: cylindrical bodies must show sharp, vertical longitudinal reflections that outline the 3D form. If brushed, preserve smooth anisotropic brush-line reflections. Ensure the metallic finish is perfectly uniform, clean, flawless, and pristine.`;
     }
     if (selectedCats.includes("PLASTIC")) {
       materialDirectives += `
-- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts. Render them with perfectly clean, uniform matte or high-gloss polymer surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Ensure subtle subsurface scattering for realistic matte or gloss polymers, completely clean, uniform, smooth, and pristine.`;
+- Plastic/Polymer Parts (Nhựa): Auto-detect plastic parts and keep their exact original color and finish (matte or gloss) — do NOT change matte to gloss or vice versa. Render perfectly clean, uniform surfaces. Do not bleed metallic highlights or chrome sheen onto plastic housings. Apply subtle subsurface scattering (<0.2mm light penetration) so the plastic reads as solid, food-safe-grade material with real thickness, not a thin paper-mache shell. Completely clean, uniform, smooth, and pristine.`;
     }
     if (selectedCats.includes("GLASS")) {
       materialDirectives += `
-- Glass/Transparent Parts (Thủy tinh): Render realistic glass transparency, subtle refraction, and clear rim specular highlights. Show internal contents nicely with soft studio backlighting if visible, keeping the glass entirely clean, uniform, and crystal clear.`;
+- Glass/Transparent Parts (Thủy tinh): Preserve exact original glass shape and thickness. Refraction Index (IOR) ≈ 1.5 for borosilicate glass — internal walls/contents must remain visible through the glass, with slight chromatic aberration at edges to simulate professional camera optics. Use subtle dark-field rim lighting (thin dark edge outline) so the transparent silhouette never dissolves into the pure white #FFFFFF background. Keep the glass entirely clean, uniform, and crystal clear.`;
     }
     if (selectedCats.includes("CERAMIC")) {
       materialDirectives += `
-- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely smooth, uniform, flawless, and pristine.`;
+- Ceramic/Coated Parts (Gốm sứ/Chống dính): Render a perfectly smooth, flawless, and uniform glossy glaze or clean non-stick coating, keeping the exact original color. Ensure a pristine, homogeneous finish with soft, diffused light absorption, completely smooth, uniform, flawless, and pristine.`;
     }
     if (materialDirectives === "") {
       materialDirectives = "\n- Standard materials: Clean, realistic studio texture preservation, completely clean and pristine.";
@@ -911,7 +1026,7 @@ ${designWhiteBGRetouch}
 
 ${stylePrompt}
  
-CRITICAL REQUIREMENT: Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product itself must remain exactly as it appears in the reference image.
+STRICT PRESERVATION (MANDATORY): Keep the exact original product — no change in shape, angle, color, material composition, or texture pattern. Do NOT duplicate or add any object. Do NOT change composition or camera perspective. Absolutely do not change the original camera angle, perspective, shape, or texture/structure of the product. The product itself must remain exactly as it appears in the reference image.
 DO NOT CROP THE PRODUCT: The entire product MUST remain 100% fully visible inside the frame. Do NOT cut off any edges, handles, lids, or parts of the product. If the requested aspect ratio is different from the original image, you MUST pad the extra space with the pure white background. The product should be centered and completely contained within the image boundaries without any cropping.
 
 BACKGROUND SANITIZATION (MANDATORY & MAXIMUM PRIORITY / YÊU CẦU BẮT BUỘC):
@@ -1207,8 +1322,19 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
         trackImagenUsage(modelName, 1, `Tạo ảnh: ${settings.visualStyle || "N/A"}`, settings.imageSize);
-        const base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        return await resizeImageToQuality(base64Data, settings.imageSize as '1K' | '2K' | '4K');
+        let base64Data = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        const isWhiteBgRetouch = settings.visualStyle === "WHITE_BG_RETOUCH";
+        // Chỉ làm thêm 1 lượt "nâng chi tiết" cho WHITE_BG_RETOUCH ở chất
+        // lượng 4K (xem enhanceWhiteBgImageDetail) — không áp dụng cho các
+        // workflow khác để tránh phát sinh chi phí/thời gian ngoài ý muốn.
+        if (isWhiteBgRetouch && settings.imageSize === '4K') {
+          base64Data = await enhanceWhiteBgImageDetail(base64Data, settings);
+        }
+        let finalImage = await resizeImageToQuality(base64Data, settings.imageSize as '1K' | '2K' | '4K');
+        if (isWhiteBgRetouch) {
+          finalImage = await whitenNearWhiteBackground(finalImage);
+        }
+        return finalImage;
       }
     }
     throw new Error("Không có ảnh.");
