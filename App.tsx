@@ -64,7 +64,7 @@ import {
   CAMERA_ISO,
   TONE_STYLES
 } from './constants';
-import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
+import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI, STYLES_WITH_4K_DETAIL_ENHANCE } from './services/geminiService';
 import { logGeneratedImage, rateGeneratedImage, fetchApprovedPromptHints, fetchChatHistory, deleteChatHistorySession } from './services/historyService';
 
 const initialSettings: GenerationSettings = {
@@ -661,7 +661,7 @@ const App: React.FC = () => {
         url: newUrl,
         prompt: editPrompt,
         timestamp: time,
-        settings: { ...activeImage.settings },
+        settings: { ...activeImage.settings, imageSize: editQuality },
         variant: activeImage.variant + 1
       };
       setGallery(prev => [newImage, ...prev]);
@@ -1811,7 +1811,14 @@ const App: React.FC = () => {
     if (image.settings.visualStyle === 'CONCEPT' || image.settings.visualStyle === 'STUDIO') {
       cost += 0.002; // Cost for gemini-2.5-flash
     }
-    
+
+    // Lượt AI nâng chi tiết thêm khi xuất 4K cho các phong cách premium
+    // (xem STYLES_WITH_4K_DETAIL_ENHANCE trong geminiService.ts) — tốn thêm
+    // 1 lượt gọi ở mức giá 2K.
+    if (image.settings.imageSize === '4K' && STYLES_WITH_4K_DETAIL_ENHANCE.includes(image.settings.visualStyle)) {
+      cost += 0.101;
+    }
+
     return cost;
   };
 
