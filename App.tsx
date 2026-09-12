@@ -66,7 +66,7 @@ import {
   TONE_STYLES
 } from './constants';
 import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
-import { logGeneratedImage, rateGeneratedImage, fetchApprovedPromptHints, fetchChatHistory, deleteChatHistorySession } from './services/historyService';
+import { logGeneratedImage, rateGeneratedImage, fetchCategoryGuidance, fetchChatHistory, deleteChatHistorySession } from './services/historyService';
 
 // Danh sách công cụ hiển thị trên màn hình chọn công cụ (AppHomeScreen) —
 // mỗi công cụ là 1 icon vuông màu đặc, giống springboard iPhone.
@@ -638,11 +638,15 @@ const App: React.FC = () => {
     setLoadingMessage("Gemini Thinking đang chuẩn bị kiệt tác...");
     try {
       const finalSettings = { ...settings, ...overrideSettings };
-      // Lấy gợi ý từ các prompt đã được cả đội đánh giá "Rất tốt!" cho đúng
-      // phong cách này (Lịch sử dùng chung) — trả về [] ngay nếu backend
-      // chưa cấu hình, không làm chậm luồng tạo ảnh.
-      const approvedHints = await fetchApprovedPromptHints(finalSettings.visualStyle, 3);
-      const urls = await Promise.all(Array.from({ length: finalSettings.numImages }, (_, i) => generateProductImage(finalSettings, i + 1, successfulPrompts, approvedHints)));
+      // Lấy chỉ dẫn đã đúc kết riêng cho dòng sản phẩm này (đúc kết từ các
+      // ảnh đã được cả đội đánh giá "Rất tốt!") — trả về rỗng ngay nếu backend
+      // chưa cấu hình hoặc chưa đủ dữ liệu, không làm chậm luồng tạo ảnh.
+      const { guidanceText: categoryGuidance } = await fetchCategoryGuidance({
+        visualStyle: finalSettings.visualStyle,
+        productName: finalSettings.productName,
+        productCode: finalSettings.productCode,
+      });
+      const urls = await Promise.all(Array.from({ length: finalSettings.numImages }, (_, i) => generateProductImage(finalSettings, i + 1, successfulPrompts, categoryGuidance || undefined)));
       const time = Date.now();
       const newImages: GeneratedImage[] = urls.map((url, i) => ({ id: `${time}-${i}`, url, prompt: finalSettings.concept, timestamp: time, settings: { ...finalSettings }, variant: i + 1 }));
       setGallery(prev => [...newImages, ...prev]);
@@ -1949,9 +1953,9 @@ const App: React.FC = () => {
                       timestamp: Date.now()
                     };
                     setSuccessfulPrompts(prev => [...prev, newPrompt]);
-                    // Ghi lên Lịch sử dùng chung để CẢ ĐỘI cùng hưởng gợi ý này ở lần
-                    // tạo ảnh sau (không chỉ riêng trình duyệt này) — xem
-                    // fetchApprovedPromptHints() trong startGeneration().
+                    // Ghi lên Lịch sử dùng chung để CẢ ĐỘI cùng hưởng chỉ dẫn đúc kết
+                    // theo dòng sản phẩm này ở lần tạo ảnh sau (không chỉ riêng trình
+                    // duyệt này) — xem fetchCategoryGuidance() trong startGeneration().
                     rateGeneratedImage(askFeedbackImage.id, 'good').catch(() => {});
                     setAskFeedbackImage(null);
                   }}

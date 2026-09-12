@@ -16,6 +16,7 @@ export interface ImageHistoryRecord {
   tokens?: number;
   timestamp: number;
   imageUrl: string | null;
+  rating?: 'good' | 'bad';
 }
 
 export interface ChatHistoryMessage {
@@ -176,29 +177,30 @@ export async function rateGeneratedImage(id: string, rating: 'good' | 'bad'): Pr
   }
 }
 
-export interface ApprovedPromptHint {
-  id: string;
-  visualStyle?: string;
-  prompt?: string;
-  productName?: string;
+export interface CategoryGuidanceResult {
+  category: string | null;
+  guidanceText: string | null;
 }
 
 /**
- * Lấy các prompt từng được đội ngũ đánh giá "Rất tốt!" cho 1 phong cách cụ
- * thể — dùng làm gợi ý định hướng cho generateProductImage(). Luôn trả về
- * mảng rỗng thay vì throw nếu backend chưa cấu hình hoặc lỗi mạng.
+ * Lấy chỉ dẫn đã được đúc kết cho đúng dòng sản phẩm (không phải trích dẫn
+ * prompt gốc) — dùng làm định hướng bổ sung cho generateProductImage() /
+ * generateImageForChat(). Luôn trả về object rỗng thay vì throw nếu backend
+ * chưa cấu hình hoặc lỗi mạng.
  */
-export async function fetchApprovedPromptHints(visualStyle?: string, limit = 3): Promise<ApprovedPromptHint[]> {
+export async function fetchCategoryGuidance(params: { visualStyle: string; productName?: string; productCode?: string; text?: string }): Promise<CategoryGuidanceResult> {
   try {
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (visualStyle) params.set('visualStyle', visualStyle);
-    const res = await fetch(`/api/history/approved-prompts?${params.toString()}`);
+    const query = new URLSearchParams({ visualStyle: params.visualStyle });
+    if (params.productName) query.set('productName', params.productName);
+    if (params.productCode) query.set('productCode', params.productCode);
+    if (params.text) query.set('text', params.text);
+    const res = await fetch(`/api/history/category-guidance?${query.toString()}`);
     const data = await res.json();
-    if (!data.success) return [];
-    return data.items || [];
+    if (!data.success) return { category: null, guidanceText: null };
+    return { category: data.category ?? null, guidanceText: data.guidanceText ?? null };
   } catch (err) {
-    console.error('Không tải được gợi ý từ lịch sử đã duyệt (bỏ qua):', err);
-    return [];
+    console.error('Không tải được category guidance (bỏ qua):', err);
+    return { category: null, guidanceText: null };
   }
 }
 

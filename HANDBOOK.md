@@ -274,13 +274,17 @@ cộng dồn và ghi log tự động vào Google Sheets dùng chung — xem m�
    - Ghi lại **ảnh kết quả** của mọi lần tạo/sửa ảnh, và **toàn bộ tin
      nhắn chat**, dùng chung cho cả team, xem được ở bất kỳ trình duyệt
      nào (không giới hạn 7 ngày như gallery cục bộ).
-   - **Tự học từ phản hồi:** khi người dùng bấm "Rất tốt!" ở modal phản hồi
-     sau khi tải ảnh về, đánh giá đó được lưu chung cho cả team (không chỉ
-     riêng máy đang dùng). Ở lần tạo ảnh tiếp theo cho cùng workflow, hệ
-     thống tự lấy tối đa 3 prompt đã được duyệt tốt nhất để tham khảo văn
-     phong — càng nhiều người dùng bấm "Rất tốt!", gợi ý càng sát. Đây là
-     kỹ thuật tăng cường prompt bằng dữ liệu đã duyệt, không phải fine-tune
-     mô hình. Chi tiết: ARCHITECTURE.md mục 8.5.
+   - **Tự học từ phản hồi (theo từng dòng sản phẩm):** khi người dùng bấm
+     "Rất tốt!" ở modal phản hồi sau khi tải ảnh về, đánh giá đó được lưu
+     chung cho cả team (không chỉ riêng máy đang dùng) và hệ thống tự suy
+     luận "dòng sản phẩm" (vd bình giữ nhiệt, nồi cơm điện) từ tên/mã sản
+     phẩm. Khi đủ dữ liệu (từ 3 ảnh "tốt" trở lên cho cùng dòng sản phẩm +
+     phong cách), hệ thống tự đúc kết thành 1 đoạn CHỈ DẪN ngắn gọn (không
+     phải trích dẫn nguyên văn prompt cũ) để tham khảo cho các lần tạo ảnh
+     sau — áp dụng cho cả 11 công cụ workflow lẫn khi tạo ảnh qua Trợ lý
+     Chat. Càng nhiều người dùng bấm "Rất tốt!", chỉ dẫn càng sát. Đây là
+     kỹ thuật đúc kết chỉ dẫn từ dữ liệu đã duyệt, không phải fine-tune mô
+     hình. Chi tiết: ARCHITECTURE.md mục 8.5–8.5b.
    - **Tab "Trợ lý Chat" tự lấy lại lịch sử từ server khi cache trình duyệt
      trống** (trình duyệt mới, tab ẩn danh, hoặc cache đã quá 7 ngày) — sửa
      lỗi trước đó khiến chat cũ "biến mất" khi mở app ở máy khác dù dữ liệu

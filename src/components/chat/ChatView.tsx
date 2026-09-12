@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { ChatMessage, ChatSession } from '../../../types';
 import { generateImageForChat, chatWithAI } from '../../../services/geminiService';
-import { logChatSession, logGeneratedImage } from '../../../services/historyService';
+import { logChatSession, logGeneratedImage, fetchCategoryGuidance } from '../../../services/historyService';
 
 const TypingEffect: React.FC<{ text: string }> = ({ text }) => {
   const [displayedText, setDisplayedText] = useState("");
@@ -134,11 +134,19 @@ export const ChatView: React.FC<ChatViewProps> = ({
       let newModelMsg: ChatMessage;
       if (chatMode === 'image') {
         const selectedImageModel = chatImageModel === 'PRO' ? 'gemini-3-pro-image' : 'gemini-3.1-flash-image';
+        // Chỉ dẫn đúc kết theo dòng sản phẩm (nếu suy luận được từ nội dung
+        // tin nhắn) — cùng cơ chế đang dùng cho 11 workflow, xem
+        // fetchCategoryGuidance() trong App.tsx::startGeneration().
+        const { guidanceText: categoryGuidance } = await fetchCategoryGuidance({
+          visualStyle: 'CONCEPT',
+          text: newUserMsg.text,
+        });
         const imageUrl = await generateImageForChat(
           messagesToSend,
           selectedImageModel,
           chatImageAspectRatio,
-          chatImageQuality
+          chatImageQuality,
+          categoryGuidance || undefined
         );
         newModelMsg = {
           id: Date.now().toString() + 'm',

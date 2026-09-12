@@ -11,8 +11,8 @@ import {
   listChatSessions,
   deleteChatSession,
   rateImageRecord,
-  listApprovedPrompts,
 } from "./lib/historyStore.js";
+import { getCategoryGuidanceFor } from "./lib/categoryGuidance.js";
 
 dotenv.config();
 
@@ -173,7 +173,7 @@ app.get("/api/history/chats", async (req: any, res: any) => {
 });
 
 // Đánh giá 1 ảnh đã tạo ("Rất tốt!" / "Không hẳn") — dùng để định hướng các
-// lần tạo ảnh sau (xem listApprovedPrompts + generateProductImage).
+// lần tạo ảnh sau (xem lib/categoryGuidance.ts + generateProductImage).
 app.post("/api/history/rate-image", async (req: any, res: any) => {
   try {
     const { id, rating } = req.body || {};
@@ -210,15 +210,20 @@ app.delete("/api/history/chats", async (req: any, res: any) => {
   }
 });
 
-app.get("/api/history/approved-prompts", async (req: any, res: any) => {
+app.get("/api/history/category-guidance", async (req: any, res: any) => {
   try {
-    const visualStyle = (req.query.visualStyle as string) || undefined;
-    const limit = Math.min(parseInt(req.query.limit as string, 10) || 5, 20);
-    const items = await listApprovedPrompts({ visualStyle, limit });
-    res.json({ success: true, items });
+    const visualStyle = (req.query.visualStyle as string) || "";
+    if (!visualStyle) {
+      return res.status(200).json({ success: false, error: "Thiếu visualStyle." });
+    }
+    const productName = (req.query.productName as string) || undefined;
+    const productCode = (req.query.productCode as string) || undefined;
+    const freeText = (req.query.text as string) || undefined;
+    const result = await getCategoryGuidanceFor({ visualStyle, productName, productCode, freeText });
+    res.json({ success: true, ...result });
   } catch (error: any) {
-    console.error("Error listing approved prompts:", error.message);
-    res.status(200).json({ success: false, error: error.message, items: [] });
+    console.error("Error getting category guidance:", error.message);
+    res.status(200).json({ success: false, error: error.message, category: null, guidanceText: null });
   }
 });
 

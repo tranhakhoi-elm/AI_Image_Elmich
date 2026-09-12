@@ -789,19 +789,12 @@ export const editProductImage = async (base64Image: string, prompt: string, imag
   }
 };
 
-export interface ApprovedPromptHint {
-  id: string;
-  visualStyle?: string;
-  prompt?: string;
-  productName?: string;
-}
-
 // Bước cuối: Tạo Prompt và Tạo Ảnh
 export const generateProductImage = async (
   settings: GenerationSettings,
   variantSeed: number,
   history?: import('../types').SuccessfulPrompt[],
-  approvedHints?: ApprovedPromptHint[]
+  categoryGuidance?: string
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   let finalPrompt = "";
@@ -812,15 +805,17 @@ export const generateProductImage = async (
 Note: Please align with the style of these previously successful concepts: ${history.map(h => h.imageSettings.concept || h.imageSettings.visualStyle).slice(-3).join(', ')}`
     : "";
 
-  // Gợi ý từ Lịch sử dùng chung (server) — các prompt THẬT đã được cả đội
-  // đánh giá "Rất tốt!" cho đúng phong cách này, xem lib/historyStore.ts::listApprovedPrompts
-  const sharedHistoryNote = approvedHints && approvedHints.length > 0
+  // Chỉ dẫn đúc kết theo dòng sản phẩm (server) — KHÔNG phải trích dẫn prompt
+  // gốc, mà là chỉ dẫn ngắn gọn được tổng hợp từ các ảnh đã được đội ngũ
+  // Elmich đánh giá "Rất tốt!" cho đúng dòng sản phẩm + phong cách này, xem
+  // lib/categoryGuidance.ts::synthesizeCategoryGuidance
+  const categoryGuidanceNote = categoryGuidance
     ? `
-Note: Dưới đây là các prompt đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây cho phong cách "${settings.visualStyle}" — hãy tham khảo văn phong, mức độ chi tiết và các yếu tố đã thành công của chúng khi phù hợp (không sao chép nguyên văn nếu sản phẩm khác nhau):
-${approvedHints.map((h, i) => `${i + 1}. ${(h.prompt || '').slice(0, 300)}`).join('\n')}`
+Chỉ dẫn bổ sung riêng cho dòng sản phẩm này (đúc kết từ các ảnh đã được đội ngũ Elmich duyệt "Rất tốt!" trước đây cho phong cách "${settings.visualStyle}" — áp dụng như định hướng chung, không phải văn mẫu để chép lại):
+${categoryGuidance}`
     : "";
 
-  const optimizedHistoryNote = `${localHistoryNote}${sharedHistoryNote}`;
+  const optimizedHistoryNote = `${localHistoryNote}${categoryGuidanceNote}`;
   
   const formatProps = (props: PropConfig[]) => {
     return props.map(p => {
@@ -1319,10 +1314,17 @@ export const generateImageForChat = async (
   messages: import('../types').ChatMessage[],
   modelName: string = 'gemini-3.1-flash-image',
   aspectRatio: string = "1:1",
-  imageSize: string = '1K'
+  imageSize: string = '1K',
+  categoryGuidance?: string
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
+    const categoryGuidanceBlock = categoryGuidance
+      ? `
+
+Chỉ dẫn bổ sung riêng cho dòng sản phẩm này (đúc kết từ các ảnh đã được đội ngũ Elmich duyệt "Rất tốt!" trước đây — áp dụng như định hướng chung, không phải văn mẫu để chép lại):
+${categoryGuidance}`
+      : '';
     const contents = messages.map((msg, idx) => {
       const isLastMessage = idx === messages.length - 1;
       let text = msg.text || '';
@@ -1330,7 +1332,7 @@ export const generateImageForChat = async (
         // Chỉ nhúng chuẩn thương hiệu vào lượt cuối (chỉ thị chốt trước khi
         // sinh ảnh) — các lượt trước giữ nguyên làm bối cảnh hội thoại thuần túy.
         text = `Elmich Brand Image Standards (bắt buộc tuân thủ):
-${chatAssistantHandbook}
+${chatAssistantHandbook}${categoryGuidanceBlock}
 
 ===================================================
 

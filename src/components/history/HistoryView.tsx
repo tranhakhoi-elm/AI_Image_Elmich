@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, MessageCircle, Loader2, X, RefreshCw, Search, Trash2, Copy, Check, Send, ArrowLeft } from 'lucide-react';
+import { Image as ImageIcon, MessageCircle, Loader2, X, RefreshCw, Search, Trash2, Copy, Check, Send, ArrowLeft, Heart } from 'lucide-react';
 import {
   fetchImageHistory,
   fetchChatHistory,
   deleteGeneratedImage,
   deleteChatHistorySession,
+  rateGeneratedImage,
   ImageHistoryRecord,
   ChatHistorySession,
 } from '../../../services/historyService';
@@ -122,6 +123,19 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
       setImages(prev => prev.filter(img => img.id !== id));
       if (activeImage?.id === id) setActiveImage(null);
     }
+  };
+
+  // Thả tim = đánh giá "Rất tốt!" ngay từ lưới Lịch sử — có tác dụng y hệt
+  // nút "Rất tốt!" ở modal phản hồi sau khi tạo ảnh (rateGeneratedImage()):
+  // giúp cả ảnh tạo qua 11 workflow lẫn ảnh tạo qua Chat (trước đây không có
+  // cách nào để rate) đều có thể đóng góp vào category guidance (xem
+  // ARCHITECTURE.md mục 8.5). Cập nhật lạc quan trên UI trước, bắn-và-quên
+  // request thật — không chặn thao tác của người dùng.
+  const handleRateGood = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setImages(prev => prev.map(img => (img.id === id ? { ...img, rating: 'good' } : img)));
+    setActiveImage(prev => (prev?.id === id ? { ...prev, rating: 'good' } : prev));
+    rateGeneratedImage(id, 'good').catch(() => {});
   };
 
   const handleDeleteChat = async (id: string, e?: React.MouseEvent) => {
@@ -266,13 +280,27 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
                           Link xem đã hết hạn
                         </div>
                       )}
-                      <button
-                        onClick={(e) => handleDeleteImage(img.id, e)}
-                        className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                        title="Xóa ảnh khỏi lịch sử"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+                        <button
+                          onClick={(e) => (img.rating === 'good' ? e.stopPropagation() : handleRateGood(img.id, e))}
+                          disabled={img.rating === 'good'}
+                          className={`p-1.5 rounded-full transition-all bg-black/70 ${
+                            img.rating === 'good'
+                              ? 'text-red-500 opacity-100'
+                              : 'text-white opacity-0 group-hover:opacity-100 hover:text-red-500'
+                          }`}
+                          title={img.rating === 'good' ? 'Đã đánh giá "Rất tốt!"' : 'Đánh giá "Rất tốt!" — giúp AI học chỉ dẫn cho dòng sản phẩm này'}
+                        >
+                          <Heart size={13} fill={img.rating === 'good' ? 'currentColor' : 'none'} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteImage(img.id, e)}
+                          className="p-1.5 bg-black/70 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                          title="Xóa ảnh khỏi lịch sử"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                       {img.visualStyle && (
                         <div className="absolute top-1.5 left-1.5 bg-black/70 backdrop-blur-sm text-[9px] text-white font-semibold px-1.5 py-0.5 rounded-md">
                           {STYLE_NAMES[img.visualStyle] || img.visualStyle}
@@ -415,6 +443,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
             <div className="flex items-center justify-between p-4 border-b border-[#3E4042]">
               <div className="font-bold text-white">{activeImage.productName || activeImage.visualStyle}</div>
               <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => (activeImage.rating === 'good' ? undefined : handleRateGood(activeImage.id, e))}
+                  disabled={activeImage.rating === 'good'}
+                  className={`p-1.5 rounded-lg hover:bg-[#3A3B3C] ${activeImage.rating === 'good' ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+                  title={activeImage.rating === 'good' ? 'Đã đánh giá "Rất tốt!"' : 'Đánh giá "Rất tốt!" — giúp AI học chỉ dẫn cho dòng sản phẩm này'}
+                >
+                  <Heart size={16} fill={activeImage.rating === 'good' ? 'currentColor' : 'none'} />
+                </button>
                 <button
                   onClick={() => handleDeleteImage(activeImage.id)}
                   className="p-1.5 rounded-lg hover:bg-[#3A3B3C] text-gray-400 hover:text-red-400"

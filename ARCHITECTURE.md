@@ -445,38 +445,84 @@ thư mục con `ai-image-elmich/` chứa bản sao lồng toàn bộ project —
 khả năng là lỗi thao tác (export/commit nhầm) chứ không chủ đích. Chưa xóa
 trong lần hợp nhất này; cần người dùng xác nhận trước khi dọn.
 
-### 8.5. Vòng phản hồi tự học từ lịch sử đã duyệt ("Rất tốt!" → gợi ý cho lần sau)
+### 8.5. Vòng phản hồi tự học từ lịch sử đã duyệt ("Rất tốt!" → chỉ dẫn theo dòng sản phẩm)
 
 Mở rộng cơ chế cũ (`SuccessfulPrompt` cục bộ trong `App.tsx`, chỉ sống
 trong `localStorage` của 1 trình duyệt) thành cơ chế **dùng chung cho cả
-team**, dựa trên collection `imageHistory` đã có ở mục 8.1–8.2:
+team**, dựa trên collection `imageHistory` đã có ở mục 8.1–8.2. Bản đầu
+tiên của cơ chế này (`listApprovedPrompts`/`fetchApprovedPromptHints`) trích
+dẫn nguyên văn tối đa 3 prompt đã duyệt vào prompt lần sau — đã bị **thay
+thế hoàn toàn** bởi cơ chế "category guidance" dưới đây vì trích dẫn nguyên
+văn prompt cũ không phải điều mong muốn (dễ khiến AI lặp lại y hệt sản phẩm
+cũ thay vì học phong cách chung).
 
-- `logGeneratedImage()` (client) giờ gửi kèm `id` — trùng với
-  `GeneratedImage.id` trong gallery cục bộ — để `saveImageRecord()` dùng
-  làm doc id trên Firestore thay vì tự sinh UUID. Nhờ vậy, khi người dùng
-  bấm "Rất tốt!"/"Không hẳn" ở modal phản hồi (`App.tsx`, sau khi tải ảnh
-  về), `rateGeneratedImage(id, rating)` có thể cập nhật **đúng** bản ghi đã
-  log trước đó bằng `POST /api/history/rate-image` (Firestore
-  `.set({rating, ratedAt}, {merge:true})`).
-- `listApprovedPrompts()` (`lib/historyStore.ts`) truy vấn tối đa 50 bản ghi
-  `rating == "good"` gần nhất (`GET /api/history/approved-prompts`), lọc
-  theo `visualStyle` ở tầng ứng dụng (JS) thay vì query Firestore lồng
-  nhiều điều kiện — chỉ cần đúng **1 composite index** (`imageHistory`:
-  `rating` + `timestamp desc`) thay vì 1 index riêng cho mỗi workflow.
-  **Người dùng cần tạo index này trên Firestore Console** (lần đầu chạy
-  query mà chưa có index, Firestore trả lỗi kèm sẵn link để tạo index chỉ
-  bằng 1 click).
-- `startGeneration()` trong `App.tsx` gọi `fetchApprovedPromptHints(visualStyle, 3)`
-  trước khi sinh ảnh, truyền kết quả vào `generateProductImage(..., approvedHints)`
-  — hàm này nhúng tối đa 3 đoạn prompt thật (không chỉ tên concept như cơ
-  chế cũ) đã được duyệt cho đúng phong cách đó vào cuối prompt cuối cùng.
+- `logGeneratedImage()` (client) gửi kèm `id` — trùng với `GeneratedImage.id`
+  trong gallery cục bộ — để `saveImageRecord()` dùng làm doc id trên
+  Firestore thay vì tự sinh UUID, để sau này có thể "đánh giá" đúng bản ghi
+  này.
+- Khi người dùng bấm "Rất tốt!" ở modal phản hồi (`App.tsx`, sau khi tải
+  ảnh về), `rateImageRecord()` (`lib/historyStore.ts`) suy luận thêm
+  **`productCategory`** (dòng sản phẩm, vd `binh_giu_nhiet`, `noi_com_dien`)
+  từ `productName`/`productCode` đã lưu sẵn trên bản ghi, bằng
+  `inferProductCategory()` (`lib/categoryGuidance.ts`, gọi Gemini text
+  `gemini-2.5-flash`, neo theo 1 danh sách dòng gia dụng phổ biến của Elmich
+  để hạn chế cùng 1 dòng sản phẩm bị tách thành nhiều category do câu chữ
+  khác nhau), rồi gọi `rebuildCategoryGuidanceIfEligible()` để tổng hợp lại
+  guidance cho đúng cặp (`visualStyle`, `productCategory`) — xem chi tiết ở
+  mục 8.5b.
+- **Đây là lời gọi Gemini TEXT model đầu tiên chạy ở phía server** (mọi lời
+  gọi `GoogleGenAI` khác trong dự án đều ở client, `services/geminiService.ts`).
+  Dùng lại `GEMINI_API_KEY` đã có sẵn trong `.env`/biến môi trường server
+  (nạp qua `dotenv.config()` trong `server.ts`), không cần thêm cấu hình
+  riêng.
 - Đây **không phải fine-tuning mô hình** — Gemini image model không hỗ trợ
-  fine-tune theo hướng này cho use case của dự án. Đây là kỹ thuật tăng
-  cường prompt bằng dữ liệu lịch sử đã được con người duyệt (một dạng
-  "few-shot theo lịch sử"), rẻ và không cần hạ tầng ML riêng.
-- Chưa áp dụng cho `generateImageForChat` (ảnh tạo tự do qua Chat) — phạm
-  vi hiện tại chỉ áp dụng cho luồng 15 workflow chính trong Studio, nơi đã
-  có sẵn `visualStyle` rõ ràng để lọc gợi ý theo đúng phong cách.
+  fine-tune theo hướng này cho use case của dự án. Đây là kỹ thuật đúc kết
+  chỉ dẫn phong cách từ dữ liệu lịch sử đã được con người duyệt, rẻ và
+  không cần hạ tầng ML riêng.
+- Áp dụng cho cả 11 workflow (`generateProductImage`) **lẫn** ảnh tạo qua
+  Chat (`generateImageForChat`) — với Chat, category được suy luận từ nội
+  dung tin nhắn cuối của người dùng (`freeText`) thay vì `productName` có
+  cấu trúc, vì Chat log ảnh với `productName: 'Trợ lý Chat AI'` (placeholder,
+  không phải tên sản phẩm thật).
+- **Chat hiện chỉ tiêu thụ guidance, chưa đóng góp ngược lại** — `ChatView.tsx`
+  chưa có UI đánh giá ảnh "Rất tốt!"/"Không hẳn" như modal ở `App.tsx`, nên
+  ảnh tạo qua Chat không thể trở thành nguồn mẫu cho guidance (nợ kỹ thuật/
+  phạm vi cố ý để ngỏ cho phase sau).
+
+### 8.5b. Category guidance — cấu trúc dữ liệu & đường đi tổng hợp
+
+Toàn bộ logic nằm ở `lib/categoryGuidance.ts` (không phải trong
+`lib/historyStore.ts`, để tách rõ 2 mối quan tâm: lưu trữ lịch sử thô vs.
+đúc kết tri thức):
+
+- Collection Firestore mới `categoryGuidance`, doc id =
+  `${visualStyle}::${productCategorySlug}` — tra cứu **O(1) theo id**, không
+  cần composite index mới (khác với `imageHistory` cần index
+  `rating` + `timestamp`).
+- `listGoodSamplesForCategory()`: dùng lại đúng trick đã có ở
+  `listApprovedPrompts` cũ (query `imageHistory` where `rating == "good"`
+  order by `timestamp desc` limit 50, lọc `visualStyle` + `productCategory`
+  ở tầng JS) — tái sử dụng composite index đã có sẵn, không cần index riêng
+  cho category.
+- `synthesizeCategoryGuidance()`: chỉ chạy khi đã có ít nhất 3 mẫu "good"
+  cho đúng cặp (visualStyle, category) — gọi Gemini text đúc kết tối đa 15
+  mẫu gần nhất thành 1 đoạn chỉ dẫn ngắn gọn dạng gạch đầu dòng (chất liệu,
+  ánh sáng, bố cục, góc máy, nên/không nên). **Ghi đè toàn bộ** `guidanceText`
+  mỗi lần tổng hợp lại (không nối chuỗi tích luỹ) để tránh phình to/trôi nội
+  dung theo thời gian.
+- `getCategoryGuidanceFor()`: đọc guidance cho 1 lượt tạo ảnh mới — suy luận
+  category từ sản phẩm/tin nhắn hiện tại rồi đọc thẳng doc theo id. Trả về
+  rỗng (không lỗi) nếu chưa đủ mẫu hoặc chưa suy luận được category — luồng
+  tạo ảnh vẫn chạy bình thường như trước khi có tính năng này.
+- Route: `GET /api/history/category-guidance` (`api/history/category-guidance.ts`
+  + route Express tương ứng trong `server.ts`), gọi từ client qua
+  `fetchCategoryGuidance()` (`services/historyService.ts`) ở cả
+  `App.tsx::startGeneration()` và `ChatView.tsx::handleSendMessage()`.
+- **Phạm vi cố ý để ngỏ cho phase sau:** backfill `productCategory` cho các
+  bản ghi "good" cũ trước khi tính năng này tồn tại; UI quản trị xem/sửa tay
+  guidance đã tổng hợp (hiện tự động hoàn toàn, không có bước duyệt của con
+  người); áp dụng guidance cho `chatWithAI` (hội thoại văn bản thuần, không
+  tạo ảnh).
 
 ### 8.6. Bug đã sửa: Chat không hiện lại ở trình duyệt khác
 
@@ -534,6 +580,10 @@ tên với file khác:
 `services/historyService.ts` (URL client gọi) — 2 nơi này luôn phải khớp
 tên route với nhau vì cùng 1 client code chạy trên cả 2 kiểu deploy.
 
+> **Cập nhật (mục 8.5b):** `GET /api/history/approved-prompts` bản thân nó
+> sau đó cũng bị thay thế hoàn toàn bởi `GET /api/history/category-guidance`
+> — bài học về routing phẳng ở trên vẫn áp dụng cho route mới.
+
 ### 8.7. Phạm vi cố ý KHÔNG làm trong v1
 
 - Không lưu lại các ảnh **đầu vào** (ảnh mẫu màu, các mặt bao bì, ảnh
@@ -552,5 +602,6 @@ tên route với nhau vì cùng 1 client code chạy trên cả 2 kiểu deploy.
   ghi dữ liệu giả hoặc tự "dìm"/"đẩy" đánh giá `rating` của bất kỳ ảnh nào
   vào lịch sử dùng chung. Chấp nhận được cho một tool nội bộ đã có PIN chặn
   ở tầng UI, nhưng cần biết đây không phải hàng rào bảo mật thật ở tầng
-  API — và vì `approvedHints` được nhúng thẳng vào prompt sinh ảnh, dữ liệu
-  `rating` giả có thể ảnh hưởng trực tiếp đến chất lượng gợi ý cho cả team.
+  API — và vì `categoryGuidance` được nhúng thẳng vào prompt sinh ảnh (mục
+  8.5/8.5b), dữ liệu `rating` giả có thể ảnh hưởng trực tiếp đến chất lượng
+  chỉ dẫn cho cả team.

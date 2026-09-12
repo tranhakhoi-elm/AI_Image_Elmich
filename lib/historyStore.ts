@@ -3,6 +3,7 @@
 // trong api/history/ đều gọi thẳng các hàm ở đây.
 import { randomUUID } from "crypto";
 import { getFirestore, getBucket } from "./googleCloud.js";
+import { inferProductCategory, rebuildCategoryGuidanceIfEligible } from "./categoryGuidance.js";
 
 export const HISTORY_NOT_CONFIGURED_ERROR =
   "Tính năng Lịch sử chưa được cấu hình (thiếu GOOGLE_SERVICE_ACCOUNT_JSON hoặc GCS_BUCKET_NAME trên server).";
@@ -127,61 +128,41 @@ export interface RateImageParams {
   rating: "good" | "bad";
 }
 
-/** Gắn đánh giá của người dùng ("Rất tốt!" / "Không hẳn") vào 1 bản ghi ảnh đã lưu. */
+/**
+ * Gắn đánh giá của người dùng ("Rất tốt!" / "Không hẳn") vào 1 bản ghi ảnh
+ * đã lưu. Khi rating là "good": suy luận thêm productCategory (dòng sản
+ * phẩm) từ productName/productCode đã lưu sẵn trên bản ghi, rồi tổng hợp lại
+ * category guidance cho đúng cặp (visualStyle, productCategory) nếu đã đủ
+ * mẫu — xem lib/categoryGuidance.ts.
+ */
 export async function rateImageRecord({ id, rating }: RateImageParams) {
   const db = getFirestore();
   if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
   if (!id) throw new Error("Thiếu id của ảnh cần đánh giá.");
 
-  await db.collection("imageHistory").doc(id).set({ rating, ratedAt: Date.now() }, { merge: true });
-  return { id, rating };
-}
+  const docRef = db.collection("imageHistory").doc(id);
+  const update: Record<string, unknown> = { rating, ratedAt: Date.now() };
 
-export interface ApprovedPromptsParams {
-  visualStyle?: string;
-  limit?: number;
-}
-
-export interface ApprovedPromptHint {
-  id: string;
-  visualStyle?: string;
-  prompt?: string;
-  productName?: string;
-}
-
-/**
- * Lấy các prompt đã từng được đánh giá "Rất tốt!" — dùng làm gợi ý định
- * hướng cho các lần tạo ảnh sau (xem generateProductImage trong
- * geminiService.ts). Chỉ cần 1 composite index Firestore duy nhất
- * (imageHistory: rating ASC, timestamp DESC) — lọc theo visualStyle được
- * làm ở tầng ứng dụng (JS) để không phải tạo thêm index cho từng workflow.
- */
-export async function listApprovedPrompts({ visualStyle, limit = 5 }: ApprovedPromptsParams = {}): Promise<ApprovedPromptHint[]> {
-  const db = getFirestore();
-  if (!db) throw new Error(HISTORY_NOT_CONFIGURED_ERROR);
-
-  const snapshot = await db
-    .collection("imageHistory")
-    .where("rating", "==", "good")
-    .orderBy("timestamp", "desc")
-    .limit(50)
-    .get();
-
-  let items: ApprovedPromptHint[] = snapshot.docs.map((doc) => {
+  if (rating === "good") {
+    const doc = await docRef.get();
     const data = doc.data();
-    return {
-      id: doc.id,
-      visualStyle: data.visualStyle as string,
-      prompt: data.prompt as string,
-      productName: data.productName as string,
-    };
-  });
-
-  if (visualStyle) {
-    items = items.filter((item) => item.visualStyle === visualStyle);
+    if (data) {
+      const productCategory = await inferProductCategory({
+        productName: data.productName,
+        productCode: data.productCode,
+        visualStyle: data.visualStyle,
+      });
+      if (productCategory) {
+        update.productCategory = productCategory;
+        await docRef.set(update, { merge: true });
+        await rebuildCategoryGuidanceIfEligible(data.visualStyle, productCategory);
+        return { id, rating };
+      }
+    }
   }
 
-  return items.slice(0, limit);
+  await docRef.set(update, { merge: true });
+  return { id, rating };
 }
 
 export interface ListParams {
