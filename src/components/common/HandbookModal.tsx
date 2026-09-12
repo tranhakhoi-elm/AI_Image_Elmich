@@ -29,7 +29,7 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Elmich AI Design Suite — Handbook & Kỹ năng (Skill)</h2>
-                <p className="text-xs text-gray-400">Tài liệu chuẩn hóa kiến trúc, hướng dẫn 15 chế độ đồ họa và nguyên tắc prompt</p>
+                <p className="text-xs text-gray-400">Tài liệu chuẩn hóa kiến trúc, hướng dẫn 11 công cụ đang hoạt động và nguyên tắc prompt</p>
               </div>
             </div>
             <button 
@@ -52,7 +52,7 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
               onClick={() => setActiveTab('workflows')}
               className={`px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'workflows' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white hover:bg-[#3A3B3C]'}`}
             >
-              2. 15 Workflow Chuyên Biệt
+              2. 11 Công cụ Chuyên Biệt
             </button>
             <button
               onClick={() => setActiveTab('prompts')}
@@ -85,8 +85,8 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-[#18191A] p-4 rounded-xl border border-[#3E4042]">
                     <div className="text-xs font-bold text-[#1877F2] uppercase mb-1">Mô hình AI Tối tân</div>
-                    <div className="text-white font-bold text-base mb-2">Gemini 3.1 & 2.5 Flash</div>
-                    <p className="text-xs text-gray-400">Tạo ảnh độ phân giải 1K - 4K sắc nét bằng Imagen 3.0 & Gemini Flash Image, tái hiện kim loại Inox 304, lớp chống dính và thủy tinh borosilicate chân thực.</p>
+                    <div className="text-white font-bold text-base mb-2">Nano Banana 2 & Pro</div>
+                    <p className="text-xs text-gray-400">Người dùng tự chọn <strong>Flash (gemini-3.1-flash-image)</strong> hoặc <strong>Pro (gemini-3-pro-image)</strong> cùng độ phân giải 1K/2K/4K trước khi tạo ảnh, tái hiện kim loại Inox 304, lớp chống dính và thủy tinh borosilicate chân thực.</p>
                   </div>
 
                   <div className="bg-[#18191A] p-4 rounded-xl border border-[#3E4042]">
@@ -103,126 +103,127 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
                 </div>
 
                 <div className="bg-[#18191A] p-5 rounded-xl border border-[#3E4042]">
-                  <h4 className="font-bold text-white text-sm mb-3">Bảng dự toán chi phí API mỗi ảnh:</h4>
+                  <h4 className="font-bold text-white text-sm mb-3">Bảng giá tạo ảnh theo model & độ phân giải (mỗi ảnh):</h4>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left">
                       <thead className="bg-[#242526] text-gray-400 border-b border-[#3E4042]">
                         <tr>
-                          <th className="p-2.5">Độ phân giải</th>
-                          <th className="p-2.5">Mô hình xử lý</th>
-                          <th className="p-2.5">Chi phí tạo ảnh ($)</th>
-                          <th className="p-2.5">Phí phân tích Gemini ($)</th>
-                          <th className="p-2.5">Tổng chi phí ước tính</th>
+                          <th className="p-2.5">Model</th>
+                          <th className="p-2.5">1K</th>
+                          <th className="p-2.5">2K</th>
+                          <th className="p-2.5">4K</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#3E4042]">
                         <tr>
-                          <td className="p-2.5 font-bold text-white">1K (1024x1024)</td>
-                          <td className="p-2.5">gemini-3.1-flash-image</td>
+                          <td className="p-2.5 font-bold text-white">Flash — gemini-3.1-flash-image <span className="text-gray-500 font-normal">(Nano Banana 2, mặc định)</span></td>
                           <td className="p-2.5 text-emerald-400">$0.067</td>
-                          <td className="p-2.5 text-gray-400">$0.002</td>
-                          <td className="p-2.5 font-bold text-white">~$0.069 (~1.750 VNĐ)</td>
-                        </tr>
-                        <tr>
-                          <td className="p-2.5 font-bold text-white">2K (2048x2048)</td>
-                          <td className="p-2.5">gemini-3.1-flash-image</td>
                           <td className="p-2.5 text-emerald-400">$0.101</td>
-                          <td className="p-2.5 text-gray-400">$0.002</td>
-                          <td className="p-2.5 font-bold text-white">~$0.103 (~2.600 VNĐ)</td>
+                          <td className="p-2.5 text-emerald-400">$0.151</td>
                         </tr>
                         <tr>
-                          <td className="p-2.5 font-bold text-white">4K (4096x4096)</td>
-                          <td className="p-2.5">gemini-3.1-flash-image</td>
-                          <td className="p-2.5 text-emerald-400">$0.151</td>
-                          <td className="p-2.5 text-gray-400">$0.002</td>
-                          <td className="p-2.5 font-bold text-white">~$0.153 (~3.900 VNĐ)</td>
+                          <td className="p-2.5 font-bold text-white">Pro — gemini-3-pro-image <span className="text-gray-500 font-normal">(Nano Banana Pro)</span></td>
+                          <td className="p-2.5 text-amber-400">$0.134</td>
+                          <td className="p-2.5 text-amber-400">$0.134</td>
+                          <td className="p-2.5 text-amber-400">$0.24</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
+                  <h4 className="font-bold text-white text-sm mb-3 mt-5">Giá xử lý văn bản (phân tích ảnh, gợi ý prompt, dịch/kiểm bao bì) — theo 1 triệu token:</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-[#242526] text-gray-400 border-b border-[#3E4042]">
+                        <tr>
+                          <th className="p-2.5">Model</th>
+                          <th className="p-2.5">Input</th>
+                          <th className="p-2.5">Output</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#3E4042]">
+                        <tr>
+                          <td className="p-2.5 font-bold text-white">Flash — gemini-2.5-flash / gemini-3.1-flash</td>
+                          <td className="p-2.5 text-emerald-400">$0.30</td>
+                          <td className="p-2.5 text-emerald-400">$2.50</td>
+                        </tr>
+                        <tr>
+                          <td className="p-2.5 font-bold text-white">Pro — gemini-2.5-pro / gemini-3-pro</td>
+                          <td className="p-2.5 text-amber-400">$1.25</td>
+                          <td className="p-2.5 text-amber-400">$10.00</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">Chi phí mỗi ảnh = giá tạo ảnh (theo model & độ phân giải người dùng chọn) + phí phân tích văn bản đi kèm (thường chỉ $0.001-0.01 do prompt ngắn). Toàn bộ chi phí được ghi nhật ký tự động vào Google Sheets dùng chung cho cả team.</p>
                 </div>
               </div>
             )}
 
             {activeTab === 'workflows' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">Chi tiết 15 Workflow Chuyên Biệt</h3>
-                
+                <h3 className="text-base font-bold text-white">Chi tiết 11 Công cụ trên màn hình chính</h3>
+                <p className="text-xs text-gray-500 -mt-2">Thứ tự đúng như lưới icon ở màn hình chính sau khi mở khóa.</p>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">1. Concept Lifestyle (CONCEPT)</div>
-                    <p className="text-xs text-gray-400 mt-1">Gợi ý 5 ý tưởng bối cảnh sinh động (bếp gia đình ấm cúng, bàn ăn sáng, phòng khách hiện đại), điều chỉnh tiêu cự ống kính (24mm - 100mm) và đạo cụ hài hòa.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">2. Phối cảnh Thực tế (SCENE_STAGING)</div>
-                    <p className="text-xs text-gray-400 mt-1">Ghép sản phẩm vào không gian nội thất có sẵn, tự động tính toán góc chiếu sáng và đổ bóng vật lý để sản phẩm hòa nhập tự nhiên.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">3. Minh họa Kỹ thuật (TECH_PS)</div>
-                    <p className="text-xs text-gray-400 mt-1">Làm nổi bật các điểm mạnh kỹ thuật (đáy từ 5 lớp, công nghệ chống dính Teflon Platinum, động cơ DC êm ái) bằng hiệu ứng đồ họa bắt mắt.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">4. Đổi Màu Theo Pantone (COLOR_CHANGE)</div>
-                    <p className="text-xs text-gray-400 mt-1">Thay đổi màu sắc các bộ phận (nắp, tay cầm, thân nồi) theo mã Pantone chuẩn hoặc ảnh mẫu màu mà vẫn giữ bóng kim loại.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">5. Mockup Bao Bì 3D (PACKAGING_MOCKUP)</div>
-                    <p className="text-xs text-gray-400 mt-1">Dựng hộp 3D từ file bình bản 2D hoặc từng mặt riêng biệt (mặt trước, hông, nắp) trên phông trắng hoặc trong bối cảnh quầy kệ.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">6. Hiệu ứng Công nghệ (TECH_EFFECTS)</div>
-                    <p className="text-xs text-gray-400 mt-1">Tạo dòng khí nóng đối lưu, luồng xoáy chân không, tia nhiệt hồng ngoại hoặc bọt khí siêu âm mô phỏng tính năng vận hành.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">7. Retouch Phông Trắng TMĐT (WHITE_BG_RETOUCH)</div>
+                    <div className="text-xs font-bold text-[#1877F2]">1. Ảnh nền trắng (WHITE_BG_RETOUCH)</div>
                     <p className="text-xs text-gray-400 mt-1">Tách nền trắng tuyệt đối (#FFFFFF), tái tạo ánh sáng rim-light trên mép kính, xử lý vân xước Inox 304 chuẩn catalogue sàn TMĐT.</p>
                   </div>
 
                   <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">8. Render 3D sang Ảnh Chụp Thật (3D_TO_REAL_WHITE_BG)</div>
-                    <p className="text-xs text-gray-400 mt-1">Biến file render 3D dạng khối thô thành ảnh chụp studio có chất cảm bề mặt, phản xạ quang học và bóng đổ chân thực.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">9. Trợ lý Đồ Lại Nét (TRACING_ASSISTANT)</div>
-                    <p className="text-xs text-gray-400 mt-1">Hỗ trợ vẽ nét outline vector hóa sản phẩm và hướng dẫn thao tác chi tiết.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">10. Bản vẽ Nét & Bóc tách Kỹ thuật (LINE_ART)</div>
-                    <p className="text-xs text-gray-400 mt-1">Vẽ sơ đồ cấu tạo, bóc tách linh kiện (exploded view) phục vụ sách hướng dẫn sử dụng và tài liệu đăng ký chất lượng.</p>
-                  </div>
-
-                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">11. Chụp Studio Sáng Tạo (STUDIO)</div>
+                    <div className="text-xs font-bold text-[#1877F2]">2. Ảnh studio nền trơn (STUDIO)</div>
                     <p className="text-xs text-gray-400 mt-1">Tạo concept chụp studio nghệ thuật cao cấp với bục podium, hình khối hình học tối giản, ánh sáng tương phản nghệ thuật.</p>
                   </div>
 
                   <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">12. Thanh Ray Ổ Cắm Đa Năng (TRACK_SOCKET_STAGING)</div>
-                    <p className="text-xs text-gray-400 mt-1">Dựng thanh ray trượt và cắm các thiết bị gia dụng Elmich (ấm siêu tốc, máy nướng bánh mỳ, máy xay) lên mặt đá bếp cao cấp.</p>
+                    <div className="text-xs font-bold text-[#1877F2]">3. Ảnh phối cảnh (CONCEPT)</div>
+                    <p className="text-xs text-gray-400 mt-1">Gợi ý 5 ý tưởng bối cảnh sinh động (bếp gia đình ấm cúng, bàn ăn sáng, phòng khách hiện đại), điều chỉnh tiêu cự ống kính (24mm - 100mm) và đạo cụ hài hòa.</p>
                   </div>
 
                   <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">13. Tạo Mã Vạch & QR Code (BARCODE_QR_GENERATOR)</div>
+                    <div className="text-xs font-bold text-[#1877F2]">4. Làm màu sản phẩm (COLOR_CHANGE)</div>
+                    <p className="text-xs text-gray-400 mt-1">Thay đổi màu sắc các bộ phận (nắp, tay cầm, thân nồi) theo mã Pantone chuẩn hoặc ảnh mẫu màu mà vẫn giữ bóng kim loại.</p>
+                  </div>
+
+                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
+                    <div className="text-xs font-bold text-[#1877F2]">5. Tạo QR & Barcode (BARCODE_QR_GENERATOR)</div>
                     <p className="text-xs text-gray-400 mt-1">Tạo mã vạch Code 128, EAN-13 (tính check-digit tự động) và mã QR Elmich xuất SVG vector độ sắc nét tuyệt đối để in ấn bao bì.</p>
                   </div>
 
                   <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">14. Dịch Bao Bì Tự Động (TRANSLATE_PACKAGING)</div>
-                    <p className="text-xs text-gray-400 mt-1">Chuyển ngữ bao bì tiếng Anh sang tiếng Việt, giữ nguyên kết cấu bế, xuất ảnh 1K chuẩn cho đội ngũ Content không cần phần mềm đồ họa.</p>
+                    <div className="text-xs font-bold text-[#1877F2]">6. Trợ lý Tracing (TRACING_ASSISTANT)</div>
+                    <p className="text-xs text-gray-400 mt-1">Hỗ trợ vẽ nét outline vector hóa sản phẩm và hướng dẫn thao tác chi tiết.</p>
                   </div>
 
                   <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
-                    <div className="text-xs font-bold text-[#1877F2]">15. Kiểm Duyệt Bao Bì Đối Chiếu Excel (PACKAGING_CHECK)</div>
+                    <div className="text-xs font-bold text-[#1877F2]">7. Ảnh 3D - Ảnh chụp (3D_TO_REAL_WHITE_BG)</div>
+                    <p className="text-xs text-gray-400 mt-1">Biến file render 3D dạng khối thô thành ảnh chụp studio có chất cảm bề mặt, phản xạ quang học và bóng đổ chân thực.</p>
+                  </div>
+
+                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
+                    <div className="text-xs font-bold text-[#1877F2]">8. Chuyển thành Line Art (LINE_ART)</div>
+                    <p className="text-xs text-gray-400 mt-1">Vẽ sơ đồ cấu tạo, bóc tách linh kiện (exploded view) phục vụ sách hướng dẫn sử dụng và tài liệu đăng ký chất lượng.</p>
+                  </div>
+
+                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
+                    <div className="text-xs font-bold text-[#1877F2]">9. Mockup bao bì (PACKAGING_MOCKUP)</div>
+                    <p className="text-xs text-gray-400 mt-1">Dựng hộp 3D từ file bình bản 2D hoặc từng mặt riêng biệt (mặt trước, hông, nắp) trên phông trắng hoặc trong bối cảnh quầy kệ.</p>
+                  </div>
+
+                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
+                    <div className="text-xs font-bold text-[#1877F2]">10. Dịch bao bì tự động (TRANSLATE_PACKAGING)</div>
+                    <p className="text-xs text-gray-400 mt-1">Chuyển ngữ bao bì tiếng Anh sang tiếng Việt, giữ nguyên kết cấu bế, xuất ảnh chuẩn cho đội ngũ Content không cần phần mềm đồ họa.</p>
+                  </div>
+
+                  <div className="p-3 bg-[#18191A] rounded-xl border border-[#3E4042]">
+                    <div className="text-xs font-bold text-[#1877F2]">11. Kiểm tra bao bì (PACKAGING_CHECK)</div>
                     <p className="text-xs text-gray-400 mt-1">Tải file Excel thông số chuẩn, tải nhiều ảnh/PDF thiết kế bao bì (hộp màu, tem phụ, carton), AI tự động soi lỗi và xuất file Excel đối chiếu ĐẠT/KHÔNG ĐẠT.</p>
                   </div>
+                </div>
+
+                <div className="bg-[#18191A] p-4 rounded-xl border border-[#3E4042] mt-2">
+                  <div className="text-xs font-bold text-white mb-1">Trợ lý Chat AI & Lịch sử</div>
+                  <p className="text-xs text-gray-400">Ngoài 11 công cụ trên, thanh hồng cuối màn hình chính mở <strong>Trợ lý Chat AI</strong> (tư vấn thiết kế bằng chữ hoặc tạo/sửa ảnh bằng prompt tự nhiên, cũng có lựa chọn Flash/Pro riêng); ô xám &ldquo;Lịch sử&rdquo; mở lại lịch sử tạo ảnh dùng chung cho cả team.</p>
                 </div>
               </div>
             )}
@@ -265,7 +266,16 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
                       Backend & Corporate Sync
                     </div>
                     <p className="text-gray-400">Express server (`server.ts`) chạy cổng 3000 kết hợp Vite middleware.</p>
-                    <p className="text-gray-400">Tích hợp <strong>Google Sheets API</strong> qua Service Account ghi nhật ký tạo ảnh và chi phí token.</p>
+                    <p className="text-gray-400">Tích hợp <strong>Google Sheets API</strong> qua Service Account ghi nhật ký tạo ảnh và chi phí token (đã gỡ bỏ toàn bộ tích hợp Lark Bitable, không còn sử dụng).</p>
+                  </div>
+
+                  <div className="bg-[#18191A] p-4 rounded-xl border border-[#3E4042] space-y-2 md:col-span-2">
+                    <div className="font-bold text-white text-sm flex items-center gap-2">
+                      <Sparkles size={16} className="text-[#1877F2]" />
+                      Lựa chọn model theo tác vụ (Flash / Pro)
+                    </div>
+                    <p className="text-gray-400">Trước khi tạo ảnh ở bất kỳ công cụ nào, người dùng chọn độ phân giải (1K/2K/4K) và tier model (<strong>Flash</strong> — mặc định, nhanh & rẻ; hoặc <strong>Pro</strong> — chất lượng cao hơn, tối ưu cho mockup bao bì) ngay trước khi gửi prompt. Lựa chọn này áp dụng cho cả tạo ảnh chính, chỉnh sửa ảnh (modal &ldquo;Chỉnh sửa ảnh với AI&rdquo;) và chế độ tạo ảnh trong Trợ lý Chat AI.</p>
+                    <p className="text-gray-400">Các tác vụ phân tích nội bộ (gợi ý prompt, gợi ý đạo cụ, trích xuất thông số bao bì) dùng cố định <strong>gemini-2.5-flash</strong>; riêng phân tích & dịch nội dung bao bì dùng <strong>gemini-2.5-pro</strong> để đảm bảo độ chính xác OCR.</p>
                   </div>
                 </div>
               </div>
