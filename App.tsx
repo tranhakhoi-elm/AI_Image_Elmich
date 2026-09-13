@@ -36,7 +36,8 @@ import {
   Trash2,
   QrCode,
   AlertCircle, Languages,
-  BookOpen
+  BookOpen,
+  Plus
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, ImageModelTier, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
 import { BarcodeGenerator } from './src/components/BarcodeGenerator';
@@ -717,6 +718,18 @@ const App: React.FC = () => {
     setSettings(prev => ({
       ...prev, productName: '', productImages: [], referenceImage: null, techDescription: '', concept: '', placement: '', props: [], colorChanges: [], packagingFaces: {}, techTitle: '', selectedTechConcept: '', productMaterial: 'MATTE', emptySpacePosition: [], trackImage: undefined, sockets: []
     }));
+    setSuggestions({ concepts: [], locations: [], props: [] });
+    setCurrentSampleImage(null); setCustomConcept(''); setCustomProp('');
+  };
+
+  // Bắt đầu 1 phiên làm việc mới từ màn hình kết quả: xóa ảnh/thiết lập
+  // hiện tại và quay về màn hình chính, tương đương mở lại app từ đầu
+  // nhưng KHÔNG khóa lại màn hình (không yêu cầu nhập lại mã PIN).
+  const handleStartNewSession = () => {
+    setActiveImage(null);
+    setSettings(initialSettings);
+    setCurrentStep(1);
+    setConceptStep(1); setTechStep(1); setPackagingStep(1); setTechEffectStep(1); setWhiteBgStep(1); setColorChangeStep(1); setStagingStep(1); setStudioStep(1); setTrackSocketStep(1); setRender3DStep(1); setWhiteBgWebStep(1);
     setSuggestions({ concepts: [], locations: [], props: [] });
     setCurrentSampleImage(null); setCustomConcept(''); setCustomProp('');
   };
@@ -1830,6 +1843,9 @@ const App: React.FC = () => {
                      <a href="#" onClick={(e) => handleDownload(e, activeImage)} className="flex-1 flex gap-2 items-center justify-center py-2 text-white font-semibold text-[15px] hover:bg-[#18191A] rounded-md mx-1 transition-colors">
                         <Download size={20} /> Tải xuống
                      </a>
+                     <button onClick={handleStartNewSession} className="flex-1 flex gap-2 items-center justify-center py-2 text-white font-semibold text-[15px] hover:bg-[#18191A] rounded-md mx-1 transition-colors">
+                        <Plus size={20} /> Tạo ảnh khác
+                     </button>
                   </div>
                   
                   {/* Edit AI Image Section inside the post (comments area) */}
