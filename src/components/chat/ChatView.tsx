@@ -273,6 +273,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-1">
+          {/* Ô đại diện cho đoạn chat mới đang soạn (chưa có tin nhắn nào nên
+              chưa được lưu vào chatSessions) — hiển thị ngay khi bấm "Đoạn
+              chat mới" để cột lịch sử phản ánh đúng là đang ở 1 phiên mới,
+              tách biệt hoàn toàn khỏi các đoạn chat cũ bên dưới (không đoạn
+              nào trong số đó bị xóa hay ghi đè). */}
+          {!activeSessionId && (
+            <div className="w-full text-left p-3 rounded-xl bg-[#3A3B3C] font-semibold text-white flex items-center gap-2">
+              <Plus size={16} className="text-[#1877F2] shrink-0" />
+              <div className="text-[15px] truncate">Đoạn chat mới</div>
+            </div>
+          )}
           {chatSessions.length === 0 && (
             <div className="p-4 text-center text-xs text-gray-400">
               Chưa có đoạn chat nào. Bắt đầu nhắn tin để lưu lịch sử!

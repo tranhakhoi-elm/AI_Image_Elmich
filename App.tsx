@@ -379,11 +379,20 @@ const App: React.FC = () => {
   }, []);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
+  // Chỉ tự động mở lại đoạn chat gần nhất DUY NHẤT 1 LẦN khi app vừa tải
+  // xong lịch sử (mở lại app sau khi đóng). Nếu không chặn bằng ref này,
+  // effect sẽ chạy lại mỗi khi activeSessionId về null — kể cả khi người
+  // dùng chủ động bấm "Đoạn chat mới" — khiến nút đó như không có tác dụng
+  // vì bị tự động kéo ngược về đoạn chat cũ ngay lập tức.
+  const hasAutoResumedChatRef = useRef(false);
   useEffect(() => {
-    if (isChatLoaded && !activeSessionId && chatSessions.length > 0) {
-      setActiveSessionId(chatSessions[0].id);
+    if (isChatLoaded && !hasAutoResumedChatRef.current) {
+      hasAutoResumedChatRef.current = true;
+      if (!activeSessionId && chatSessions.length > 0) {
+        setActiveSessionId(chatSessions[0].id);
+      }
     }
-  }, [isChatLoaded, chatSessions, activeSessionId]);
+  }, [isChatLoaded]);
   
   useEffect(() => {
     if (isChatLoaded) {
