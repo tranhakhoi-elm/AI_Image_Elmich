@@ -225,6 +225,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const handleNewChat = () => {
     setActiveSessionId(null);
+    // Xóa sạch mọi dữ liệu còn sót lại của đoạn chat cũ trên ô soạn tin —
+    // giống hành vi "New chat" của các app chat AI khác: bản nháp đang gõ,
+    // ảnh đã đính kèm, chế độ và thiết lập ảnh đều về mặc định.
+    setChatInput('');
+    setChatInputImageBase64(null);
+    setTypingMessageId(null);
+    setChatMode('chat');
+    setChatImageAspectRatio('1:1');
+    setChatImageQuality('1K');
+    setChatImageModel('FLASH');
   };
 
   return (
