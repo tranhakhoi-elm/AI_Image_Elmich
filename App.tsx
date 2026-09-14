@@ -345,31 +345,44 @@ const App: React.FC = () => {
           localSessions = parsed.filter((s: any) => s.timestamp > oneWeekAgo);
         }
 
-        if (localSessions.length > 0) {
-          setChatSessions(localSessions);
-        } else {
-          // IndexedDB cục bộ trống (trình duyệt/thiết bị mới, tab ẩn danh,
-          // hoặc cache 7 ngày đã hết hạn) — lấy lại lịch sử chat DÙNG CHUNG
-          // từ server để không bị "mất" đoạn chat cũ. Nếu backend Lịch sử
-          // chưa cấu hình, fetchChatHistory() tự trả về success:false và
-          // chatSessions đơn giản là rỗng như trước (không crash).
-          const remote = await fetchChatHistory().catch(() => null);
-          if (remote?.success && remote.items && remote.items.length > 0) {
-            const remoteSessions: import('./types').ChatSession[] = remote.items.map(item => ({
-              id: item.id,
-              title: item.title,
-              timestamp: item.timestamp,
-              messages: item.messages.map(m => ({
-                id: m.id,
-                role: m.role,
-                text: m.text,
-                imageUrl: m.imageUrl || undefined,
-                uploadedImageUrl: m.uploadedImageUrl || undefined,
-              })),
-            }));
-            setChatSessions(remoteSessions);
-          }
+        // Luôn thử đồng bộ thêm với lịch sử chat DÙNG CHUNG từ server, chứ
+        // không chỉ khi cache cục bộ trống — trước đây chỉ fetch remote lúc
+        // trống nên hễ trình duyệt đã có DÙ CHỈ 1 đoạn chat cũ, nó sẽ không
+        // bao giờ thấy các đoạn chat mới được tạo ở trình duyệt/thiết bị
+        // khác nữa (đây là nguyên nhân "lịch sử chat không đồng bộ giữa các
+        // trình duyệt"). Nếu backend Lịch sử chưa cấu hình, fetchChatHistory()
+        // tự trả về success:false và hành vi giữ nguyên như cũ (chỉ dùng cache
+        // cục bộ, không crash).
+        const remote = await fetchChatHistory().catch(() => null);
+        let merged = localSessions;
+        if (remote?.success && remote.items && remote.items.length > 0) {
+          const remoteSessions: import('./types').ChatSession[] = remote.items.map(item => ({
+            id: item.id,
+            title: item.title,
+            timestamp: item.timestamp,
+            messages: item.messages.map(m => ({
+              id: m.id,
+              role: m.role,
+              text: m.text,
+              imageUrl: m.imageUrl || undefined,
+              uploadedImageUrl: m.uploadedImageUrl || undefined,
+            })),
+          }));
+          // Gộp theo id: ưu tiên bản có nhiều tin nhắn hơn (đầy đủ hơn) giữa
+          // local và remote — tránh trường hợp hiếm gặp remote chưa kịp nhận
+          // tin nhắn vừa gửi (logChatSession chạy kiểu bắn-và-quên, không
+          // chờ) lại ghi đè mất bản mới hơn đang có sẵn cục bộ.
+          const byId = new Map<string, import('./types').ChatSession>();
+          localSessions.forEach(s => byId.set(s.id, s));
+          remoteSessions.forEach(r => {
+            const existing = byId.get(r.id);
+            if (!existing || (r.messages?.length || 0) >= (existing.messages?.length || 0)) {
+              byId.set(r.id, r);
+            }
+          });
+          merged = Array.from(byId.values()).sort((a, b) => b.timestamp - a.timestamp);
         }
+        setChatSessions(merged);
         setIsChatLoaded(true);
       });
     }).catch(e => {
