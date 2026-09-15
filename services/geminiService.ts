@@ -334,15 +334,24 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
 };
 
 // 1. Phân tích Concept (Lifestyle) - CẬP NHẬT ĐỂ NHẬN ẢNH THAM KHẢO
-export const analyzeConceptAndCamera = async (productName: string, dimensions: string, images: string[], refImage: string | null): Promise<AIConceptAnalysis> => {
+export const analyzeConceptAndCamera = async (productName: string, dimensions: string, images: string[], refImage: string | null, categoryGuidance?: string): Promise<AIConceptAnalysis> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
+    const categoryGuidanceBlock = categoryGuidance
+      ? `
+=== CHỈ DẪN RIÊNG CHO DÒNG SẢN PHẨM NÀY (BẮT BUỘC ƯU TIÊN ÁP DỤNG) ===
+Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — coi đây là định hướng gu thẩm mỹ đã được duyệt, hãy lồng ghép vào các concept đề xuất bên dưới thay vì chỉ dựa vào quy chuẩn chung:
+${categoryGuidance}
+========================================
+`
+      : "";
+
     const prompt = `
 === ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
 Dưới đây là tài liệu quy chuẩn phong cách và các lỗi cần tránh của phong cách này:
 ${designLifestyleConcept}
 ========================================
-
+${categoryGuidanceBlock}
 Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich.
 Dựa vào quy chuẩn phong cách thiết kế phía trên, hãy đề xuất ý tưởng Lifestyle:
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
@@ -376,23 +385,24 @@ Trả về JSON với mảng concepts (mỗi concept gồm 'title' ngắn gọn 
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+      model: "gemini-2.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
+        temperature: 1.15,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            concepts: { 
-              type: Type.ARRAY, 
-              items: { 
+            concepts: {
+              type: Type.ARRAY,
+              items: {
                 type: Type.OBJECT,
                 properties: {
                   title: { type: Type.STRING },
                   prompt: { type: Type.STRING }
                 },
                 required: ["title", "prompt"]
-              } 
+              }
             },
             suggestedCamera: {
               type: Type.OBJECT,
@@ -491,8 +501,13 @@ YÊU CẦU ĐỀ XUẤT:
 };
 
 // 3. Gợi ý Props cho Concept Lifestyle
-export const suggestPropsForConcept = async (productName: string, concept: string, mode: 'STUDIO' | 'LIFESTYLE' = 'LIFESTYLE'): Promise<{props: string[], placement: string}> => {
+export const suggestPropsForConcept = async (productName: string, concept: string, mode: 'STUDIO' | 'LIFESTYLE' = 'LIFESTYLE', excludeProps: string[] = [], categoryGuidance?: string): Promise<{props: string[], placement: string}> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const isMore = excludeProps.length > 0;
+  const count = isMore ? 8 : 10;
+  const categoryGuidanceNote = categoryGuidance
+    ? `\nCHỈ DẪN RIÊNG CHO DÒNG SẢN PHẨM NÀY (đúc kết từ các ảnh đã được đội ngũ Elmich đánh giá "Rất tốt!" — ưu tiên áp dụng khi chọn đạo cụ/bố cục bên dưới):\n${categoryGuidance}\n`
+    : "";
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -502,21 +517,25 @@ Bối cảnh/Concept thiết kế: "${concept}".
 YÊU CẦU PHÂN TÍCH:
 1. Đọc kỹ tên sản phẩm, XÁC ĐỊNH DANH MỤC cụ thể (ấm/bình trà, nồi/chảo, máy xay/ép, nồi chiên không dầu, bình giữ nhiệt, bàn ủi, máy hút bụi, lò nướng, dụng cụ nhỏ...) và hiểu rõ chức năng, cách sử dụng thực tế của nó.
 2. Suy luận sâu để đề xuất 'placement': Vị trí, góc đặt sản phẩm, và cách ánh sáng tương tác tôn lên vẻ đẹp của sản phẩm.
-3. Đề xuất 10 đạo cụ (props) đi kèm, viết mỗi đạo cụ dưới dạng 1 cụm mô tả CÓ CHI TIẾT CHẤT LIỆU/TRẠNG THÁI (ví dụ "vài lát cam khô xếp cạnh ấm, tỏa hơi ấm nhẹ" thay vì chỉ "lát cam khô") để prompt sinh ảnh có đủ dữ liệu hình ảnh phong phú. Các đạo cụ này PHẢI cực kỳ logic với công năng của DANH MỤC sản phẩm đã xác định ở bước 1 và bối cảnh được chọn. KHÔNG liệt kê các đạo cụ nghệ thuật chung chung (như lăng kính, khối mica, v.v.) nếu nó không thực sự liên quan đến sản phẩm.
-4. BẮT BUỘC ĐA DẠNG VÀ KHÔNG TRÙNG LẶP: 10 đạo cụ phải khác nhau rõ rệt (không liệt kê 2 biến thể của cùng 1 vật), và nên phối hợp ít nhất 2 nhóm khác nhau: (a) nguyên liệu/vật dụng gắn trực tiếp với chức năng sản phẩm, (b) vật trang trí môi trường xung quanh hợp bối cảnh (không lấn át sản phẩm chính).
+3. Đề xuất ${count} đạo cụ (props) đi kèm, viết mỗi đạo cụ dưới dạng 1 cụm mô tả CÓ CHI TIẾT CHẤT LIỆU/TRẠNG THÁI (ví dụ "vài lát cam khô xếp cạnh ấm, tỏa hơi ấm nhẹ" thay vì chỉ "lát cam khô") để prompt sinh ảnh có đủ dữ liệu hình ảnh phong phú. Các đạo cụ này PHẢI cực kỳ logic với công năng của DANH MỤC sản phẩm đã xác định ở bước 1 và bối cảnh được chọn. KHÔNG liệt kê các đạo cụ nghệ thuật chung chung (như lăng kính, khối mica, v.v.) nếu nó không thực sự liên quan đến sản phẩm.
+4. BẮT BUỘC ĐA DẠNG VÀ KHÔNG TRÙNG LẶP: ${count} đạo cụ phải khác nhau rõ rệt (không liệt kê 2 biến thể của cùng 1 vật), và nên phối hợp ít nhất 2 nhóm khác nhau: (a) nguyên liệu/vật dụng gắn trực tiếp với chức năng sản phẩm, (b) vật trang trí môi trường xung quanh hợp bối cảnh (không lấn át sản phẩm chính).
+5. MÀU SẮC PHẢI ĂN KHỚP: mỗi đạo cụ phải có tông màu cùng nhóm (tone-on-tone) hoặc bổ trợ hài hòa với màu chủ đạo/phụ trợ của sản phẩm và bối cảnh đã chọn — tuyệt đối không đề xuất đạo cụ có màu sắc chỏi, lệch tông so với bảng màu tổng thể.
 
 ${mode === 'STUDIO'
-  ? 'LƯU Ý STUDIO: Phông nền đơn sắc. Đạo cụ tập trung làm nổi bật chất liệu và kiểu dáng sản phẩm — ví dụ: máy xay/ép đi với trái cây tươi cắt lát hoặc hạt cà phê rang; nồi/chảo đi với rau củ hoặc nguyên liệu đang chế biến; nồi chiên không dầu đi với khay thực phẩm/giỏ chiên; bàn ủi đi với vải/áo sơ mi xếp gọn; máy hút bụi đi với sàn nhà/thảm sạch bóng; bình giữ nhiệt đi với đá viên hoặc hơi nước bốc lên. Luôn kèm bục đỡ phù hợp kiểu dáng và hiệu ứng bóng đổ tự nhiên.'
+  ? 'LƯU Ý STUDIO: Phông nền đơn sắc. Đạo cụ tập trung làm nổi bật chất liệu và kiểu dáng sản phẩm — ví dụ: máy xay/ép đi với trái cây tươi cắt lát hoặc hạt cà phê rang; nồi/chảo đi với rau củ hoặc nguyên liệu đang chế biến; nồi chiên không dầu đi với khay thực phẩm/giỏ chiên; bàn ủi đi với vải/áo sơ mi xếp gọn; máy hút bụi đi với sàn nhà/thảm sạch bóng; bình giữ nhiệt đi với đá viên hoặc hơi nước bốc lên. Luôn kèm 1 bục đỡ (plinth) phù hợp kiểu dáng và hiệu ứng bóng đổ tự nhiên — NHƯNG BẮT BUỘC LUÂN PHIÊN chất liệu bục theo tông màu/phong cách sản phẩm, KHÔNG mặc định lúc nào cũng là khối đá travertine/marble: có thể là khối gỗ sồi/gỗ óc chó sáng màu, đĩa/trụ kim loại chải xước, bục mica/lucite trong mờ, bệ gốm men mờ, hoặc vải lanh/nhung phủ nhẹ — chọn loại ăn khớp nhất với tông màu sản phẩm ở yêu cầu (5).'
   : 'LƯU Ý LIFESTYLE (Phối cảnh): Đạo cụ phải thuộc về môi trường tự nhiên của DANH MỤC sản phẩm. Ví dụ: đồ gia dụng nhà bếp đi với nguyên liệu nấu nướng, gia vị, thớt gỗ, bếp...; bình giữ nhiệt đi với balo, góc làm việc, hoặc đồ thể thao; bàn ủi đi với góc phòng giặt ủi, quần áo treo gọn gàng; máy hút bụi đi với không gian phòng khách/thảm sạch. Tập trung vào tính thực tế, chân thực, tránh những đạo cụ "thơ mộng" hoặc "trừu tượng" không ăn nhập với công năng.'
 }
-Trả về định dạng JSON với 'placement' (string) và 'props' (mảng 10 chuỗi, mỗi chuỗi miêu tả ngắn gọn nhưng có chi tiết hình ảnh cụ thể về một đạo cụ hoặc yếu tố môi trường).`,
+${isMore ? `\nDANH SÁCH ĐÃ GỢI Ý TRƯỚC ĐÓ (TUYỆT ĐỐI KHÔNG LẶP LẠI, kể cả biến thể gần giống): ${excludeProps.map(p => `"${p}"`).join(', ')}\nHãy nghĩ theo hướng KHÁC HẲN nhóm đạo cụ trên (đổi chất liệu, đổi loại vật dụng, đổi vị trí) để mở rộng lựa chọn cho người dùng, không chỉ đổi từ ngữ của cùng 1 ý tưởng.` : ''}
+${categoryGuidanceNote}
+Trả về định dạng JSON với 'placement' (string) và 'props' (mảng ${count} chuỗi, mỗi chuỗi miêu tả ngắn gọn nhưng có chi tiết hình ảnh cụ thể về một đạo cụ hoặc yếu tố môi trường).`,
       config: {
         responseMimeType: "application/json",
+        temperature: isMore ? 1.3 : 1,
         responseSchema: {
           type: Type.OBJECT,
-          properties: { 
+          properties: {
             placement: { type: Type.STRING },
-            props: { type: Type.ARRAY, items: { type: Type.STRING } } 
+            props: { type: Type.ARRAY, items: { type: Type.STRING } }
           }
         }
       }
@@ -652,14 +671,23 @@ Trả về JSON 10 vật phẩm trang trí thêm vào phòng.`;
 };
 
 // 7. Phân tích Concept Studio (Mới)
-export const analyzeStudioConcept = async (productName: string, dimensions: string, images: string[]): Promise<AIConceptAnalysis> => {
+export const analyzeStudioConcept = async (productName: string, dimensions: string, images: string[], categoryGuidance?: string): Promise<AIConceptAnalysis> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
+    const categoryGuidanceBlock = categoryGuidance
+      ? `
+=== CHỈ DẪN RIÊNG CHO DÒNG SẢN PHẨM NÀY (BẮT BUỘC ƯU TIÊN ÁP DỤNG) ===
+Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — coi đây là định hướng gu thẩm mỹ đã được duyệt, hãy lồng ghép vào các concept đề xuất bên dưới thay vì chỉ dựa vào quy chuẩn chung:
+${categoryGuidance}
+========================================
+`
+      : "";
+
     const prompt = `
 === ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
 ${designStudioCreative}
 ========================================
-
+${categoryGuidanceBlock}
 Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm của Elmich.
 Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy thực hiện phân tích:
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
@@ -671,7 +699,7 @@ BƯỚC 1 — PHÂN TÍCH TRƯỚC KHI ĐỀ XUẤT (theo mục 3.1 quy chuẩn,
 
 YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
 1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
-2. BẮT BUỘC ĐA DẠNG: mỗi concept dùng 1 loại bục/plinth khác nhau theo mục 3.3 quy chuẩn (khối travertine/đá cẩm thạch, bậc thang bê tông đơn sắc, đĩa gốm mỏng lơ lửng...) và 1 sắc thái ánh sáng khác nhau (dịu nhẹ đồng đều / tương phản kịch tính / có halo hắt sáng phía sau) — không lặp lại cùng 1 loại bục hay cùng 1 kiểu ánh sáng giữa các concept.
+2. BẮT BUỘC ĐA DẠNG: mỗi concept dùng 1 loại bục/plinth khác nhau theo mục 3.3 quy chuẩn, CHỌN ĐÚNG CHẤT LIỆU BỤC ĂN KHỚP TÔNG MÀU SẢN PHẨM đã xác định ở Bước 1 (không mặc định luôn là đá travertine/marble) — ví dụ: gỗ sồi/óc chó sáng màu cho tông ấm/pastel, đĩa gốm mỏng lơ lửng cho tông pastel nhẹ, kim loại chải xước cho tông chrome/bạc, mica/lucite trong mờ cho tông sáng/hiện đại, đá travertine/bê tông đơn sắc cho tông tối/công nghiệp, vải lanh/nhung phủ bục cho tông cao cấp. Kết hợp thêm 1 sắc thái ánh sáng khác nhau cho mỗi concept (dịu nhẹ đồng đều / tương phản kịch tính / có halo hắt sáng phía sau) — TUYỆT ĐỐI không lặp lại cùng 1 loại bục hay cùng 1 kiểu ánh sáng giữa các concept.
 3. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
    - [Mô tả phong cách studio cao cấp]
    - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
@@ -696,19 +724,20 @@ Trả về JSON với 5 concepts (mỗi concept gồm 'title' ngắn gọn và '
       contents: { parts },
       config: {
         responseMimeType: "application/json",
+        temperature: 1.15,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            concepts: { 
-              type: Type.ARRAY, 
-              items: { 
+            concepts: {
+              type: Type.ARRAY,
+              items: {
                 type: Type.OBJECT,
                 properties: {
                   title: { type: Type.STRING },
                   prompt: { type: Type.STRING }
                 },
                 required: ["title", "prompt"]
-              } 
+              }
             },
             suggestedCamera: {
               type: Type.OBJECT,

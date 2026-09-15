@@ -39,10 +39,15 @@ To execute a successful tone-sur-tone composition without the product dissolving
 - **Backdrop Halo Effect:** Create a soft, radial gradient glow directly behind the product body (Backlight pointing at the paper) to generate a subtle halo, defining depth and spatial airiness.
 
 ### Step 3.3. Curating High-End Minimalist Prop Geometry
-Avoid chaotic domestic props. Elevate the commercial presentation by suggesting structural geometric plinths:
-- **Travertine & Marble Blocks:** Rectangular or square travertine blocks with rough organic pore structures to contrast gloss metallic products.
-- **Monochromatic Concrete Steps:** Stepped, matte-painted concrete platforms in matching colors to create tiered displays.
-- **Floating Ceramic Plates:** Flat, rimless pastel clay saucer plates suspended mid-air to suggest lightness and high-end design.
+Avoid chaotic domestic props. Elevate the commercial presentation by suggesting structural geometric plinths. **Critical rule: the plinth material must be chosen to match or complement the product's dominant color/tone — do NOT default to stone/marble every time.** Rotate across material families depending on what best suits the product's finish and palette:
+- **Travertine & Marble Blocks** (for gloss metallic or dark, moody products): Rectangular or square travertine blocks with rough organic pore structures to contrast gloss metallic products.
+- **Monochromatic Concrete Steps** (for industrial, matte-black or charcoal products): Stepped, matte-painted concrete platforms in matching colors to create tiered displays.
+- **Floating Ceramic Plates** (for pastel, soft-toned products): Flat, rimless pastel clay saucer plates suspended mid-air to suggest lightness and high-end design.
+- **Light Oak / Walnut Wood Blocks** (for warm creams, sage greens, earthy tones): Smooth, softly grained wood risers that echo a natural, tone-on-tone warmth.
+- **Brushed Metal Disc or Cylinder** (for tech-leaning, chrome, or silver products): A slim, satin-finish metal riser that continues the product's own material language instead of contrasting it.
+- **Frosted Acrylic / Lucite Riser** (for bright, playful, or translucent-accented products): A semi-transparent block that lets soft light glow through the base, reading as modern and light.
+- **Draped Linen or Velvet-Covered Pedestal** (for premium, soft-touch products): Fabric pulled taut over a simple riser shape, adding tactile warmth without visual clutter.
+Pick ONE family per concept based on the product's tone from Step 3.2 — never repeat the same plinth material across multiple concepts for the same product.
 
 ### Step 3.4. Ad-Copy Spatial Mapping (Composition Negative Space)
 - Guarantee that 30% to 40% of the flat seamless paper background remains completely vacant and desaturated for logo placements, product claims, or secondary copy lines.

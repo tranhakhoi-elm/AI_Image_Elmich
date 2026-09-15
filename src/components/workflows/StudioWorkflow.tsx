@@ -26,6 +26,7 @@ interface StudioWorkflowProps {
   setAlertMessage: (msg: string | null) => void;
   handleStudioAnalysis: () => void;
   handleStudioPropSuggestion: () => void;
+  handleMoreStudioPropSuggestion: () => void;
   customProp: string;
   setCustomProp: (val: string) => void;
   addCustomPropToList: () => void;
@@ -48,6 +49,7 @@ export const StudioWorkflow: React.FC<StudioWorkflowProps> = ({
   setAlertMessage,
   handleStudioAnalysis,
   handleStudioPropSuggestion,
+  handleMoreStudioPropSuggestion,
   customProp,
   setCustomProp,
   addCustomPropToList,
@@ -225,7 +227,16 @@ export const StudioWorkflow: React.FC<StudioWorkflowProps> = ({
 
                 <div className="space-y-4">
                   <div>
-                     <label className="block text-[9px] font-bold text-white uppercase mb-2">Gợi ý đạo cụ Studio</label>
+                     <div className="flex items-center justify-between mb-2">
+                       <label className="block text-[9px] font-bold text-white uppercase">Gợi ý đạo cụ Studio</label>
+                       <button
+                         type="button"
+                         onClick={handleMoreStudioPropSuggestion}
+                         className="text-[9px] font-bold text-[#1877F2] hover:brightness-125 transition-all flex items-center gap-1"
+                       >
+                         <Wand2 size={11} /> Gợi ý thêm
+                       </button>
+                     </div>
                      <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar">
                         {suggestions.props.map(p => (
                           <button key={p} onClick={() => toggleProp(p)} className={`px-3 py-2 rounded-lg border text-[9px] font-bold transition-all ${settings.props.some(i => i.name === p) ? 'bg-[#1877F2]/20 text-[#1877F2] border-[#1877F2] text-white border-[#1877F2]' : 'bg-[#242526]  border-[#3E4042] text-white hover:text-white'}`}>{p}</button>
