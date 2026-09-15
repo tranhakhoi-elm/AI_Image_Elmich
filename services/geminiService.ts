@@ -339,8 +339,8 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
   try {
     const categoryGuidanceBlock = categoryGuidance
       ? `
-=== CHỈ DẪN RIÊNG CHO DÒNG SẢN PHẨM NÀY (BẮT BUỘC ƯU TIÊN ÁP DỤNG) ===
-Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — coi đây là định hướng gu thẩm mỹ đã được duyệt, hãy lồng ghép vào các concept đề xuất bên dưới thay vì chỉ dựa vào quy chuẩn chung:
+=== CHỈ DẪN THAM KHẢO CHO DÒNG SẢN PHẨM NÀY ===
+Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — đây là xu hướng thẩm mỹ chung được ưa chuộng cho cả dòng sản phẩm, KHÔNG PHẢI một công thức cố định phải chép lại y hệt cho sản phẩm cụ thể đang phân tích. Hãy dùng nó như 1 gợi ý định hướng, nhưng BẮT BUỘC vẫn điều chỉnh chi tiết cụ thể (không gian, đạo cụ, ánh sáng...) theo đúng DANH MỤC/màu sắc/chất liệu THẬT của sản phẩm ở Bước 1 bên dưới — hai sản phẩm khác loại trong cùng dòng vẫn phải ra concept khác nhau rõ rệt:
 ${categoryGuidance}
 ========================================
 `
@@ -357,20 +357,21 @@ Dựa vào quy chuẩn phong cách thiết kế phía trên, hãy đề xuất �
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
 ${refImage ? "Tôi có gửi kèm một ảnh mẫu phong cách (Style Reference). Hãy dựa vào style của ảnh này để đề xuất." : ""}
 
-BƯỚC 1 — PHÂN TÍCH SẢN PHẨM (bắt buộc làm trước khi đề xuất, không cần viết ra câu trả lời của bước này):
+BƯỚC 1 — PHÂN TÍCH SẢN PHẨM (bắt buộc làm trước khi đề xuất, không cần viết ra câu trả lời của bước này, nhưng PHẢI dùng kết quả này để mọi concept bên dưới bám sát đúng sản phẩm THẬT trong ảnh):
 - Xác định chính xác DANH MỤC sản phẩm (ví dụ: ấm siêu tốc, nồi chiên không dầu, máy xay sinh tố, chảo/nồi nấu, bình giữ nhiệt, bàn ủi, máy hút bụi, lò nướng...) và chức năng sử dụng thực tế của nó.
-- Xác định chất liệu bề mặt và tông màu chủ đạo/phụ trợ từ ảnh sản phẩm (theo Bước 3.1 của quy chuẩn).
+- Quan sát kỹ ảnh để ghi nhận hình khối và chi tiết đặc trưng riêng của sản phẩm này (tay cầm, vòi, nắp, màn hình, dáng đứng/nằm...) — không mô tả chung chung.
+- Xác định chất liệu bề mặt và tông màu chủ đạo/phụ trợ CHÍNH XÁC từ ảnh sản phẩm (theo Bước 3.1 của quy chuẩn).
 - Dựa vào bảng 3 phong cách nội thất (Style A: Japandi/Oakwood, Style B: Modern Industrial Charcoal, Style C: Cozy Country Farmhouse ở mục 3.2 quy chuẩn), xác định phong cách nào PHÙ HỢP NHẤT với màu/chất liệu vừa phân tích.
 
 YÊU CẦU ĐỀ XUẤT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
 1. Đề xuất 5 Ý tưởng (Concept) phối cảnh chụp ảnh Lifestyle. Tên của concept (title) BẮT BUỘC phải là tiếng Việt. Bố cục decor phải luôn duy trì sự ngăn nắp, hiện đại, trẻ trung, gọn gàng, tránh bừa bộn quá mức đời thường.
 2. BẮT BUỘC ĐA DẠNG: 5 concept phải khác biệt rõ rệt với nhau — không được lặp lại cùng 1 kiểu không gian, cùng 1 khung giờ ánh sáng, hay cùng 1 nhóm đạo cụ giữa các concept. Hãy phối hợp ít nhất 2-3 phong cách khác nhau trong số Style A/B/C nêu trên, và xen kẽ các khung giờ ánh sáng khác nhau (nắng sớm, ánh nắng xuyên tán lá/rèm cửa, hoàng hôn ấm áp) theo mục 5 quy chuẩn.
 3. Đạo cụ và nguyên liệu nhắc tới trong mỗi prompt PHẢI khớp đúng với DANH MỤC sản phẩm đã xác định ở Bước 1 (theo bảng Prop & Ingredient Taxonomy mục 3.3 quy chuẩn) — ví dụ ấm/bình trà đi với vỏ cam khô/quế, chảo/nồi đi với nguyên liệu đang chế biến, máy xay đi với trái cây/đá viên. TUYỆT ĐỐI không gán nguyên liệu/đạo cụ sai công năng.
-4. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
-   - [Mô tả phong cách nội thất cụ thể (Style A/B/C) và cảm giác hiện đại, gọn gàng]
+4. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng). MỖI GẠCH ĐẦU DÒNG BẮT BUỘC PHẢI NHẮC ÍT NHẤT 1 CHI TIẾT QUAN SÁT THỰC TẾ TỪ ẢNH SẢN PHẨM (hình khối/chi tiết/màu sắc cụ thể đã xác định ở Bước 1) — TUYỆT ĐỐI KHÔNG viết câu mô tả chung chung có thể dùng lại y hệt cho bất kỳ sản phẩm gia dụng nào khác:
+   - [Mô tả phong cách nội thất cụ thể (Style A/B/C) và cảm giác hiện đại, gọn gàng, có nhắc đến hình khối/chi tiết đặc trưng của CHÍNH sản phẩm này]
    - [Mô tả không gian bối cảnh, đạo cụ/nguyên liệu đúng công năng sản phẩm, khoảng trống không gian âm]
-   - [Mô tả cách đánh sáng tự nhiên chân thực theo đúng khung giờ đã chọn]
-   - [Mô tả cảm giác, màu sắc chủ đạo trẻ trung]
+   - [Mô tả cách đánh sáng tự nhiên chân thực theo đúng khung giờ đã chọn, tương tác với chất liệu/màu THẬT của sản phẩm này]
+   - [Mô tả cảm giác, màu sắc chủ đạo trẻ trung, đúng tông màu THẬT đã xác định ở Bước 1]
    (Lưu ý: Sử dụng ký tự xuống dòng
  giữa các tiêu chí để định dạng)
 5. Đề xuất bộ thông số Camera (Góc chụp lệc nhẹ 1/3, tiêu cự 50mm hoặc 85mm, khẩu độ lớn) lý tưởng nhất dựa trên Quy Chuẩn Phối Cảnh Đời Sống.
@@ -676,8 +677,8 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
   try {
     const categoryGuidanceBlock = categoryGuidance
       ? `
-=== CHỈ DẪN RIÊNG CHO DÒNG SẢN PHẨM NÀY (BẮT BUỘC ƯU TIÊN ÁP DỤNG) ===
-Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — coi đây là định hướng gu thẩm mỹ đã được duyệt, hãy lồng ghép vào các concept đề xuất bên dưới thay vì chỉ dựa vào quy chuẩn chung:
+=== CHỈ DẪN THAM KHẢO CHO DÒNG SẢN PHẨM NÀY ===
+Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — đây là xu hướng thẩm mỹ chung được ưa chuộng cho cả dòng sản phẩm, KHÔNG PHẢI một công thức cố định phải chép lại y hệt cho sản phẩm cụ thể đang phân tích. Hãy dùng nó như 1 gợi ý định hướng, nhưng BẮT BUỘC vẫn điều chỉnh chi tiết cụ thể (chất liệu bục, tông màu nền, góc máy...) theo đúng hình khối/màu sắc/chất liệu THẬT của sản phẩm ở Bước 1 bên dưới — hai sản phẩm khác loại trong cùng dòng vẫn phải ra concept khác nhau rõ rệt:
 ${categoryGuidance}
 ========================================
 `
@@ -692,20 +693,20 @@ Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp
 Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy thực hiện phân tích:
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
 
-BƯỚC 1 — PHÂN TÍCH TRƯỚC KHI ĐỀ XUẤT (theo mục 3.1 quy chuẩn, không cần viết ra câu trả lời của bước này):
-- Xác định hình khối chính của sản phẩm (trụ tròn, hộp chữ nhật, dáng dài cầm tay...) để chọn góc rim light phù hợp.
+BƯỚC 1 — PHÂN TÍCH TRƯỚC KHI ĐỀ XUẤT (theo mục 3.1 quy chuẩn, không cần viết ra câu trả lời của bước này, nhưng PHẢI dùng kết quả này để mọi concept bên dưới bám sát đúng sản phẩm THẬT trong ảnh, không viết chung chung có thể lắp vừa cho bất kỳ đồ gia dụng nào khác):
+- Quan sát kỹ ảnh và mô tả cho chính mình: hình khối chính xác của sản phẩm (trụ tròn, hộp chữ nhật, dáng dài cầm tay, có cánh/lưới/vòi/nắp...), các chi tiết đặc trưng riêng (nút bấm, tay cầm, màn hình, lưới tản nhiệt...) để chọn góc rim light phù hợp.
 - Xác định chất liệu bề mặt (inox bóng gương / nhựa sơn tĩnh điện mờ / thủy tinh trong suốt) để chọn cách chiếu sáng đúng (diffuser mềm cho inox bóng, sáng cứng hơn cho nhựa mờ, hậu cảnh tối cho thủy tinh) theo đúng mục 3.1.
-- Xác định màu chủ đạo của sản phẩm để tính màu nền giấy tone-sur-tone tương ứng (mục 3.2).
+- Xác định màu chủ đạo CHÍNH XÁC của sản phẩm này (không đoán chung chung) để tính màu nền giấy tone-sur-tone tương ứng (mục 3.2).
 
 YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT (TUÂN THỦ HOÀN TOÀN QUY CHUẨN TRÊN):
 1. Đề xuất 5 Ý tưởng (Concept) chụp ảnh Studio phong phú (tối giản, hiện đại, ánh sáng kịch tính...). Tên của concept (title) BẮT BUỘC phải là tiếng Việt.
 2. BẮT BUỘC ĐA DẠNG: mỗi concept dùng 1 loại bục/plinth khác nhau theo mục 3.3 quy chuẩn, CHỌN ĐÚNG CHẤT LIỆU BỤC ĂN KHỚP TÔNG MÀU SẢN PHẨM đã xác định ở Bước 1 (không mặc định luôn là đá travertine/marble) — ví dụ: gỗ sồi/óc chó sáng màu cho tông ấm/pastel, đĩa gốm mỏng lơ lửng cho tông pastel nhẹ, kim loại chải xước cho tông chrome/bạc, mica/lucite trong mờ cho tông sáng/hiện đại, đá travertine/bê tông đơn sắc cho tông tối/công nghiệp, vải lanh/nhung phủ bục cho tông cao cấp. Kết hợp thêm 1 sắc thái ánh sáng khác nhau cho mỗi concept (dịu nhẹ đồng đều / tương phản kịch tính / có halo hắt sáng phía sau) — TUYỆT ĐỐI không lặp lại cùng 1 loại bục hay cùng 1 kiểu ánh sáng giữa các concept.
-3. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng):
-   - [Mô tả phong cách studio cao cấp]
-   - [Màu sắc, chất liệu nền giấy trơn cùng tone sản phẩm]
-   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights)]
-   - [Mô tả cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
-   (Lưu ý: Sử dụng ký tự xuống dòng 
+3. MỖI CONCEPT PHẢI ĐƯỢC VIẾT DƯỚI DẠNG MỘT PROMPT CHI TIẾT, MẠCH LẠC, BẮT BUỘC XUỐNG DÒNG RÕ RÀNG THEO CÁC TIÊU CHÍ SAU (viết 100% bằng tiếng Việt, KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng). MỖI GẠCH ĐẦU DÒNG BẮT BUỘC PHẢI NHẮC ÍT NHẤT 1 CHI TIẾT QUAN SÁT THỰC TẾ TỪ ẢNH SẢN PHẨM (hình khối/chi tiết/màu sắc cụ thể đã xác định ở Bước 1) — TUYỆT ĐỐI KHÔNG viết câu mô tả kỹ thuật studio chung chung có thể dùng cho bất kỳ sản phẩm gia dụng nào khác mà không sửa 1 chữ:
+   - [Mô tả phong cách studio cao cấp, có nhắc đến hình khối/chi tiết đặc trưng của CHÍNH sản phẩm này]
+   - [Màu sắc, chất liệu nền giấy trơn cùng tone với màu THẬT của sản phẩm này]
+   - [Cách đánh sáng đa điểm chuyên nghiệp (1 main, 1 top, 1 fill, 2 rim lights), giải thích rõ ánh sáng tương tác thế nào với hình khối/chất liệu cụ thể của sản phẩm này]
+   - [Mô tả cấu trúc bóng đổ đa tầng theo đúng hình khối đế/chân của sản phẩm này và khoảng trống chèn chữ]
+   (Lưu ý: Sử dụng ký tự xuống dòng
  giữa các tiêu chí để định dạng)
 4. RÀNG BUỘC BẮT BUỘC:
    - Hình ảnh chụp trên nền giấy trơn 1 màu (Plain Paper Background).
