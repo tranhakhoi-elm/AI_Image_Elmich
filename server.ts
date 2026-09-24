@@ -14,6 +14,7 @@ import {
 } from "./lib/historyStore.js";
 import { getCategoryGuidanceFor } from "./lib/categoryGuidance.js";
 
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config();
 
 const app = express();

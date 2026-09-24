@@ -501,6 +501,97 @@ YÊU CẦU ĐỀ XUẤT:
   } catch (error: any) { throw error; }
 };
 
+// Hàm parse JSON an toàn từ kết quả của mô hình Gemini (loại bỏ markdown fences nếu có)
+export const safeParseGeminiJson = (text?: string): any => {
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    const cleaned = text
+      .replace(/^```(?:json)?\s*/im, '')
+      .replace(/\s*```$/im, '')
+      .trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        try {
+          return JSON.parse(text.slice(firstBrace, lastBrace + 1));
+        } catch {}
+      }
+      return {};
+    }
+  }
+};
+
+// Danh sách đạo cụ dự phòng chất lượng cao chuẩn Elmich phòng khi API gặp sự cố mạng
+export const getFallbackProps = (productName: string = '', mode: 'STUDIO' | 'LIFESTYLE' = 'LIFESTYLE'): string[] => {
+  const lower = productName.toLowerCase();
+  if (mode === 'STUDIO') {
+    if (lower.includes('nồi') || lower.includes('chảo')) {
+      return [
+        'Bục gỗ sồi tự nhiên màu sáng, bề mặt mịn màng',
+        'Vài nhánh hương thảo tươi xếp gọn gàng cạnh chân bục',
+        'Đĩa gốm men mờ màu xám tro phong cách tối giản',
+        'Vải lanh dệt thô màu kem phủ nhẹ một góc bục',
+        'Vài lát chanh vàng tươi cắt mỏng xếp nghệ thuật',
+        'Trụ kim loại xước mờ satin bổ trợ góc sau',
+        'Vài hạt tiêu đen nguyên hạt rải nhẹ tạo điểm nhấn'
+      ];
+    }
+    if (lower.includes('ấm') || lower.includes('bình')) {
+      return [
+        'Bục đá travertine màu be sáng với vân tự nhiên',
+        'Vài lát cam vàng khô xếp cạnh chân bục',
+        'Đế lót bằng gỗ óc chó tròn tối giản',
+        'Nhánh hoa baby khô tạo cảm giác thanh lịch',
+        'Vải lụa mờ màu kem nhạt xếp nếp mềm mại',
+        'Khối mica mờ khuếch tán ánh sáng nhẹ phía sau'
+      ];
+    }
+    return [
+      'Bục đá travertine màu be sáng với vân tự nhiên',
+      'Khối gỗ sồi màu sáng phong cách tối giản',
+      'Vải lanh dệt thô màu xám tro nhẹ',
+      'Đế lót gốm thủ công mộc mạc',
+      'Nhánh lá xanh nhỏ tạo sức sống thanh khiết',
+      'Bục mica trong mờ khuếch tán ánh sáng dịu'
+    ];
+  } else {
+    if (lower.includes('nồi') || lower.includes('chảo')) {
+      return [
+        'Thớt gỗ sồi tự nhiên có vân sáng, đặt nghiêng trên mặt bàn',
+        'Bát gốm men mờ đựng rau củ tươi (cà rốt, bí ngòi)',
+        'Khăn lau bếp vải lanh màu kem nhạt gấp gọn gàng',
+        'Lọ gia vị thủy tinh đựng hạt tiêu đen và muối biển',
+        'Chai dầu ô liu thủy tinh trong suốt dáng thanh mảnh',
+        'Muôi gỗ tự nhiên cán dài gác nhẹ cạnh bếp',
+        'Chậu cây hương thảo nhỏ trong chậu đất nung'
+      ];
+    }
+    if (lower.includes('ấm') || lower.includes('bình')) {
+      return [
+        'Khay gỗ tự nhiên màu sáng đựng bộ ly thủy tinh',
+        'Hũ thủy tinh nhỏ đựng lá trà thảo mộc sấy khô',
+        'Vài lát chanh tươi và lá bạc hà trên đĩa gốm nhỏ',
+        'Cuốn tạp chí phong cách sống mở hờ trên bàn gỗ',
+        'Khăn trải bàn vải thô màu be ấm áp',
+        'Cốc trà thủy tinh hai lớp chịu nhiệt'
+      ];
+    }
+    return [
+      'Mặt bàn đá nhân tạo vân mây sang trọng',
+      'Thớt gỗ tự nhiên cao cấp phong cách Scandinavia',
+      'Khăn lau vải lanh màu pastel thanh lịch',
+      'Lọ hoa gốm nhỏ cắm cành lá xanh tươi mát',
+      'Hũ gia vị nắp gỗ tối giản xếp ngăn nắp',
+      'Ánh nắng tự nhiên buổi sáng rọi qua khung cửa sổ'
+    ];
+  }
+};
+
 // 3. Gợi ý Props cho Concept Lifestyle
 export const suggestPropsForConcept = async (productName: string, concept: string, mode: 'STUDIO' | 'LIFESTYLE' = 'LIFESTYLE', excludeProps: string[] = [], categoryGuidance?: string): Promise<{props: string[], placement: string}> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -512,7 +603,7 @@ export const suggestPropsForConcept = async (productName: string, concept: strin
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Sản phẩm thực tế: ${productName}.
+      contents: `Sản phẩm thực tế: ${productName || "Sản phẩm gia dụng cao cấp Elmich"}.
 Bối cảnh/Concept thiết kế: "${concept}".
 
 YÊU CẦU PHÂN TÍCH:
@@ -537,13 +628,36 @@ Trả về định dạng JSON với 'placement' (string) và 'props' (mảng ${
           properties: {
             placement: { type: Type.STRING },
             props: { type: Type.ARRAY, items: { type: Type.STRING } }
-          }
+          },
+          required: ["placement", "props"]
         }
       }
     });
-    trackGeminiUsage(response, productName || "Đạo cụ Concept", "gemini-2.5-flash");
-    return JSON.parse(response.text || "{}");
-  } catch (error) { return { props: [], placement: "" }; }
+
+    try {
+      trackGeminiUsage(response, productName || "Đạo cụ Concept", "gemini-2.5-flash");
+    } catch {}
+
+    const parsed = safeParseGeminiJson(response.text);
+    const parsedProps = Array.isArray(parsed.props)
+      ? parsed.props.filter((p: any) => typeof p === 'string' && p.trim().length > 0)
+      : [];
+
+    return {
+      props: parsedProps.length > 0 ? parsedProps : getFallbackProps(productName, mode),
+      placement: typeof parsed.placement === 'string' && parsed.placement.trim().length > 0
+        ? parsed.placement
+        : (mode === 'STUDIO' ? 'Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm' : 'Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ')
+    };
+  } catch (error) {
+    console.warn("suggestPropsForConcept encountered error, using fallback props:", error);
+    return {
+      props: getFallbackProps(productName, mode),
+      placement: mode === 'STUDIO'
+        ? 'Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm'
+        : 'Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ'
+    };
+  }
 };
 
 // 4. Gợi ý Visual Elements cho Tech USP

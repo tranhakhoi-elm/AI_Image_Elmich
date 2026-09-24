@@ -66,7 +66,7 @@ import {
   CAMERA_ISO,
   TONE_STYLES
 } from './constants';
-import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
+import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, getFallbackProps, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
 import { logGeneratedImage, rateGeneratedImage, fetchCategoryGuidance, fetchChatHistory, deleteChatHistorySession } from './services/historyService';
 
 // Danh sách công cụ hiển thị trên màn hình chọn công cụ (AppHomeScreen) —
@@ -538,31 +538,91 @@ const App: React.FC = () => {
   };
 
   const handlePropSuggestion = async () => {
-    const finalConcept = settings.concept;
-    if (!finalConcept) return setAlertMessage("Vui lòng chọn hoặc nhập 1 phối cảnh.");
+    const finalConcept = settings.concept || suggestions.concepts[0]?.prompt || (settings.productName ? `Không gian hiện đại cho ${settings.productName}` : 'Không gian bếp hiện đại');
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ phù hợp cho phối cảnh này...");
     try {
       const result = await suggestPropsForConcept(settings.productName, finalConcept, 'LIFESTYLE', [], conceptCategoryGuidance || undefined);
-      setSuggestions(prev => ({ ...prev, props: result.props }));
-      setSettings(prev => ({ ...prev, props: [], placement: result.placement }));
+      const validProps = Array.isArray(result.props) && result.props.length > 0
+        ? result.props
+        : getFallbackProps(settings.productName, 'LIFESTYLE');
+
+      setSuggestions(prev => ({ ...prev, props: validProps }));
+      // Tự động chọn sẵn 2-3 đạo cụ tiêu biểu nhất từ gợi ý AI
+      const initialSelected = validProps.slice(0, 3).map(p => ({
+        name: p,
+        size: 'auto',
+        position: 'auto',
+        rotation: 'auto'
+      }));
+      setSettings(prev => ({
+        ...prev,
+        concept: finalConcept,
+        props: initialSelected,
+        placement: result.placement || prev.placement || "Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ"
+      }));
       setConceptStep(3);
-    } catch (e) { console.error(e); }
-    finally { setAppState(AppState.READY); }
+    } catch (e: any) {
+      console.error("handlePropSuggestion error:", e);
+      const fallback = getFallbackProps(settings.productName, 'LIFESTYLE');
+      setSuggestions(prev => ({ ...prev, props: fallback }));
+      setSettings(prev => ({
+        ...prev,
+        concept: finalConcept,
+        props: fallback.slice(0, 3).map(p => ({ name: p, size: 'auto', position: 'auto', rotation: 'auto' })),
+        placement: prev.placement || "Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ"
+      }));
+      setConceptStep(3);
+    } finally {
+      setAppState(AppState.READY);
+    }
   };
 
   // Cho phép người dùng xin thêm gợi ý đạo cụ MỚI (không trùng danh sách hiện có)
   // ngay tại bước chọn đạo cụ, thay vì phải quay lại phân tích từ đầu.
   const handleMorePropSuggestion = async () => {
-    const finalConcept = settings.concept;
-    if (!finalConcept) return;
+    const finalConcept = settings.concept || suggestions.concepts[0]?.prompt || (settings.productName ? `Không gian cho ${settings.productName}` : 'Không gian bếp');
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm thêm đạo cụ mới, khác biệt hơn...");
     try {
       const result = await suggestPropsForConcept(settings.productName, finalConcept, 'LIFESTYLE', suggestions.props, conceptCategoryGuidance || undefined);
-      setSuggestions(prev => ({ ...prev, props: [...prev.props, ...result.props.filter(p => !prev.props.includes(p))] }));
-    } catch (e) { console.error(e); }
-    finally { setAppState(AppState.READY); }
+      const newProps = Array.isArray(result.props) ? result.props : [];
+      const distinctNew = newProps.filter(p => !suggestions.props.includes(p));
+      if (distinctNew.length === 0) {
+        setAlertMessage("AI không tìm thêm được đạo cụ mới. Bạn có thể tự thêm ở ô nhập bên dưới.");
+      } else {
+        setSuggestions(prev => ({
+          ...prev,
+          props: [...prev.props, ...distinctNew]
+        }));
+        setAlertMessage(`AI đã bổ sung thêm ${distinctNew.length} gợi ý đạo cụ mới.`);
+      }
+    } catch (e) {
+      console.error("handleMorePropSuggestion error:", e);
+      setAlertMessage("Có lỗi khi tìm thêm đạo cụ. Vui lòng thử lại.");
+    } finally {
+      setAppState(AppState.READY);
+    }
+  };
+
+  const handleAutoSelectProps = () => {
+    if (!suggestions.props || suggestions.props.length === 0) {
+      setAlertMessage("Chưa có gợi ý đạo cụ nào từ AI để chọn.");
+      return;
+    }
+    const countToPick = Math.min(3, suggestions.props.length);
+    const picked = suggestions.props.slice(0, countToPick).map(p => ({
+      name: p,
+      size: 'auto',
+      position: 'auto',
+      rotation: 'auto'
+    }));
+    setSettings(prev => ({ ...prev, props: picked }));
+    setAlertMessage(`AI đã tự động chọn ${picked.length} đạo cụ phù hợp nhất.`);
+  };
+
+  const handleClearAllProps = () => {
+    setSettings(prev => ({ ...prev, props: [] }));
   };
 
   const addCustomConceptToList = () => {
@@ -675,30 +735,70 @@ const App: React.FC = () => {
   };
 
   const handleStudioPropSuggestion = async () => {
-    const finalConcept = settings.concept;
-    if (!finalConcept) return setAlertMessage("Vui lòng chọn hoặc nhập 1 concept.");
+    const finalConcept = settings.concept || suggestions.concepts[0]?.prompt || (settings.productName ? `Studio chuyên nghiệp cho ${settings.productName}` : 'Studio tối giản cao cấp');
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm kiếm đạo cụ Studio phù hợp...");
     try {
       const result = await suggestPropsForConcept(settings.productName, finalConcept, 'STUDIO', [], conceptCategoryGuidance || undefined);
-      setSuggestions(prev => ({ ...prev, props: result.props }));
-      setSettings(prev => ({ ...prev, props: [], placement: result.placement }));
+      const validProps = Array.isArray(result.props) && result.props.length > 0
+        ? result.props
+        : getFallbackProps(settings.productName, 'STUDIO');
+
+      setSuggestions(prev => ({ ...prev, props: validProps }));
+      // Tự động chọn sẵn 2-3 đạo cụ studio tiêu biểu nhất từ AI
+      const initialSelected = validProps.slice(0, 3).map(p => ({
+        name: p,
+        size: 'auto',
+        position: 'auto',
+        rotation: 'auto'
+      }));
+      setSettings(prev => ({
+        ...prev,
+        concept: finalConcept,
+        props: initialSelected,
+        placement: result.placement || prev.placement || "Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm"
+      }));
       setStudioStep(3);
-    } catch (e) { console.error(e); }
-    finally { setAppState(AppState.READY); }
+    } catch (e: any) {
+      console.error("handleStudioPropSuggestion error:", e);
+      const fallback = getFallbackProps(settings.productName, 'STUDIO');
+      setSuggestions(prev => ({ ...prev, props: fallback }));
+      setSettings(prev => ({
+        ...prev,
+        concept: finalConcept,
+        props: fallback.slice(0, 3).map(p => ({ name: p, size: 'auto', position: 'auto', rotation: 'auto' })),
+        placement: prev.placement || "Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm"
+      }));
+      setStudioStep(3);
+    } finally {
+      setAppState(AppState.READY);
+    }
   };
 
   // Tương tự handleMorePropSuggestion nhưng cho nhánh Studio (mode 'STUDIO').
   const handleMoreStudioPropSuggestion = async () => {
-    const finalConcept = settings.concept;
-    if (!finalConcept) return;
+    const finalConcept = settings.concept || suggestions.concepts[0]?.prompt || (settings.productName ? `Studio cho ${settings.productName}` : 'Studio');
     setAppState(AppState.ANALYZING);
     setLoadingMessage("AI đang tìm thêm đạo cụ Studio mới, khác biệt hơn...");
     try {
       const result = await suggestPropsForConcept(settings.productName, finalConcept, 'STUDIO', suggestions.props, conceptCategoryGuidance || undefined);
-      setSuggestions(prev => ({ ...prev, props: [...prev.props, ...result.props.filter(p => !prev.props.includes(p))] }));
-    } catch (e) { console.error(e); }
-    finally { setAppState(AppState.READY); }
+      const newProps = Array.isArray(result.props) ? result.props : [];
+      const distinctNew = newProps.filter(p => !suggestions.props.includes(p));
+      if (distinctNew.length === 0) {
+        setAlertMessage("AI không tìm thêm được đạo cụ Studio mới. Bạn có thể tự thêm ở ô bên dưới.");
+      } else {
+        setSuggestions(prev => ({
+          ...prev,
+          props: [...prev.props, ...distinctNew]
+        }));
+        setAlertMessage(`AI đã bổ sung thêm ${distinctNew.length} đạo cụ Studio mới.`);
+      }
+    } catch (e) {
+      console.error("handleMoreStudioPropSuggestion error:", e);
+      setAlertMessage("Có lỗi khi tìm thêm đạo cụ Studio. Vui lòng thử lại.");
+    } finally {
+      setAppState(AppState.READY);
+    }
   };
 
   const startGeneration = async (overrideSettings?: Partial<GenerationSettings>) => {
@@ -1504,6 +1604,8 @@ const App: React.FC = () => {
                    handleConceptAnalysis={handleConceptAnalysis}
                    handlePropSuggestion={handlePropSuggestion}
                    handleMorePropSuggestion={handleMorePropSuggestion}
+                   handleAutoSelectProps={handleAutoSelectProps}
+                   handleClearAllProps={handleClearAllProps}
                    customProp={customProp}
                    setCustomProp={setCustomProp}
                    addCustomPropToList={addCustomPropToList}
@@ -1599,6 +1701,8 @@ const App: React.FC = () => {
                    handleStudioAnalysis={handleStudioAnalysis}
                    handleStudioPropSuggestion={handleStudioPropSuggestion}
                    handleMoreStudioPropSuggestion={handleMoreStudioPropSuggestion}
+                   handleAutoSelectProps={handleAutoSelectProps}
+                   handleClearAllProps={handleClearAllProps}
                    customProp={customProp}
                    setCustomProp={setCustomProp}
                    addCustomPropToList={addCustomPropToList}
