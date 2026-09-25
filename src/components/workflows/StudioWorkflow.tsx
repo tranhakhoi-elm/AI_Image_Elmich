@@ -129,7 +129,18 @@ export const StudioWorkflow: React.FC<StudioWorkflowProps> = ({
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[9px] font-bold text-white uppercase mb-2">Ảnh sản phẩm (Nền trắng hoặc ảnh chụp điện thoại)</label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[9px] font-bold text-white uppercase">Ảnh sản phẩm (Nền trắng hoặc ảnh chụp điện thoại)</label>
+                      {settings.productImages.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSettings(s => ({ ...s, productImages: [], whiteBGMaterialsDescription: '', concept: '', props: [] }))}
+                          className="text-[9px] text-red-400 hover:text-red-300 font-bold transition-colors"
+                        >
+                          ✕ Đổi sản phẩm (Xóa ảnh cũ)
+                        </button>
+                      )}
+                    </div>
                     <div className="grid grid-cols-5 gap-2">
                        {settings.productImages.map((img, i) => (
                          <div key={i} className="aspect-square bg-[#242526]  border border-[#3E4042] rounded-lg overflow-hidden relative group">

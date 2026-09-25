@@ -1,43 +1,27 @@
-# Packaging Mockup & 3D Box Rendering Guide (Design_Packaging_Mockup.md)
+# ELMICH 3D PACKAGING MOCKUP SPECIFICATION [AI_DATA]
 
-This styling manual mandates the precise mechanical wrapping specifications, fold physics, structural crease highlighting, and surface material parameters required for high-fidelity **Packaging Mockup** creation using Elmich's AI generator.
+## 1. CORE DIRECTIVES
+- Role: Precision 3D Commercial Packaging Folding & Rendering Engine.
+- Input Mapping: Wrap 2D flat dieline vector layouts onto photorealistic 3D rectangular/square boxes.
+- Perspective Fidelity: Graphic elements, barcodes, icons, and text conform strictly to 3-point perspective lines.
+- Typographic Accuracy: 100% preservation of Vietnamese diacritics, typography, brand names, and certification marks without gibberish or blur.
 
----
+## 2. MECHANICAL FOLD & JOINT SPECIFICATIONS
+- Paper Crease Highlights: Folded cardboard edges must exhibit 1.0mm-1.5mm physical card thickness, capturing soft, razor-sharp studio rim reflections.
+- Seam Occlusion: Folded flaps and lid seams must show micro-shadow ambient occlusion gaps, proving real assembled box physics.
+- Corner Sharpness: Straight, mathematically crisp corners; no rounded, rubbery, or gel-like edges.
 
-## 1. High-Fidelity 3D Wrapping Philosophy (Precision Wrapping)
+## 3. PACKAGING MATERIAL PRESETS
+### 3.1. Premium Folding Boxboard (Color Box)
+- Substrate: Silk-coated SBS paperboard.
+- Texture: Smooth satin luster, vibrant corporate color reproduction, crisp ink boundaries, elegant diffuse softbox reflections.
+### 3.2. Industrial Kraft Corrugated Cardboard (Shipping Carton)
+- Substrate: Raw fibrous kraft paperboard.
+- Texture: Natural cellulose micro-fibers, subtle vertical fluting core ridges, screen-printed grayscale/black ink marks.
 
-The primary goal of the Packaging Mockup workflow is to wrap flat, 2D vector graphic layouts or raw package assets onto realistic 3D boxes (gift boxes, corrugated shipping cartons, or paperboard containers) while maintaining professional commercial standards:
-- **Perspective Plane Mapping:** All technical text, brand markings, barcodes, icons, and product diagrams from the source graphic must warp seamlessly along the 3D perspective lines of the box panels. They must conform precisely to light falloff, three-point perspective, and distortion rules.
-- **Typographic Preservation:** The AI must preserve every alphanumeric character, logo font, and symbol of the source artwork. It is strictly forbidden to warp Vietnamese letters into illegible gibberish, messy runes, or distorted symbols.
+## 4. STAGING MODES
+- White Studio: Pure #FFFFFF seamless backdrop, 3/4 perspective revealing Front, Side, and Top panels, grounded by soft dark contact shadow.
+- Lifestyle Context: Modern kitchen shelf or light oak tabletop, shallow depth-of-field, organic soft window shadows.
 
----
-
-## 2. Structural Crease & Assembly Joint Physics (Seam & Flap Mechanics)
-
-To prevent the 3D mockup from appearing like a flat, computer-generated vector brick, incorporate natural fold mechanics:
-- **Paper Thickness Crease Highlights (Folded Crease Highlights):**
-  - *Principle:* True premium cardboard boxes exhibit a microscopic thickness along their folded edges (ranging from `1mm` to `1.5mm`). These folded edges catch a very thin, sharp, natural studio rim light (specular crease highlight) that defines the physical 3D box shape.
-  - *Engineering Prompt:* `"Model natural paper crease lines with a tiny paper edge thickness of approximately 1mm. Edges must capture soft, realistic studio highlight reflections."`
-- **Mechanical Flaps & Slight Seam Gaps:**
-  - Where the cardboard box lid folds in or where the paper flaps overlap at the back, introduce a microscopic, natural shadow gap. This soft, tight ambient occlusion line ensures the box looks like an assembled, physical object.
-
----
-
-## 3. Advanced Box Material Modeling
-
-Prompts must define the physical properties of the paper material:
-- **Premium Printed Color Box (Satin/Gloss Color Box):**
-  - *Properties:* High-quality, satin or semi-gloss finish. It must catch soft, diffuse studio reflections from softbox lights without creating an overexposed glare.
-  - *Prompt:* `"Add premium semi-gloss satin finish with elegant diffuse softbox reflections. Colors must appear saturated and deep with zero ink bleeds or pixelated spots."`
-- **Natural Kraft Recycled Cardboard (Kraft/Corrugated Cardboard):**
-  - *Properties:* Rough, unfinished texture with visible cellulose micro-fibers. Shows subtle corrugated vertical core ridges.
-  - *Prompt:* `"Apply realistic brown kraft paper micro-fibers and corrugated cardboard core texturing to ensure organic material fidelity."`
-
----
-
-## 4. Defect Prevention Checklist (Negative Guidelines)
-
-- **Perspective Distortion (Warping Clashes):** Ensure the typography and lines of the graphics align perfectly to the vanishing points of the box. Text must not skew awkwardly across plane transitions.
-- **Deformed / Rounded Corners (Gel Corners):** Box corners must remain straight and mathematically sharp. Avoid bloated, rounded corners that look like soft gel, wax, or rubber.
-- **Legibility Breakdown (Blurry Branding):** The Elmich logo, regulatory symbols, weight specifications, and barcode bars must remain sharp and readable. They must not dissolve into blurry pixels or artifacts.
-- **Unstable Box Panels (Dented Surfaces):** All panels of the mockup must be perfectly flat. Ensure there are no unrequested dents, warped surfaces, or crushed edges on the packaging walls.
+## 5. NEGATIVE CONSTRAINTS
+[NO: distorted perspective planes, warped lettering, gibberish typography, dented walls, crushed corners, floating box, blurry barcodes, color bleeding].

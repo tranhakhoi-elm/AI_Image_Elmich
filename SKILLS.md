@@ -39,6 +39,7 @@ Nghĩa là:
 |---|---|---|
 | [Design_Lifestyle_Concept.md](Design_Lifestyle_Concept.md) | `CONCEPT`, `SCENE_STAGING` | `analyzeConceptAndCamera`, `generateProductImage` (nhánh CONCEPT/STUDIO/TECH_PS "thinking prompt", nhánh SCENE_STAGING) |
 | [Design_Studio_Creative.md](Design_Studio_Creative.md) | `STUDIO` | `analyzeStudioConcept`, `generateProductImage` (thinking prompt) |
+| [Design_Studio_Props_Guide.md](Design_Studio_Props_Guide.md) | `STUDIO` (Đạo cụ & Tiêu chuẩn 10 ngành hàng) | `suggestPropsForConcept`, `StudioWorkflow.tsx`, `propMatrix.ts` |
 | [Design_Tech_Effects.md](Design_Tech_Effects.md) | `TECH_PS`, `TECH_EFFECTS` (loại `SEA_TECH_GENERATION`) | `analyzeTechConceptAndCamera`, `suggestTechConcepts`, `generateProductImage` (thinking prompt + nhánh TECH_EFFECTS) |
 | [Design_Color_Editing.md](Design_Color_Editing.md) | `COLOR_CHANGE` | `generateProductImage` |
 | [Design_Packaging_Mockup.md](Design_Packaging_Mockup.md) | `PACKAGING_MOCKUP` | `generateProductImage` |

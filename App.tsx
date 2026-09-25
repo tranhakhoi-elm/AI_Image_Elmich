@@ -62,8 +62,6 @@ import { ModelSelection } from './src/components/common/ModelSelection';
 import { AppHomeScreen, AppTile } from './src/components/common/AppHomeScreen';
 import { HistoryView } from './src/components/history/HistoryView';
 import {
-  CAMERA_APERTURES,
-  CAMERA_ISO,
   TONE_STYLES
 } from './constants';
 import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, getFallbackProps, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
@@ -496,7 +494,13 @@ const App: React.FC = () => {
         setSettings(prev => ({ ...prev, referenceImage: base64 }));
       } else if (type === 'product') {
         const newImages = await Promise.all(Array.from(files).map((file) => resizeImage(file as File)));
-        setSettings(prev => ({ ...prev, productImages: [...prev.productImages, ...newImages].slice(0, 5) }));
+        const isSingleProductWorkflow = ['TECH_PS', 'SCENE_STAGING', 'COLOR_CHANGE'].includes(settings.visualStyle);
+        setSettings(prev => ({
+          ...prev,
+          productImages: isSingleProductWorkflow ? newImages.slice(0, 1) : [...prev.productImages, ...newImages].slice(0, 5),
+          whiteBGMaterialsDescription: '',
+          whiteBGSelectedCategories: ['METAL'],
+        }));
       } else if (type === 'track') {
         const base64 = await resizeImage(files[0]);
         setSettings(prev => ({ ...prev, trackImage: base64 }));
@@ -1766,42 +1770,18 @@ const App: React.FC = () => {
 
   const renderCameraSettings = (onBack: () => void) => (
     <div className="space-y-5">
-      <div className="bg-[#242526]  rounded-xl p-4 space-y-4 border border-[#3E4042]">
-         <div className="space-y-2">
-            <div className="flex justify-between text-[9px] font-bold text-white uppercase"><span>Góc chụp</span><span className="text-[#caf0f8]">{settings.camera.angle}°</span></div>
-            <input type="range" min="-15" max="90" step="5" className="w-full h-1 bg-[#3A3B3C] rounded-lg appearance-none cursor-pointer" value={settings.camera.angle} onChange={e => setSettings({...settings, camera: {...settings.camera, angle: parseInt(e.target.value)}})} />
-         </div>
-         <div className="space-y-2">
-            <div className="flex justify-between text-[9px] font-bold text-white uppercase"><span>Tiêu cự</span><span className="text-[#caf0f8]">{settings.camera.focalLength}mm</span></div>
-            <input type="range" min="12" max="200" step="1" className="w-full h-1 bg-[#3A3B3C] rounded-lg appearance-none cursor-pointer" value={settings.camera.focalLength} onChange={e => setSettings({...settings, camera: {...settings.camera, focalLength: parseInt(e.target.value)}})} />
-         </div>
-         <div className="grid grid-cols-2 gap-3">
-           <div>
-              <label className="block text-[8px] font-bold text-white uppercase mb-1">Khẩu độ</label>
-              <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-[10px] text-white outline-none focus:border-[#caf0f8]" value={settings.camera.aperture} onChange={e => setSettings({...settings, camera: {...settings.camera, aperture: e.target.value}})}>
-                {CAMERA_APERTURES.map(a => <option key={a} value={a} className="bg-[#242526]">{a}</option>)}
-              </select>
-           </div>
-           <div>
-              <label className="block text-[8px] font-bold text-white uppercase mb-1">ISO</label>
-              <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-[10px] text-white outline-none focus:border-[#caf0f8]" value={settings.camera.iso} onChange={e => setSettings({...settings, camera: {...settings.camera, iso: e.target.value}})}>
-                {CAMERA_ISO.map(i => <option key={i} value={i} className="bg-[#242526]">{i}</option>)}
-              </select>
-           </div>
-         </div>
-      </div>
       <div className="grid grid-cols-1 gap-3">
         <div>
-           <label className="block text-[9px] font-bold text-white uppercase mb-1">Tỷ lệ</label>
-           <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-[10px] text-white outline-none" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+           <label className="block text-[9px] font-bold text-white uppercase mb-1">Tỷ lệ khung hình</label>
+           <select className="w-full bg-[#242526] border border-[#3E4042] rounded-lg p-2.5 text-xs text-white outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
               <option value="1:1" className="bg-[#242526]">1:1 Vuông</option><option value="16:9" className="bg-[#242526]">16:9 HD</option><option value="9:16" className="bg-[#242526]">9:16</option><option value="4:3" className="bg-[#242526]">4:3</option><option value="3:4" className="bg-[#242526]">3:4</option><option value="1:4" className="bg-[#242526]">1:4</option><option value="4:1" className="bg-[#242526]">4:1</option>
            </select>
         </div>
       </div>
       {renderModelSelection()}
       <div className="flex gap-2">
-        <button onClick={onBack} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
-        <button onClick={() => startGeneration()} className="flex-[2] bg-[#1877F2] text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl">Tạo ảnh</button>
+        <button onClick={onBack} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold hover:bg-[#3A3B3C] transition-colors">Quay lại</button>
+        <button onClick={() => startGeneration()} className="flex-[2] bg-[#1877F2] text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl hover:brightness-110 transition-all">Tạo ảnh</button>
       </div>
     </div>
   );
