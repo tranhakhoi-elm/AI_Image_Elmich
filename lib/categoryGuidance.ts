@@ -49,7 +49,7 @@ export async function inferProductCategory({ productName, productCode, freeText 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash",
       contents: {
         parts: [{
           text: `Bạn phân loại sản phẩm gia dụng Elmich vào 1 "dòng sản phẩm" (category) dựa trên thông tin sau: "${signal}".
@@ -93,7 +93,7 @@ async function synthesizeCategoryGuidance(visualStyle: string, productCategory: 
       .join("\n\n");
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash",
       contents: {
         parts: [{
           text: `Dưới đây là ${samples.length} ảnh sản phẩm dòng "${productCategory}" (phong cách "${visualStyle}") đã được đội ngũ Elmich đánh giá "Rất tốt!":

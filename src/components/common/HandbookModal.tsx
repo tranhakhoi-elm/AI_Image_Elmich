@@ -14,34 +14,34 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6">
+      <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6">
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-[#242526] border border-[#3E4042] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+          className="bg-[#242526] border border-[#3E4042] rounded-2xl w-full max-w-5xl h-[92vh] sm:h-[85vh] flex flex-col shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="p-4 sm:p-5 border-b border-[#3E4042] flex items-center justify-between bg-[#18191A]">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#1877F2]/20 border border-[#1877F2]/30 flex items-center justify-center text-[#1877F2]">
-                <BookOpen size={20} />
+          <div className="p-3 sm:p-5 border-b border-[#3E4042] flex items-center justify-between bg-[#18191A] shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#1877F2]/20 border border-[#1877F2]/30 flex items-center justify-center text-[#1877F2] shrink-0">
+                <BookOpen size={18} />
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Elmich AI Design Suite — Handbook & Kỹ năng (Skill)</h2>
-                <p className="text-xs text-gray-400">Tài liệu chuẩn hóa kiến trúc, hướng dẫn 11 công cụ đang hoạt động và nguyên tắc prompt</p>
+              <div className="min-w-0">
+                <h2 className="text-sm sm:text-lg font-bold text-white truncate">Elmich AI Design Suite — Handbook</h2>
+                <p className="text-[11px] sm:text-xs text-gray-400 hidden sm:block">Tài liệu chuẩn hóa kiến trúc, hướng dẫn công cụ và nguyên tắc prompt</p>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-[#3A3B3C] text-gray-400 hover:text-white transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg hover:bg-[#3A3B3C] text-gray-400 hover:text-white transition-colors shrink-0 ml-2"
             >
               <X size={20} />
             </button>
           </div>
 
           {/* Nav Tabs */}
-          <div className="flex items-center gap-1 px-4 py-2 bg-[#242526] border-b border-[#3E4042] overflow-x-auto text-xs font-bold">
+          <div className="flex items-center gap-1 px-3 sm:px-4 py-2 bg-[#242526] border-b border-[#3E4042] overflow-x-auto text-xs font-bold shrink-0 custom-scrollbar">
             <button
               onClick={() => setActiveTab('overview')}
               className={`px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'overview' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white hover:bg-[#3A3B3C]'}`}
@@ -142,12 +142,12 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
                       </thead>
                       <tbody className="divide-y divide-[#3E4042]">
                         <tr>
-                          <td className="p-2.5 font-bold text-white">Flash — gemini-2.5-flash / gemini-3.1-flash</td>
+                          <td className="p-2.5 font-bold text-white">Flash — gemini-3.8-flash / gemini-3.1-flash-image</td>
                           <td className="p-2.5 text-emerald-400">$0.30</td>
                           <td className="p-2.5 text-emerald-400">$2.50</td>
                         </tr>
                         <tr>
-                          <td className="p-2.5 font-bold text-white">Pro — gemini-2.5-pro / gemini-3-pro</td>
+                          <td className="p-2.5 font-bold text-white">Pro — gemini-3.1-pro-preview / gemini-3-pro-image</td>
                           <td className="p-2.5 text-amber-400">$1.25</td>
                           <td className="p-2.5 text-amber-400">$10.00</td>
                         </tr>
@@ -275,7 +275,7 @@ export const HandbookModal: React.FC<HandbookModalProps> = ({ isOpen, onClose })
                       Lựa chọn model theo tác vụ (Flash / Pro)
                     </div>
                     <p className="text-gray-400">Trước khi tạo ảnh ở bất kỳ công cụ nào, người dùng chọn độ phân giải (1K/2K/4K) và tier model (<strong>Flash</strong> — mặc định, nhanh & rẻ; hoặc <strong>Pro</strong> — chất lượng cao hơn, tối ưu cho mockup bao bì) ngay trước khi gửi prompt. Lựa chọn này áp dụng cho cả tạo ảnh chính, chỉnh sửa ảnh (modal &ldquo;Chỉnh sửa ảnh với AI&rdquo;) và chế độ tạo ảnh trong Trợ lý Chat AI.</p>
-                    <p className="text-gray-400">Các tác vụ phân tích nội bộ (gợi ý prompt, gợi ý đạo cụ, trích xuất thông số bao bì) dùng cố định <strong>gemini-2.5-flash</strong>; riêng phân tích & dịch nội dung bao bì dùng <strong>gemini-2.5-pro</strong> để đảm bảo độ chính xác OCR.</p>
+                    <p className="text-gray-400">Các tác vụ phân tích nội bộ (gợi ý prompt, gợi ý đạo cụ, bóc tách chất liệu, trích xuất thông số bao bì) dùng <strong>gemini-3.8-flash</strong>; riêng phân tích & dịch nội dung bao bì và đối thoại trợ lý dùng <strong>gemini-3.1-pro-preview</strong> để đảm bảo độ chính xác và chất lượng cao.</p>
                   </div>
                 </div>
               </div>

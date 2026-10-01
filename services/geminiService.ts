@@ -43,48 +43,6 @@ const CHAT_SYSTEM_INSTRUCTION = `${chatAssistantHandbook}
 
 Luôn ưu tiên trả lời bằng tiếng Việt, trừ khi người dùng chủ động dùng ngôn ngữ khác. Trả lời ngắn gọn, đi thẳng vào tư vấn thực tế — KHÔNG liệt kê hay trích dẫn lại nguyên văn cẩm nang trên cho người dùng đọc.`;
 
-export const CONDENSED_LIFESTYLE_GUIDE = `
-QUY CHUẨN LIFESTYLE ELMICH:
-- Bối cảnh: Sang trọng, hiện đại, tối giản, gọn gàng (Aesthetic Order), không bừa bộn. Chừa 30% khoảng trống âm (negative space) sạch để chèn chữ/banner.
-- 3 Phong cách nội thất chính:
-  + Style A (Japandi / Oakwood): Gỗ sồi sáng, đá marble trắng vân mây, tường be nhạt, sáng sớm tự nhiên dịu nhẹ. Hợp sản phẩm màu kem, pastel, trắng, inox sáng.
-  + Style B (Modern Industrial Charcoal): Bê tông mài tối, đá phiến xám/đen, gạch thẻ sẫm, ánh sáng tương phản kịch tính. Hợp sản phẩm màu đỏ đậm, đen nhám, inox xước, xám đậm.
-  + Style C (Cozy Farmhouse): Gỗ óc chó trầm, ánh hoàng hôn ấm áp, rèm lanh, chi tiết đồng/ấm cúng. Hợp sản phẩm tráng men, đồng ấm, gang đúc.
-- Đạo cụ & Nguyên liệu: BẮT BUỘC logic với công năng sản phẩm (ấm/bình trà đi với lát cam khô, thanh quế, hoa cúc; nồi/chảo đi với cá hồi/bò áp chảo, măng tây, chanh; máy xay đi với trái cây tươi mọng nước, đá viên trong suốt).
-- Ánh sáng & Camera: Ánh sáng tự nhiên (nắng sớm/hoàng hôn/xuyên rèm), bóng đổ mềm. Lens 50mm hoặc 85mm, f/2.2-f/3.5, góc 30-45° hoặc ngang tầm mắt, bố cục 1/3.
-`;
-
-export const CONDENSED_STUDIO_GUIDE = `
-QUY CHUẨN STUDIO SÁNG TẠO ELMICH:
-- Phông nền: Plain Paper Background trơn 1 màu, BẮT BUỘC tone-sur-tone (cùng tone màu với sản phẩm). Chừa khoảng trống âm để chèn chữ thương hiệu.
-- Bục đỡ (Plinth) - Bắt buộc luân phiên theo màu/chất liệu sản phẩm: Gỗ sồi/óc chó (tông ấm/pastel), đĩa gốm mỏng (pastel nhẹ), kim loại chải xước (chrome/bạc), mica/lucite trong mờ (hiện đại), đá travertine/bê tông (công nghiệp/tối).
-- Ánh sáng Studio chuyên nghiệp: Hệ thống 3-point softbox (Key, Fill, Rim lights).
-  + Inox/kim loại: Diffuser mềm, vệt sáng xước satin (brushed specular highlight) sắc sảo.
-  + Nhựa/sơn tĩnh điện mờ: Ánh sáng định hình khối rõ nét.
-  + Thủy tinh: Backlight hắt viền tôn độ trong suốt và khúc xạ.
-- Camera: 50mm hoặc 85mm, f/8 hoặc f/5.6, ISO 100, góc ngang tầm mắt hoặc lệch nhẹ 15-30°.
-`;
-
-export const CONDENSED_TECH_GUIDE = `
-QUY CHUẨN TECH USP ELMICH:
-- Bối cảnh: Studio tối sang trọng hoặc nền gradient công nghệ cao, làm nổi bật hiệu năng vật lý.
-- Màu ánh sáng công nghệ theo bản chất tính năng:
-  + Nhiệt/gia nhiệt/nướng: Dải màu cam hổ phách, đỏ nhiệt quang tinh tế (hạn chế chói lòe).
-  + Làm mát/lọc khí/hút ẩm/khử khuẩn: Xanh ngọc bích (teal), xanh dương neon, tia UV tím dịu.
-  + Cảm ứng điện từ/sóng âm: Tím điện từ, dải sóng ánh sáng thanh mảnh.
-- Đồ họa hiệu ứng: Luồng khí đối lưu xoáy mềm mại, mặt cắt xuyên thấu (see-through cutaway), hạt vi nhiệt tinh tế, không làm che khuất logo hay biến dạng sản phẩm gốc.
-`;
-
-const parseBase64Image = (dataUri: string): { mimeType: string; data: string } => {
-  const match = dataUri.match(/^data:([^;]+);base64,(.+)$/);
-  if (match) return { mimeType: match[1], data: match[2] };
-  const commaIdx = dataUri.indexOf(',');
-  if (commaIdx !== -1) {
-    return { mimeType: 'image/jpeg', data: dataUri.slice(commaIdx + 1) };
-  }
-  return { mimeType: 'image/jpeg', data: dataUri };
-};
-
 const resizeImageToQuality = (base64Data: string, quality: '1K' | '2K' | '4K'): Promise<string> => {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -164,7 +122,7 @@ const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor
           // Image is taller than target. Need to pad width.
           newWidth = Math.round(img.height * targetRatio);
         } else {
-          if (base64Data.startsWith('data:image/jpeg')) {
+          if (base64Data.startsWith('data:image/png')) {
             resolve(base64Data);
           } else {
             const canvas = document.createElement('canvas');
@@ -173,7 +131,7 @@ const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0);
-              resolve(canvas.toDataURL('image/jpeg', 0.88));
+              resolve(canvas.toDataURL('image/png'));
             } else {
               resolve(base64Data);
             }
@@ -193,8 +151,8 @@ const padImageToAspectRatio = (base64Data: string, aspectRatio: string, padColor
           const offsetY = Math.round((newHeight - img.height) / 2);
           
           ctx.drawImage(img, offsetX, offsetY);
-          // Xuất JPEG 0.88 để giảm 85% dung lượng payload Base64 gửi sang Gemini API
-          resolve(canvas.toDataURL('image/jpeg', 0.88));
+          // Luôn xuất định dạng PNG
+          resolve(canvas.toDataURL('image/png'));
         } else {
           resolve(base64Data);
         }
@@ -318,8 +276,7 @@ Return ONLY a JSON object with this exact structure:
       model: "gemini-2.5-flash",
       contents: { parts },
       config: {
-        responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 }
+        responseMimeType: "application/json"
       }
     });
 
@@ -345,7 +302,6 @@ export const getAiSuggestions = async (settings: { productName: string, visualSt
       contents: `Gợi ý cho: "${settings.productName}". ${styleContext}`,
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -384,42 +340,52 @@ export const analyzeConceptAndCamera = async (productName: string, dimensions: s
     const categoryGuidanceBlock = categoryGuidance
       ? `
 === CHỈ DẪN THAM KHẢO CHO DÒNG SẢN PHẨM NÀY ===
-Đúc kết từ các ảnh cùng dòng sản phẩm đã được duyệt:
+Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — đây là xu hướng thẩm mỹ chung được ưa chuộng cho cả dòng sản phẩm, KHÔNG PHẢI một công thức cố định phải chép lại y hệt cho sản phẩm cụ thể đang phân tích. Hãy dùng nó như 1 gợi ý định hướng, nhưng BẮT BUỘC vẫn điều chỉnh chi tiết cụ thể (không gian, đạo cụ, ánh sáng...) theo đúng DANH MỤC/màu sắc/chất liệu THẬT của sản phẩm ở Bước 1 bên dưới — hai sản phẩm khác loại trong cùng dòng vẫn phải ra concept khác nhau rõ rệt:
 ${categoryGuidance}
 ========================================
 `
       : "";
 
     const prompt = `
-${CONDENSED_LIFESTYLE_GUIDE}
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và các lỗi cần tránh của phong cách này:
+${designLifestyleConcept}
+========================================
 ${categoryGuidanceBlock}
-Bạn là chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm của Elmich.
-Dựa vào quy chuẩn thiết kế, hãy đề xuất ý tưởng Lifestyle:
+Bạn là Giám đốc Sáng tạo Nhiếp ảnh Ẩm thực & Prompt Engineer chuyên nghiệp của Elmich.
+Dựa vào quy chuẩn phong cách thiết kế phía trên, hãy phân tích sản phẩm và đề xuất 5 Ý tưởng phối cảnh Lifestyle ĐA DẠNG & TOÀN DIỆN:
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
-${refImage ? "Dựa vào style của ảnh mẫu đính kèm để đề xuất." : ""}
+${refImage ? "Tôi có gửi kèm một ảnh mẫu phong cách (Style Reference). Hãy dựa vào style của ảnh này để đề xuất." : ""}
 
-YÊU CẦU ĐỀ XUẤT:
-1. Đề xuất 5 Concept Lifestyle phong phú (title bằng tiếng Việt, prompt chi tiết).
-2. ĐA DẠNG: 5 concept khác biệt rõ rệt (phối hợp các Style A/B/C và các khung giờ ánh sáng khác nhau: sáng sớm, hoàng hôn, nắng xiên).
-3. Đạo cụ & nguyên liệu PHẢI khớp đúng với công năng thực tế của sản phẩm.
-4. MỖI CONCEPT VIẾT BẰNG TIẾNG VIỆT, XUỐNG DÒNG RÕ RÀNG:
-   - [Phong cách nội thất cụ thể (Style A/B/C), hình khối đặc trưng của sản phẩm]
-   - [Không gian bối cảnh, đạo cụ đúng công năng, chừa khoảng trống âm]
-   - [Cách đánh sáng tự nhiên theo khung giờ đã chọn]
-   - [Màu sắc chủ đạo hài hòa với màu thật của sản phẩm]
-5. Đề xuất bộ thông số Camera lý tưởng (Góc chụp, tiêu cự 50mm hoặc 85mm, khẩu độ lớn).
+BƯỚC 1 — PHÂN TÍCH SẢN PHẨM & CÂU CHUYỆN SỬ DỤNG:
+- Xác định chính xác DANH MỤC sản phẩm và công năng sử dụng thực tế (nấu nướng, pha trà/cà phê, nướng bánh, xay sinh tố, giữ nhiệt, là ủi, hút bụi...).
+- Quan sát kỹ hình khối, đường nét, chất liệu bề mặt và bảng màu sắc đặc trưng của sản phẩm.
+- Lựa chọn các trường phái không gian ẩm thực phù hợp nhất (Modern Mediterranean, Italian Minimalist, Japandi Organic, Parisian Bakery, Scandinavian, Cozy Farmhouse...).
 
-Trả về JSON với mảng concepts (title, prompt) và suggestedCamera.
+BƯỚC 2 — ĐỀ XUẤT 5 PHONG CÁCH TOÀN DIỆN (GỒM CẢ BỐI CẢNH + ĐẠO CỤ + VỊ TRÍ ĐẶT):
+Với MỖI concept trong số 5 concept, bạn hãy cung cấp đầy đủ 4 trường thông tin:
+1. 'title': Tên phong cách (tiếng Việt ngắn gọn, gợi cảm xúc, ví dụ: "Bình minh Địa Trung Hải & Bữa sáng", "Bếp Ý Tối giản Sang trọng", "Không gian Japandi Mộc mạc & Thư thái", "Bếp bánh ấm cúng phong cách Pháp", "Căn hộ Bắc Âu Hiện đại & Năng động").
+2. 'prompt': Bản mô tả bối cảnh chi tiết (tiếng Việt), mạch lạc, giàu sức sống và tương tác ẩm thực chân thực:
+   - Mô tả phong cách nội thất kiến trúc, vật liệu mặt bàn (đá cẩm thạch, gỗ sồi, bê tông mài, gạch gốm...)
+   - Mô tả tương tác ẩm thực sống động (thức ăn tươi đang sơ chế, làn hơi ấm bốc nhẹ, sốt bóng mịn...)
+   - Cách ánh sáng tự nhiên rọi vào (nắng sớm xiên cửa sổ, ánh sáng dịu qua rèm, hoàng hôn ấm áp)
+   - Tông màu tổng thể hài hòa, tôn lên màu sắc và chất liệu của sản phẩm
+3. 'props': Danh sách 8-10 đạo cụ (props) cụ thể ăn khớp hoàn hảo với concept đó theo mô hình 3 tầng:
+   - Tầng 1: Nguyên liệu/thức ăn tươi ngon đúng công năng của sản phẩm
+   - Tầng 2: Đồ dùng bàn ăn (tableware), thớt gỗ, đĩa gốm artisan, thìa nĩa, lọ gia vị nắp bần
+   - Tầng 3: Chi tiết khí quyển & cảm xúc (nhánh thảo mộc đọng sương, vết bột mì lấm tấm, hơi nước ấm)
+   (Mỗi đạo cụ mô tả cụ thể về chất liệu và trạng thái, ví dụ "vài nhánh hương thảo tươi trên đĩa gốm mờ", "lọ dầu ô liu thủy tinh thanh mảnh")
+4. 'placement': Vị trí, góc đặt sản phẩm và tỷ lệ tối ưu trong khung hình (ví dụ: "Đặt trên mặt bàn đá trắng lệch 1/3 bên trái, hướng góc 45 độ đón nắng sớm").
+
+BẮT BUỘC ĐA DẠNG: 5 concept phải mang 5 tâm trạng/không gian và bảng màu khác biệt nhau rõ rệt, không lặp lại cùng một công thức!
+
+Trả về JSON với mảng concepts (mỗi phần tử gồm title, prompt, props, placement) và suggestedCamera.
 `;
 
     const parts: any[] = [{ text: prompt }];
-    images.forEach(img => {
-      const { mimeType, data } = parseBase64Image(img);
-      parts.push({ inlineData: { mimeType, data } });
-    });
+    images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
     if (refImage) {
-      const { mimeType, data } = parseBase64Image(refImage);
-      parts.push({ inlineData: { mimeType, data } });
+      parts.push({ inlineData: { data: refImage.split(',')[1], mimeType: 'image/png' } });
     }
 
     const response = await ai.models.generateContent({
@@ -427,8 +393,7 @@ Trả về JSON với mảng concepts (title, prompt) và suggestedCamera.
       contents: { parts },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
-        temperature: 1.0,
+        temperature: 1.15,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -438,23 +403,32 @@ Trả về JSON với mảng concepts (title, prompt) và suggestedCamera.
                 type: Type.OBJECT,
                 properties: {
                   title: { type: Type.STRING },
-                  prompt: { type: Type.STRING }
+                  prompt: { type: Type.STRING },
+                  props: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  placement: { type: Type.STRING }
                 },
-                required: ["title", "prompt"]
+                required: ["title", "prompt", "props", "placement"]
               }
+            },
+            suggestedCamera: {
+              type: Type.OBJECT,
+              properties: {
+                angle: { type: Type.NUMBER },
+                focalLength: { type: Type.NUMBER },
+                aperture: { type: Type.STRING },
+                iso: { type: Type.STRING },
+                isMacro: { type: Type.BOOLEAN }
+              },
+              required: ["angle", "focalLength", "aperture", "iso", "isMacro"]
             }
           },
-          required: ["concepts"]
+          required: ["concepts", "suggestedCamera"]
         }
       }
     });
 
     trackGeminiUsage(response, productName || "Phân tích Concept");
-    const parsed = JSON.parse(response.text || "{}");
-    return {
-      concepts: parsed.concepts || [],
-      suggestedCamera: { angle: 0, focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false }
-    };
+    return JSON.parse(response.text || "{}") as AIConceptAnalysis;
   } catch (error: any) {
     if (error.message?.includes("Requested entity was not found")) throw new Error("AUTH_ERROR");
     throw error;
@@ -466,31 +440,37 @@ export const analyzeTechConceptAndCamera = async (productName: string, techDesc:
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const prompt = `
-${CONDENSED_TECH_GUIDE}
-Bạn là chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm của Elmich.
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và đặc tả kỹ năng cho tác vụ này:
+${designTechEffects}
+========================================
+
+Bạn là một chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm chuyên nghiệp của Elmich.
+Dựa TRÊN QUY CHUẨN TRÊN, hãy thực hiện phân tích kỹ thuật:
 Phân tích kỹ thuật cho: "${productName}". Tính năng: "${techDesc}". Kích thước: ${dimensions}.
 
+BƯỚC 1 — PHÂN TÍCH TRƯỚC KHI ĐỀ XUẤT (không cần viết ra câu trả lời của bước này):
+- Xác định DANH MỤC sản phẩm (nồi chiên không dầu, quạt/máy lọc không khí, bếp từ, máy xay, ấm siêu tốc...) và cơ chế vật lý thực tế đằng sau tính năng "${techDesc}" (đối lưu khí nóng, cảm ứng điện từ, áp suất, ly tâm...) để hiệu ứng đồ họa mô tả ĐÚNG bản chất vật lý, không tưởng tượng tùy tiện.
+- Xác định 1-2 màu neon/ánh sáng phù hợp nhất với bản chất tính năng đó (nhiệt = cam/đỏ, làm mát/lọc khí = xanh dương/ngọc bích, điện từ = tím/xanh điện...).
+
 YÊU CẦU ĐỀ XUẤT:
-1. Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt' chi tiết) và suggestedCamera.
-2. ĐA DẠNG: 5 concept thể hiện 5 góc độ khác nhau (toàn cảnh luồng khí, cận cảnh mặt cắt xuyên thấu, góc từ trên xuống, góc thấp nhấn mạnh sức mạnh, góc đồ họa hướng dòng chảy).
-3. YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG:
-- [Mô tả phong cách hiệu năng công nghệ, đúng bản chất vật lý]
+1. Trả về JSON 5 concept (mỗi concept gồm 'title' bằng tiếng Việt và 'prompt') và camera.
+2. BẮT BUỘC ĐA DẠNG: 5 concept phải thể hiện 5 GÓC ĐỘ khác nhau của cùng 1 tính năng (ví dụ: toàn cảnh luồng khí bao quanh sản phẩm, cận cảnh mặt cắt xuyên thấu bên trong, góc từ trên xuống cho thấy vùng tác động, góc thấp nhấn mạnh sức mạnh, góc kèm biểu đồ/mũi tên chỉ hướng dòng chảy) — không lặp lại cùng 1 bố cục hiệu ứng.
+3. YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
+), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+- [Mô tả phong cách hiệu năng công nghệ, đúng bản chất vật lý đã xác định ở Bước 1]
 - [Mô tả không gian hiển thị, bối cảnh tối sang trọng]
 - [Mô tả cách đánh sáng phát quang tinh tế theo đúng màu đã chọn]
-- [Mô tả cảm giác, màu sắc dải nhiệt/lạnh phù hợp]
-- [Chống lòe loẹt, chống lỗi bóng mờ]`;
+- [Mô tả cảm giác, màu sắc của dải nhiệt/lạnh phù hợp]
+- [Quy chuẩn chống lòe loẹt, chống lỗi bóng mờ]`;
     const parts: any[] = [{ text: prompt }];
-    images.forEach(img => {
-      const { mimeType, data } = parseBase64Image(img);
-      parts.push({ inlineData: { mimeType, data } });
-    });
+    images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -504,9 +484,16 @@ YÊU CẦU ĐỀ XUẤT:
                 },
                 required: ["title", "prompt"]
               } 
-            } 
+            },
+            suggestedCamera: {
+              type: Type.OBJECT,
+              properties: {
+                angle: { type: Type.NUMBER }, focalLength: { type: Type.NUMBER }, aperture: { type: Type.STRING }, iso: { type: Type.STRING }, isMacro: { type: Type.BOOLEAN }
+              },
+              required: ["angle", "focalLength", "aperture", "iso", "isMacro"]
+            }
           },
-          required: ["concepts"]
+          required: ["concepts", "suggestedCamera"]
         }
       }
     });
@@ -514,7 +501,7 @@ YÊU CẦU ĐỀ XUẤT:
     const result = JSON.parse(response.text || "{}");
     return {
       concepts: result.concepts || [],
-      suggestedCamera: { angle: 0, focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false }
+      suggestedCamera: result.suggestedCamera || { angle: 0, focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false }
     };
   } catch (error: any) { throw error; }
 };
@@ -640,7 +627,6 @@ ${categoryGuidanceNote}
 Trả về định dạng JSON với 'placement' (string) và 'props' (mảng ${count} chuỗi, mỗi chuỗi miêu tả ngắn gọn nhưng có chi tiết hình ảnh cụ thể về một đạo cụ hoặc yếu tố môi trường).`,
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         temperature: isMore ? 1.3 : 1,
         responseSchema: {
           type: Type.OBJECT,
@@ -686,18 +672,19 @@ export const suggestTechVisuals = async (productName: string, concept: string): 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `
-${CONDENSED_TECH_GUIDE}
+=== QUY CHUẨN THAM KHẢO (Tech Effects) ===
+${designTechEffects}
+========================================
 
 Sản phẩm: ${productName}. Tech Concept: "${concept}".
 YÊU CẦU:
-1. Xác định cơ chế vật lý thực tế của concept trên (đối lưu khí nóng, hơi nước áp suất, cảm ứng điện từ, ly tâm, sóng âm...).
-2. Đề xuất 'placement': Vị trí và tỷ lệ sản phẩm trong khung hình.
-3. Liệt kê 10 hiệu ứng đồ họa/visual elements cụ thể, khớp đúng bản chất công nghệ.
-4. ĐA DẠNG: 10 hiệu ứng khác nhau về vị trí (trong/ngoài/mặt cắt) và hình dạng (xoáy/tia/tỏa tròn).
+1. Xác định DANH MỤC sản phẩm và cơ chế vật lý thực tế đằng sau concept trên (đối lưu khí nóng, hơi nước áp suất, cảm ứng điện từ, ly tâm, sóng âm khử khuẩn...).
+2. Suy luận sâu và đề xuất 'placement': Vị trí và tỷ lệ sản phẩm (cách đặt sản phẩm, tỷ lệ so với khung hình) sao cho hiệu ứng có đủ không gian hiển thị.
+3. Liệt kê 10 hiệu ứng đồ họa/visual elements đi kèm, mỗi hiệu ứng viết CÓ CHI TIẾT HÌNH ẢNH cụ thể (ví dụ "luồng khí nóng màu cam xoáy hình trôn ốc bao quanh giỏ chiên" thay vì chỉ "luồng khí nóng") và phải khớp đúng cơ chế vật lý đã xác định ở bước 1 — không dùng hiệu ứng chung chung không liên quan tính năng thật.
+4. BẮT BUỘC ĐA DẠNG: 10 hiệu ứng phải khác nhau về vị trí xuất hiện (bên trong/bên ngoài/mặt cắt), hình dạng (xoáy/tia thẳng/tỏa tròn/gợn sóng) và cường độ — không lặp lại cùng 1 kiểu hiệu ứng dưới tên gọi khác nhau.
 Trả về JSON với 'placement' (string) và 'props' (array of strings).`,
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         responseSchema: {
           type: Type.OBJECT,
           properties: { 
@@ -723,19 +710,22 @@ export const suggestTechConcepts = async (productName: string, title: string): P
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `
-${CONDENSED_TECH_GUIDE}
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+Dưới đây là tài liệu quy chuẩn phong cách và đặc tả kỹ năng cho tác vụ này:
+${designTechEffects}
+========================================
 
 Sản phẩm: ${productName}, Tiêu đề: ${title}. Mô tả 3 ý tưởng hiển thị trên mặt nước biển đêm theo đúng Quy Chuẩn Hiệu ứng Công nghệ.
-ĐA DẠNG: 3 ý tưởng khác nhau về bố cục sóng (gợn nhẹ / xoáy cuộn / tách dải) và tông màu neon (ngọc bích / xanh dương / tím).
+BẮT BUỘC ĐA DẠNG: 3 ý tưởng phải khác nhau rõ rệt về bố cục sóng (gợn nhẹ lăn tăn / xoáy cuộn mạnh / tách lớp thành dải) và tông màu neon (xanh ngọc bích / xanh dương đậm / pha ánh tím) — không lặp lại cùng 1 kiểu chuyển động sóng hay cùng 1 tông màu giữa 3 ý tưởng.
 JSON array với 'title' (tiếng Việt) và 'prompt'.
-YÊU CẦU CHO 'prompt': Viết bằng tiếng Việt, mạch lạc, xuống dòng:
-- [Phong cách và cấu trúc hiệu ứng sóng nước]
-- [Nền mặt biển ẩm mượt, tinh khôi]
-- [Cách đánh sáng phát quang, ánh neon phản chiếu]
-- [Cảm giác, màu sắc chủ đạo]`,
+YÊU CẦU CHO 'prompt': Viết 100% bằng tiếng Việt, mạch lạc, BẮT BUỘC XUỐNG DÒNG (dùng \
+), KHÔNG viết tên tiêu chí, chỉ ghi nội dung bắt đầu bằng gạch đầu dòng:
+- [Mô tả phong cách và cấu trúc hiệu ứng của sóng nước đại dương rực rỡ]
+- [Mô tả nền mặt biển ẩm mượt, tinh khôi]
+- [Mô tả cách đánh sáng phát quang, ánh neon phản chiếu xanh lam/ngọc bích]
+- [Mô tả cảm giác, màu sắc chủ đạo, chất lượng hoàn hảo]`,
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         responseSchema: {
           type: Type.OBJECT,
           properties: { 
@@ -765,27 +755,29 @@ export const analyzeStagingScene = async (concept: string, realSceneImg: string,
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const prompt = `
-${CONDENSED_LIFESTYLE_GUIDE}
+=== QUY CHUẨN THAM KHẢO (Lifestyle & Scene Staging) ===
+${designLifestyleConcept}
+========================================
 
-Bạn là chuyên gia Home Staging. Bạn được cung cấp 2 ảnh: (1) ảnh không gian phòng thực tế, (2) ảnh tham khảo phong cách. Concept: "${concept}".
-YÊU CẦU:
-1. Nhận diện không gian ảnh (1), vị trí trống để thêm đạo cụ mà không che sản phẩm chính.
-2. Nắm bắt tông màu, mood ảnh (2).
-3. Đề xuất 10 vật phẩm trang trí thêm vào phòng (1), chi tiết chất liệu/vị trí, không bừa bộn (Aesthetic Order).
-Trả về JSON 10 vật phẩm trang trí.`;
-    const realImgPart = parseBase64Image(realSceneImg);
-    const refImgPart = parseBase64Image(refStyleImg);
+Bạn là chuyên gia Home Staging cho ảnh sản phẩm thương mại. Bạn được cung cấp 2 ảnh: (1) ảnh không gian phòng thực tế sẽ đặt sản phẩm vào, (2) ảnh tham khảo phong cách mong muốn. Concept mô tả thêm: "${concept}".
+
+YÊU CẦU PHÂN TÍCH:
+1. Quan sát ảnh (1) để nhận diện loại không gian (bếp/phòng khách/bàn ăn...), nội thất/màu sắc sẵn có, và các vị trí trống hợp lý để thêm đạo cụ mà không che khuất sản phẩm chính.
+2. Quan sát ảnh (2) để nắm bắt tông màu, mood và loại vật dụng đặc trưng của phong cách tham khảo.
+3. Đề xuất 10 vật phẩm trang trí thêm vào phòng (1), kết hợp hài hòa giữa nội thất sẵn có của (1) và phong cách của (2) — mỗi vật phẩm viết CÓ CHI TIẾT chất liệu/vị trí đặt (ví dụ "bình gốm nhỏ men mờ đặt góc trái quầy bếp" thay vì chỉ "bình gốm").
+4. BẮT BUỘC ĐA DẠNG VÀ THỰC TẾ: không liệt kê 2 vật tương tự nhau; ưu tiên các nhóm khác nhau (cây xanh/hoa, vật dụng bếp liên quan trực tiếp tới sản phẩm nếu ảnh (1) là bếp, vải/khăn trải, ánh sáng trang trí, vật trang trí nhỏ). Tuân thủ nguyên tắc "Aesthetic Order" của quy chuẩn — không đề xuất vật gây rối mắt, không hợp không gian, hoặc làm bừa bộn (mục 2 và Defect Prevention Checklist của quy chuẩn).
+
+Trả về JSON 10 vật phẩm trang trí thêm vào phòng.`;
     const parts: any[] = [
       { text: prompt },
-      { inlineData: { data: realImgPart.data, mimeType: realImgPart.mimeType } },
-      { inlineData: { data: refImgPart.data, mimeType: refImgPart.mimeType } }
+      { inlineData: { data: realSceneImg.split(',')[1], mimeType: 'image/png' } },
+      { inlineData: { data: refStyleImg.split(',')[1], mimeType: 'image/png' } }
     ];
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         responseSchema: {
           type: Type.OBJECT,
           properties: { items: { type: Type.ARRAY, items: { type: Type.STRING } } }
@@ -805,46 +797,50 @@ export const analyzeStudioConcept = async (productName: string, dimensions: stri
     const categoryGuidanceBlock = categoryGuidance
       ? `
 === CHỈ DẪN THAM KHẢO CHO DÒNG SẢN PHẨM NÀY ===
-Đúc kết từ các ảnh cùng dòng sản phẩm đã duyệt:
+Đúc kết từ các ảnh cùng dòng sản phẩm đã được đội ngũ Elmich đánh giá "Rất tốt!" trước đây — đây là xu hướng thẩm mỹ chung được ưa chuộng cho cả dòng sản phẩm, KHÔNG PHẢI một công thức cố định phải chép lại y hệt cho sản phẩm cụ thể đang phân tích. Hãy dùng nó như 1 gợi ý định hướng, nhưng BẮT BUỘC vẫn điều chỉnh chi tiết cụ thể (chất liệu bục, tông màu nền, góc máy...) theo đúng hình khối/màu sắc/chất liệu THẬT của sản phẩm ở Bước 1 bên dưới — hai sản phẩm khác loại trong cùng dòng vẫn phải ra concept khác nhau rõ rệt:
 ${categoryGuidance}
 ========================================
 `
       : "";
 
     const prompt = `
-${CONDENSED_STUDIO_GUIDE}
+=== ĐỌC QUY CHUẨN TRƯỚC KHI THỰC HIỆN (BẮT BUỘC) ===
+${designStudioCreative}
+========================================
 ${categoryGuidanceBlock}
-Bạn là chuyên gia Prompt Engineer và Giám đốc sáng tạo nhiếp ảnh sản phẩm của Elmich.
-Dựa vào quy chuẩn Studio, hãy phân tích:
+Bạn là Giám đốc Sáng tạo Nhiếp ảnh Studio Thương mại của Elmich.
+Dựa vào quy chuẩn chụp studio sáng tạo phía trên, hãy phân tích sản phẩm và đề xuất 5 Ý tưởng Studio TOÀN DIỆN (GỒM CẢ BỐI CẢNH + ĐẠO CỤ STUDIO + VỊ TRÍ ĐẶT):
 Sản phẩm: "${productName}". Kích thước: ${dimensions}.
 
-YÊU CẦU ĐẶC BIỆT CHO STUDIO CONCEPT:
-1. Đề xuất 5 Concept Studio phong phú (title bằng tiếng Việt, prompt chi tiết).
-2. ĐA DẠNG: Mỗi concept dùng 1 loại bục/plinth khác nhau ăn khớp màu sản phẩm (gỗ sồi, gốm mỏng, kim loại chải xước, mica trong mờ, đá travertine) và 1 sắc thái ánh sáng khác nhau.
-3. MỖI CONCEPT VIẾT BẰNG TIẾNG VIỆT, XUỐNG DÒNG RÕ RÀNG:
-   - [Phong cách studio cao cấp, hình khối đặc trưng của sản phẩm]
-   - [Màu sắc nền giấy trơn cùng tone với màu thật của sản phẩm (tone-sur-tone)]
-   - [Cách đánh sáng đa điểm 3-point softbox tương tác với chất liệu sản phẩm]
-   - [Cấu trúc bóng đổ đa tầng và khoảng trống chèn chữ]
-4. RÀNG BUỘC: Nền giấy trơn cùng màu sản phẩm, sản phẩm gọn trong khung hình, chừa khoảng trống âm.
-5. Đề xuất bộ thông số Camera lý tưởng cho Studio.
+BƯỚC 1 — PHÂN TÍCH HÌNH KHỐI, CHẤT LIỆU VÀ MÀU SẮC SẢN PHẨM:
+- Quan sát kỹ hình khối đặc trưng của sản phẩm (trụ tròn, khối hộp chữ nhật, tay cầm, vòi, nắp...) để thiết lập hướng chiếu sáng rim light / kickers.
+- Xác định chất liệu bề mặt (inox bóng gương, nhôm xước mờ satin, nhựa phủ nhám, thủy tinh trong suốt) để chọn loại tản sáng (diffuser) tương ứng.
+- Xác định chính xác tông màu chủ đạo để tính toán màu nền giấy tone-sur-tone liền mạch (seamless paper background).
 
-Trả về JSON với 5 concepts (title, prompt) và suggestedCamera.
+BƯỚC 2 — ĐỀ XUẤT 5 CONCEPT STUDIO TOÀN DIỆN:
+Với MỖI concept trong 5 concept, bạn cung cấp 4 trường thông tin:
+1. 'title': Tên concept studio (tiếng Việt ngắn gọn, ví dụ: "Tối giản Hiện đại Tone-sur-tone", "Ánh sáng Kịch tính & Halo Hậu cảnh", "Bục Kiến trúc Đa tầng Tinh tế", "Studio Tinh khiết Softbox Đa điểm", "Nghệ thuật Tương phản Đẳng cấp").
+2. 'prompt': Bản mô tả chi tiết bố cục studio, màu nền giấy tone-sur-tone, cách đánh sáng 3-point (Key, Fill, 2 Rim lights, Backlight halo), cấu trúc bóng đổ đa tầng (contact shadow, key shadow).
+3. 'props': Danh sách 6-8 đạo cụ studio tối giản ăn khớp hoàn hảo với concept và màu sắc sản phẩm:
+   - 1 bục plinth phù hợp (bục đá travertine vân tự nhiên, khối bê tông mài, đĩa gốm mờ, khối gỗ sồi sáng màu, trụ kim loại chải xước, hoặc bục mica trong mờ)
+   - 2-3 phụ kiện hoặc nguyên liệu tối giản liên quan đến sản phẩm (ví dụ lát cam khô, vài hạt tiêu, cành lá xanh nhỏ, vải lanh gấp gọn)
+   (Mỗi đạo cụ mô tả cụ thể về chất liệu và hình khối).
+4. 'placement': Vị trí, góc đặt sản phẩm và góc máy (ví dụ: "Đặt chính giữa bục studio, góc chụp ngang tầm mắt 0-15 độ, ánh sáng viền ôm trọn đường cong").
+
+BẮT BUỘC ĐA DẠNG: 5 concept phải luân phiên chất liệu bục đỡ và sắc thái ánh sáng (dịu nhẹ / tương phản kịch tính / có halo hắt sáng).
+
+Trả về JSON với 5 concepts (mỗi concept gồm title, prompt, props, placement) và suggestedCamera.
 `;
 
     const parts: any[] = [{ text: prompt }];
-    images.forEach(img => {
-      const { mimeType, data } = parseBase64Image(img);
-      parts.push({ inlineData: { mimeType, data } });
-    });
+    images.forEach(img => parts.push({ inlineData: { data: img.split(',')[1], mimeType: 'image/png' } }));
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash", 
       contents: { parts },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
-        temperature: 1.0,
+        temperature: 1.15,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -854,23 +850,32 @@ Trả về JSON với 5 concepts (title, prompt) và suggestedCamera.
                 type: Type.OBJECT,
                 properties: {
                   title: { type: Type.STRING },
-                  prompt: { type: Type.STRING }
+                  prompt: { type: Type.STRING },
+                  props: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  placement: { type: Type.STRING }
                 },
-                required: ["title", "prompt"]
+                required: ["title", "prompt", "props", "placement"]
               }
+            },
+            suggestedCamera: {
+              type: Type.OBJECT,
+              properties: {
+                angle: { type: Type.NUMBER },
+                focalLength: { type: Type.NUMBER },
+                aperture: { type: Type.STRING },
+                iso: { type: Type.STRING },
+                isMacro: { type: Type.BOOLEAN }
+              },
+              required: ["angle", "focalLength", "aperture", "iso", "isMacro"]
             }
           },
-          required: ["concepts"]
+          required: ["concepts", "suggestedCamera"]
         }
       }
     });
 
     trackGeminiUsage(response, productName || "Phân tích Studio");
-    const parsed = JSON.parse(response.text || "{}");
-    return {
-      concepts: parsed.concepts || [],
-      suggestedCamera: { angle: 0, focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false }
-    };
+    return JSON.parse(response.text || "{}") as AIConceptAnalysis;
   } catch (error: any) {
     if (error.message?.includes("Requested entity was not found")) throw new Error("AUTH_ERROR");
     throw error;
@@ -942,6 +947,11 @@ export const generateProductImage = async (
   let finalPrompt = "";
 
   // Gợi ý từ lịch sử cục bộ (trình duyệt hiện tại) — cơ chế cũ, giữ để tương thích ngược
+  const localHistoryNote = history && history.length > 0
+    ? `
+Note: Please align with the style of these previously successful concepts: ${history.map(h => h.imageSettings.concept || h.imageSettings.visualStyle).slice(-3).join(', ')}`
+    : "";
+
   // Chỉ dẫn đúc kết theo dòng sản phẩm (server) — KHÔNG phải trích dẫn prompt
   // gốc, mà là chỉ dẫn ngắn gọn được tổng hợp từ các ảnh đã được đội ngũ
   // Elmich đánh giá "Rất tốt!" cho đúng dòng sản phẩm + phong cách này, xem
@@ -952,7 +962,7 @@ Chỉ dẫn bổ sung riêng cho dòng sản phẩm này (đúc kết từ các 
 ${categoryGuidance}`
     : "";
 
-  const optimizedHistoryNote = categoryGuidanceNote;
+  const optimizedHistoryNote = `${localHistoryNote}${categoryGuidanceNote}`;
   
   const formatProps = (props: PropConfig[]) => {
     return props.map(p => {
@@ -966,8 +976,14 @@ ${categoryGuidance}`
     }).join(", ");
   };
 
-  const formatCameraSettings = (_camera?: any) => {
-    return `Professional commercial catalog studio lighting, razor-sharp focus, clean depth of field, hyper-detailed, photorealistic 8k.`;
+  const formatCameraSettings = (camera: any) => {
+    const angleDesc = camera.angle === 0 ? "eye-level shot" :
+                      camera.angle > 0 ? `high angle shot (${camera.angle} degrees)` :
+                      `low angle shot (${Math.abs(camera.angle)} degrees)`;
+                      
+    const macroDesc = camera.isMacro ? "macro photography, extreme close-up details" : "standard product framing";
+    
+    return `Shot on ${camera.focalLength}mm lens, aperture ${camera.aperture}, ISO ${camera.iso}. ${angleDesc}. ${macroDesc}. Professional studio lighting, sharp focus, hyper-detailed, photorealistic.`;
   };
   
   if (settings.visualStyle === "SCENE_STAGING") {
@@ -978,8 +994,8 @@ ${categoryGuidance}`
     }
 
     finalPrompt = `
-Style Guide:
-${CONDENSED_LIFESTYLE_GUIDE}
+Style Guide Requirements:
+${designLifestyleConcept}
 
 Staging professional: Add ${formatProps(settings.props)} into the real scene image following style "${settings.concept}". Keep original furniture.${materialInstruction} Camera & Lighting: ${formatCameraSettings(settings.camera)}. 8k, realistic.`;
     } else if (settings.visualStyle === "TRACING_ASSISTANT") {
@@ -996,8 +1012,8 @@ Staging professional: Add ${formatProps(settings.props)} into the real scene ima
       finalPrompt = `Remove watermark/text from this image. Keep high quality, clear, bright.`;
     } else {
       finalPrompt = `
-Style Guide:
-${CONDENSED_TECH_GUIDE}
+Style Guide Requirements:
+${designTechEffects}
 
 Ocean night cinemetic. Product ${settings.productName}. Text "${settings.techTitle}". ${settings.selectedTechConcept}. Neon reflections, Camera: ${formatCameraSettings(settings.camera)}. 8k.`;
     }
@@ -1210,15 +1226,15 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     const mode = isStudio ? "minimalist high-end studio product shot" : "high-end commercial product photography shot";
     const propDetails = settings.props && settings.props.length > 0 ? settings.props.map(p => `${p.name}${p.amount ? ' (' + p.amount + ')' : ''}`).join(', ') : 'None';
     const placementDetails = settings.placement || "Centered";
-    const cameraDetails = "Commercial catalog lighting, razor-sharp focus throughout, clean depth of field";
+    const cameraDetails = `${settings.camera?.angle || 'Front'}, ${settings.camera?.isMacro ? 'Macro Lens' : 'Standard Lens'}`;
 
     let selectedStyleGuide = "";
     if (settings.visualStyle === "CONCEPT") {
-      selectedStyleGuide = CONDENSED_LIFESTYLE_GUIDE;
+      selectedStyleGuide = designLifestyleConcept;
     } else if (settings.visualStyle === "STUDIO") {
-      selectedStyleGuide = CONDENSED_STUDIO_GUIDE;
+      selectedStyleGuide = designStudioCreative;
     } else if (settings.visualStyle === "TECH_PS") {
-      selectedStyleGuide = CONDENSED_TECH_GUIDE;
+      selectedStyleGuide = designTechEffects;
     }
 
     const matDesc = settings.whiteBGMaterialsDescription || "";
@@ -1230,14 +1246,21 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
     }
 
     const thinkingPrompt = `
-      Act as Elmich's Head of Creative, a senior commercial product photographer and expert prompt engineer. Adhere to Elmich AI Image Studio photography principles:
+      Act as Elmich's Head of Creative, a senior commercial product photographer and expert prompt engineer. You must read and strictly adhere to the following three master styling manuals of Elmich AI Image Studio to write the absolute best prompt:
       
-      === MASTER STYLE GUIDE ===
-      ${selectedStyleGuide}
-      ==========================
+      === MASTER MANUAL 1: LIFESTYLE CONCEPT (BỐ CẢNH ĐỜI SỐNG ANH/CHỊ ĐÒI HỎI) ===
+      ${designLifestyleConcept}
+      
+      === MASTER MANUAL 2: CREATIVE STUDIO PRO (CHỤP TRONG STUDIO/PHÔNG NỀN TRƠN) ===
+      ${designStudioCreative}
+      
+      === MASTER MANUAL 3: TECH EFFECTS & VISUALS (HIỆU ỨNG CÔNG NGHỆ LOOPS VÀ PHYSICS) ===
+      ${designTechEffects}
+      
+      =============================================================================
 
       Generate a highly detailed, descriptive, and professional image generation prompt (in English) for a ${mode}.
-      Selected style: "${settings.visualStyle}".
+      Please apply the specific rules of the current selected style: "${settings.visualStyle}" (Main guide: ${settings.visualStyle === "CONCEPT" ? "LIFESTYLE" : settings.visualStyle === "STUDIO" ? "STUDIO" : "TECH EFFECTS"}), but cross-reference elements from the other manuals to guarantee absolute quality (e.g., maintain the premium material reflections, pristine geometry, absolute verticality, correct light bleed, and avoiding chaotic Sci-Fi graphics at all costs).
       
       Product: ${settings.productName}
       Creative Concept/Theme: ${settings.concept}
@@ -1248,39 +1271,44 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       Composition: The product and props must be neatly arranged and fit entirely within the frame.
       Camera & Lighting Setup: ${cameraDetails}${materialInstruction}
       
-      CORE PHOTOGRAPHY AND DESIGN PRINCIPLES:
-      1. Strict Geometry: Maintain absolute verticality for cylindrical products, parallel base/lid, vector logo decal without distortion, scale 1:1.
-      2. PBR Materials:
-         - Metal (Inox/Aluminum): Anisotropic reflection, contour-following specular highlights, subtle brushed satin finish, no uncontrolled bloom.
-         - Plastic: Micro-bump texture at 5% intensity, subtle edge Fresnel.
-         - Glass: Refraction Index 1.5, visible internal walls, clean reflections.
-         - Ceramic/Non-stick: Micro-displacement, 45-degree grazing light.
-      3. Shadows: Dark contact shadow at base, soft gradient key shadow.
-      4. Lighting: 3-Point Studio Lighting (Key, Fill, Rim Light).
+      CORE PHOTOGRAPHY AND DESIGN PRINCIPLES (STRICTLY ENFORCE):
+      1. Strict Geometry Preservation (Geometry Control Protocol): 
+         - Axis Alignment: "Maintain absolute verticality for all cylindrical products. Ensure the base and lid are perfectly parallel to the horizon."
+         - Logo Integrity: "Apply logo as a precise vector-based decal. No warping or distortion on curved surfaces. Center properly."
+         - Scale Reference: "Scale 1:1 relative to standard environment. Ensure handle-to-body proportion follows engineering standards."
+      2. PBR (Physically Based Rendering & Advanced Micro-surface Optics): 
+         - Metal (Inox/Aluminum): "Use Anisotropic reflection with a blurriness factor of 0.05. Highlights must trace the contour of the object, not bloom uncontrollably." Apply Fresnel reflections.
+         - Plastic: "Apply Micro-bump texture at 5% intensity to mimic high-grade food-safe plastic. Subtle Fresnel effect at the edges to show material thickness."
+         - Glass: "Set Refraction Index (IOR) to 1.5. Ensure the internal walls of the container are visible through the glass, with slight chromatic aberration at the edges to simulate professional camera optics."
+         - Ceramic/Stone: Grazing 45-degree light for micro-displacement/pores.
+      3. Shadow Structure: Must include contact shadows (stark black at the base), soft gradient key shadows, and feathered extrusion shadows for handles.
+      4. Lighting System: 3-Point Lighting System (Key Light, Fill Light, Rim Light).
       
-      ASPECT RATIO DIRECTIVES:
+      ASPECT RATIO SPECIFIC COMPOSITION DIRECTIVES:
       - Current Aspect Ratio: ${settings.aspectRatio}
-      - For wide aspect ratios ('16:9', '4:1'): Create a wide panoramic tabletop/countertop extending horizontally, main product offset on the rule-of-thirds axis.
+      - For extremely wide aspect ratios (such as '4:1' or '16:9'), do NOT center a single tiny product in an empty void. Instead, design a breathtaking wide panoramic landscape/tabletop composition. Describe how the countertop, stone slabs, paper backdrop, or floor continuously extend horizontally from left to right across the ultra-wide frame. Place the main product strictly once, ideally offset to the left or right third (rule of thirds), and let the gorgeous ambient scenery or soft matching props (such as scattered ingredients, plants, glassware) flow elegantly along the horizontal axis, forming beautiful negative space.
+      - For extremely tall aspect ratios (such as '1:4' or '9:16'), design a vertical cascading composition where elements stack elegantly vertically.
       
-      STRICT AVOIDANCE:
-      - NO DUPLICATION: Main product appears exactly ONCE.
-      - No distorted logos, skewed geometry, floating parts, over-saturated colors, or blurry reflections.
+      STRICT AVOIDANCE (NEGATIVE PROMPT EQUIVS):
+      - NO DUPLICATION: Under no circumstances should there be multiple copies, ghost shapes, blurred visual echoes, double images, or floating duplicate pieces of the main product. The main product must appear exactly ONCE in the entire image.
+      - Avoid distorted logos, skewed geometry, non-functional hinges, floating parts.
+      - Avoid over-saturated colors, unrealistic bloom, plastic-looking metal, blurry reflections.
+      - Avoid inconsistent shadow direction, multiple light sources causing conflicting shadows.
+      - Avoid low-resolution textures, pixelated edges on text/branding.
       
-      Instructions:
-      - Describe product placement ("${placementDetails}"), lighting, shadows, and reflections vividly.
-      - Describe background and environment matching props (${propDetails}).
-      - ${isStudio ? "Minimalist, clean, extremely neat layout." : "Rule of thirds composition, harmonious color palette."}
-      - Output ONLY the final prompt text (in English), no conversational text or markdown code fences.
+      Instructions for the prompt:
+      - Describe the product's placement (MANDATORY: you must explicitly describe placing the product as described in "${placementDetails}"), lighting, shadows, and reflections in vivid technical detail based on the core principles.
+      - Describe the background and environment based on the concept and color palette rules. Make sure the props (${propDetails}) are present.
+      - ${isStudio ? "Ensure minimalist, clean, extremely neat layout." : "Follow the rule of thirds for composition. Use an elegant, harmonious color palette."}
+      - Ensure the prompt emphasizes photorealism, 8k resolution, and high-end commercial aesthetic.
+      - ONLY output the final prompt text (in English), no explanations.
     `;
 
     const thinkingResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: thinkingPrompt,
-      config: {
-        thinkingConfig: { thinkingBudget: 0 }
-      }
+      model: "gemini-2.5-pro",
+      contents: thinkingPrompt
     });
-    trackGeminiUsage(thinkingResponse, "Suy luận Prompt ảnh", "gemini-2.5-flash");
+    trackGeminiUsage(thinkingResponse, "Suy luận Prompt ảnh", "gemini-2.5-pro");
     finalPrompt = thinkingResponse.text || "";
   } else if (settings.visualStyle === "TRACK_SOCKET_STAGING") {
     const socketDetails = settings.sockets?.map((s, idx) => {
@@ -1444,7 +1472,6 @@ export const generateImageForChat = async (
 Chỉ dẫn bổ sung riêng cho dòng sản phẩm này (đúc kết từ các ảnh đã được đội ngũ Elmich duyệt "Rất tốt!" trước đây — áp dụng như định hướng chung, không phải văn mẫu để chép lại):
 ${categoryGuidance}`
       : '';
-    const hasLatestUploadedImage = !!messages[messages.length - 1]?.uploadedImageUrl;
     const contents = messages.map((msg, idx) => {
       const isLastMessage = idx === messages.length - 1;
       let text = msg.text || '';
@@ -1456,19 +1483,14 @@ ${chatAssistantHandbook}${categoryGuidanceBlock}
 
 ===================================================
 
-Yêu cầu cụ thể của người dùng: ${text}
-${hasLatestUploadedImage ? 'QUAN TRỌNG: Sử dụng hình ảnh sản phẩm vừa được tải lên ở tin nhắn này làm đối tượng chuẩn duy nhất. KHÔNG sao chép quai cầm, nắp hoặc chi tiết hình học từ các sản phẩm ở các lượt trò chuyện trước.' : ''}`;
+Yêu cầu cụ thể của người dùng (dựa trên toàn bộ ngữ cảnh cuộc trò chuyện phía trên, kể cả ảnh đã đề cập): ${text}`;
       }
       const parts: any[] = [];
       if (text) parts.push({ text });
-      // Nếu tin nhắn mới nhất đã có ảnh tải lên mới, không gửi lại ảnh cũ ở các lượt trước để tránh AI bị lai đặc điểm
-      const shouldIncludeImage = isLastMessage || !hasLatestUploadedImage;
-      if (shouldIncludeImage) {
-        const uploaded = chatImageToInlineData(msg.uploadedImageUrl);
-        if (uploaded) parts.push(uploaded);
-        const generated = chatImageToInlineData(msg.imageUrl);
-        if (generated) parts.push(generated);
-      }
+      const uploaded = chatImageToInlineData(msg.uploadedImageUrl);
+      if (uploaded) parts.push(uploaded);
+      const generated = chatImageToInlineData(msg.imageUrl);
+      if (generated) parts.push(generated);
       if (parts.length === 0) parts.push({ text: '' });
       return { role: msg.role, parts };
     });
@@ -1521,7 +1543,6 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
       contents: contents,
       config: {
         systemInstruction: CHAT_SYSTEM_INSTRUCTION,
-        thinkingConfig: { thinkingBudget: 0 }
       }
     });
     trackGeminiUsage(response, "Trò chuyện trợ lý", modelName);
@@ -1558,21 +1579,27 @@ LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:
     ];
     
     designFiles.forEach(file => {
-      const { mimeType, data } = parseBase64Image(file.data);
-      parts.push({ text: `Tài liệu thiết kế, Tên file: ${file.name}` });
-      parts.push({ inlineData: { mimeType, data } });
+      const commaIdx = file.data.indexOf(',');
+      if (commaIdx !== -1) {
+        const header = file.data.substring(0, commaIdx);
+        const data = file.data.substring(commaIdx + 1);
+        const mimeMatch = header.match(/data:([^;]+)/);
+        if (mimeMatch && mimeMatch[1]) {
+          parts.push({ text: `Tài liệu thiết kế, Tên file: ${file.name}` });
+          parts.push({ inlineData: { mimeType: mimeMatch[1], data: data } });
+        }
+      }
     });
 
     if (parts.length === 1) throw new Error("Invalid files");
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: {
         parts: parts
       },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -1606,7 +1633,7 @@ LƯU Ý QUAN TRỌNG VÀ BẮT BUỘC:
       }
     });
 
-    trackGeminiUsage(response, "Kiểm tra bao bì", "gemini-2.5-flash");
+    trackGeminiUsage(response, "Kiểm tra bao bì", "gemini-2.5-pro");
     return JSON.parse(response.text || '{"params": []}');
   } catch (error) {
     console.error("Lỗi kiểm tra bao bì:", error);
@@ -1652,11 +1679,10 @@ LƯU Ý:
 }
 `;
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -1675,7 +1701,7 @@ LƯU Ý:
         }
       }
     });
-    trackGeminiUsage(response, "Trích xuất thông số chuẩn", "gemini-2.5-flash");
+    trackGeminiUsage(response, "Trích xuất thông số chuẩn", "gemini-2.5-pro");
     const res = JSON.parse(response.text || '{"params": []}');
     return res.params || [];
   } catch (error) {
@@ -1687,8 +1713,8 @@ LƯU Ý:
 export const analyzeAndTranslatePackaging = async (imageBase64: string): Promise<{ regions: any[] }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
-    const { mimeType, data } = parseBase64Image(imageBase64);
-    if (!data) throw new Error("Ảnh không hợp lệ.");
+    const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    if (!match) throw new Error("Ảnh không hợp lệ.");
     const parts: any[] = [
       {
         text: `Bạn là chuyên gia dịch thuật và bóc tách bố cục (OCR & Layout Analysis).
@@ -1708,23 +1734,22 @@ Trả về một JSON có cấu trúc sau:
       },
       {
         inlineData: {
-          mimeType,
-          data
+          mimeType: match[1],
+          data: match[2]
         }
       }
     ];
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 }
       }
     });
 
     if (response.text) {
-      trackGeminiUsage(response, "Dịch và OCR bao bì", "gemini-2.5-flash");
+      trackGeminiUsage(response, "Dịch và OCR bao bì", "gemini-2.5-pro");
       return JSON.parse(response.text);
     }
     throw new Error("Không có phản hồi");

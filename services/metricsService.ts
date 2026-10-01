@@ -21,8 +21,8 @@ export function updateSessionStats(tokens: number, costUSD: number) {
 export function calculateGeminiCost(modelName: string, promptTokens: number, candidatesTokens: number): { tokens: number; costUSD: number } {
   // Bảng giá Gemini text — cập nhật theo https://ai.google.dev/gemini-api/docs/pricing
   // (Standard tier, ≤200K token/prompt — mọi prompt trong app đều nằm trong ngưỡng này):
-  // - gemini-2.5-flash: $0.30 / 1M input (text/image/video), $2.50 / 1M output.
-  // - gemini-2.5-pro (và các bản "pro" khác): $1.25 / 1M input, $10.00 / 1M output.
+  // - gemini-3.8-flash / flash models: $0.30 / 1M input (text/image/video), $2.50 / 1M output.
+  // - gemini-3.1-pro-preview (và các bản "pro" khác): $1.25 / 1M input, $10.00 / 1M output.
   let inputPricePerM = 0.30;
   let outputPricePerM = 2.50;
 

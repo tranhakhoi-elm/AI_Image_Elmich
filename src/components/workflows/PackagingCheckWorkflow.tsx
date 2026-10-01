@@ -14,41 +14,7 @@ import {
 } from 'lucide-react';
 import { AppState, PackagingStandardParam } from '../../../types';
 import { analyzePackagingContent, extractStandardParamsWithAI } from '../../../services/geminiService';
-
-interface StepIndicatorProps {
-  current: number;
-  total: number;
-  labels: string[];
-}
-
-const StepIndicator: React.FC<StepIndicatorProps> = ({ current, total, labels }) => {
-  return (
-    <div className="flex items-center justify-between mb-4 px-2">
-      {labels.map((label, index) => {
-        const stepNum = index + 1;
-        const isActive = stepNum === current;
-        const isDone = stepNum < current;
-        return (
-          <React.Fragment key={index}>
-            <div className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                isActive ? 'bg-[#1877F2] text-white' : isDone ? 'bg-green-600 text-white' : 'bg-[#3A3B3C] text-gray-400'
-              }`}>
-                {isDone ? <Check size={14} /> : stepNum}
-              </div>
-              <span className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-gray-400'}`}>
-                {label}
-              </span>
-            </div>
-            {index < total - 1 && (
-              <div className={`flex-1 h-[2px] mx-2 ${stepNum < current ? 'bg-green-600' : 'bg-[#3A3B3C]'}`} />
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-};
+import { StepIndicator } from '../common/StepIndicator';
 
 interface PackagingCheckWorkflowProps {
   onBackToMenu: () => void;

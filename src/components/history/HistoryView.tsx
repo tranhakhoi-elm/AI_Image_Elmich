@@ -81,6 +81,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
   const [chatsError, setChatsError] = useState<string | null>(null);
   const [chatsLoadedOnce, setChatsLoadedOnce] = useState(false);
   const [expandedChatId, setExpandedChatId] = useState<string | null>(null);
+  const [confirmDeleteTarget, setConfirmDeleteTarget] = useState<{ type: 'image' | 'chat'; id: string; title: string } | null>(null);
 
   const loadImages = useCallback(async (cursor?: string) => {
     setImagesLoading(true);
@@ -115,13 +116,32 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
     if (tab === 'chats' && !chatsLoadedOnce) loadChats();
   }, [tab, imagesLoadedOnce, chatsLoadedOnce, loadImages, loadChats]);
 
-  const handleDeleteImage = async (id: string, e?: React.MouseEvent) => {
+  const handleDeleteImage = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!window.confirm('Xóa ảnh này khỏi Lịch sử dùng chung? Hành động này áp dụng cho cả team.')) return;
-    const ok = await deleteGeneratedImage(id);
-    if (ok) {
-      setImages(prev => prev.filter(img => img.id !== id));
-      if (activeImage?.id === id) setActiveImage(null);
+    setConfirmDeleteTarget({ type: 'image', id, title: 'ảnh này' });
+  };
+
+  const handleDeleteChat = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setConfirmDeleteTarget({ type: 'chat', id, title: 'đoạn chat này' });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteTarget) return;
+    const { type, id } = confirmDeleteTarget;
+    setConfirmDeleteTarget(null);
+    if (type === 'image') {
+      const ok = await deleteGeneratedImage(id);
+      if (ok) {
+        setImages(prev => prev.filter(img => img.id !== id));
+        if (activeImage?.id === id) setActiveImage(null);
+      }
+    } else {
+      const ok = await deleteChatHistorySession(id);
+      if (ok) {
+        setChats(prev => prev.filter(c => c.id !== id));
+        if (expandedChatId === id) setExpandedChatId(null);
+      }
     }
   };
 
@@ -136,16 +156,6 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
     setImages(prev => prev.map(img => (img.id === id ? { ...img, rating: 'good' } : img)));
     setActiveImage(prev => (prev?.id === id ? { ...prev, rating: 'good' } : prev));
     rateGeneratedImage(id, 'good').catch(() => {});
-  };
-
-  const handleDeleteChat = async (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (!window.confirm('Xóa đoạn chat này khỏi Lịch sử dùng chung? Hành động này áp dụng cho cả team.')) return;
-    const ok = await deleteChatHistorySession(id);
-    if (ok) {
-      setChats(prev => prev.filter(c => c.id !== id));
-      if (expandedChatId === id) setExpandedChatId(null);
-    }
   };
 
   const handleCopyPrompt = (id: string, text: string) => {
@@ -173,9 +183,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
   }, [chats, searchQuery]);
 
   return (
-    <main className="flex-1 flex flex-col max-w-[1400px] mx-auto w-full p-4 md:p-6 gap-4 text-white overflow-y-auto custom-scrollbar">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <main className="flex-1 flex flex-col max-w-[1400px] mx-auto w-full p-3 sm:p-4 md:p-6 pb-24 md:pb-8 gap-4 text-white overflow-y-auto custom-scrollbar">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <button
             onClick={onBackToHome}
             className="p-2 rounded-xl bg-[#18191A] border border-[#3E4042] text-gray-300 hover:text-white shrink-0"
@@ -183,49 +193,49 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
           >
             <ArrowLeft size={18} />
           </button>
-          <div>
-            <h1 className="text-xl font-bold">Lịch sử dùng chung</h1>
-            <p className="text-xs text-gray-400 mt-1">
-              Ảnh và đoạn chat được lưu trên máy chủ chung của team — xem được ở bất kỳ máy/trình duyệt nào.
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold truncate">Lịch sử dùng chung</h1>
+            <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 line-clamp-1 sm:line-clamp-none">
+              Ảnh và đoạn chat được lưu trên máy chủ chung của team.
             </p>
           </div>
         </div>
         <button
           onClick={() => (tab === 'images' ? loadImages() : loadChats())}
-          className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-[#3A3B3C] transition-colors shrink-0"
+          className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-[#3A3B3C] transition-colors shrink-0"
         >
           <RefreshCw size={14} className={imagesLoading || chatsLoading ? 'animate-spin' : ''} />
-          <span>Làm mới</span>
+          <span className="hidden sm:inline">Làm mới</span>
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex items-center bg-[#18191A] p-1 rounded-xl border border-[#3E4042] w-fit shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:flex sm:items-center bg-[#18191A] p-1 rounded-xl border border-[#3E4042] w-full sm:w-fit shrink-0 gap-1">
           <button
             onClick={() => setTab('images')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              tab === 'images' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              tab === 'images' ? 'bg-[#1877F2] text-white shadow-sm' : 'text-gray-400 hover:text-white'
             }`}
           >
-            <ImageIcon size={14} /> Ảnh đã tạo ({images.length})
+            <ImageIcon size={14} /> Ảnh ({images.length})
           </button>
           <button
             onClick={() => setTab('chats')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              tab === 'chats' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              tab === 'chats' ? 'bg-[#1877F2] text-white shadow-sm' : 'text-gray-400 hover:text-white'
             }`}
           >
-            <MessageCircle size={14} /> Lịch sử Chat ({chats.length})
+            <MessageCircle size={14} /> Chat ({chats.length})
           </button>
         </div>
 
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-0">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder={tab === 'images' ? 'Tìm theo tên sản phẩm, mã, prompt...' : 'Tìm đoạn chat theo tiêu đề...'}
+            placeholder={tab === 'images' ? 'Tìm theo tên sản phẩm, mã...' : 'Tìm đoạn chat...'}
             className="w-full bg-[#18191A] border border-[#3E4042] rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#1877F2]"
           />
           {searchQuery && (
@@ -239,7 +249,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
           <select
             value={styleFilter}
             onChange={e => setStyleFilter(e.target.value)}
-            className="bg-[#18191A] border border-[#3E4042] rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer shrink-0"
+            className="bg-[#18191A] border border-[#3E4042] rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer shrink-0 w-full sm:w-auto"
           >
             <option value="ALL">Tất cả workflow</option>
             {Object.entries(STYLE_NAMES).map(([code, name]) => (
@@ -287,7 +297,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
                           className={`p-1.5 rounded-full transition-all bg-black/70 ${
                             img.rating === 'good'
                               ? 'text-red-500 opacity-100'
-                              : 'text-white opacity-0 group-hover:opacity-100 hover:text-red-500'
+                              : 'text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-red-500'
                           }`}
                           title={img.rating === 'good' ? 'Đã đánh giá "Rất tốt!"' : 'Đánh giá "Rất tốt!" — giúp AI học chỉ dẫn cho dòng sản phẩm này'}
                         >
@@ -295,7 +305,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
                         </button>
                         <button
                           onClick={(e) => handleDeleteImage(img.id, e)}
-                          className="p-1.5 bg-black/70 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-1.5 bg-black/70 hover:bg-red-600 text-white rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                           title="Xóa ảnh khỏi lịch sử"
                         >
                           <Trash2 size={13} />
@@ -362,7 +372,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
                         <span
                           role="button"
                           onClick={(e) => { e.stopPropagation(); onOpenChat(session.id, session); }}
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-[#1877F2] hover:bg-[#18191A] transition-colors opacity-0 group-hover:opacity-100"
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-[#1877F2] hover:bg-[#18191A] transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                           title="Mở trong Trợ lý Chat"
                         >
                           <Send size={14} />
@@ -371,7 +381,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
                       <span
                         role="button"
                         onClick={(e) => handleDeleteChat(session.id, e)}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#18191A] transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#18191A] transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                         title="Xóa đoạn chat này"
                       >
                         <Trash2 size={14} />
@@ -511,6 +521,45 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onOpenChat, onBackToHo
                   Mở ảnh gốc
                 </a>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* In-app Confirmation Modal for deletion */}
+      {confirmDeleteTarget && (
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setConfirmDeleteTarget(null)}
+        >
+          <div
+            className="bg-[#242526] border border-[#3E4042] rounded-2xl max-w-sm w-full p-5 shadow-2xl text-white space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">Xác nhận xóa</h3>
+                <p className="text-xs text-gray-400">Hành động này áp dụng cho cả team trên Server.</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              Bạn có chắc chắn muốn xóa {confirmDeleteTarget.title} khỏi Lịch sử dùng chung?
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#3E4042]">
+              <button
+                onClick={() => setConfirmDeleteTarget(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:bg-[#3A3B3C] transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-500 text-white transition-colors shadow-md shadow-red-600/30"
+              >
+                Xóa vĩnh viễn
+              </button>
             </div>
           </div>
         </div>

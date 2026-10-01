@@ -142,6 +142,8 @@ export interface GenerationSettings {
 export interface ConceptSuggestion {
   title: string;
   prompt: string;
+  props?: string[];
+  placement?: string;
 }
 
 export interface AIConceptAnalysis {

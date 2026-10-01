@@ -75,3 +75,23 @@ Tài liệu này xác định các quy tắc, nguyên tắc kiến trúc và ti�
   - **Lớp chống dính:** Bề mặt vi hạt mờ (`micro-granite non-stick texture`).
   - **Thủy tinh:** Trong suốt chịu nhiệt borosilicate có khúc xạ ánh sáng sắc sảo.
   - **Logo thương hiệu:** Luôn giữ nguyên logo Elmich ở vị trí tự nhiên trên sản phẩm.
+
+---
+
+## 5. QUY TRÌNH THỰC THI MẶC ĐỊNH (DEFAULT AUTONOMOUS EXECUTION WORKFLOW - CLAUDE CODE STYLE)
+Từ nay, với **MỌI YÊU CẦU** từ người dùng (không cần người dùng phải nhắc câu lệnh định hướng), Agent **MẶC ĐỊNH TỰ ĐỘNG** tuân thủ chu trình 5 bước:
+
+1. **Khảo sát ngữ cảnh (Context Gathering First):**
+   - Đọc kỹ mã nguồn liên quan bằng `view_file` trước khi viết bất kỳ dòng code nào.
+   - Kiểm tra `ARCHITECTURE.md`, `types.ts`, và các component con tương tự để hiểu logic hiện hữu.
+2. **Kế hoạch hành động (Plan Breakdown):**
+   - Nêu ngắn gọn 2–4 bước dự kiến trước khi tiến hành (các file cần chỉnh sửa hoặc tạo mới, giải pháp kỹ thuật).
+3. **Thực thi chuẩn Modular (Clean Implementation):**
+   - Tuân thủ nguyên tắc không nhồi nhét `App.tsx`.
+   - Viết code hoàn chỉnh, sạch, giữ nguyên design system Elmich (dark theme, Tailwind, Motion).
+4. **Tự động Thẩm định (Verification & Linting):**
+   - Luôn chạy `compile_applet` / `lint_applet` sau khi chỉnh sửa code để đảm bảo ứng dụng không lỗi build.
+   - Nếu có lỗi biên dịch hoặc type, tự sửa ngay lập tức trước khi kết thúc lượt.
+5. **Báo cáo kết quả rõ ràng (Executive Summary):**
+   - Tóm tắt ngắn gọn các file đã thay đổi, hành vi mới và trạng thái biên dịch thành công.
+

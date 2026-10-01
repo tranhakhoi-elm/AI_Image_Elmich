@@ -39,7 +39,7 @@ import {
   BookOpen,
   Plus
 } from 'lucide-react';
-import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, ImageModelTier, AISuggestions, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
+import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, ImageModelTier, AISuggestions, ConceptSuggestion, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
 import { BarcodeGenerator } from './src/components/BarcodeGenerator';
 import { PackagingCheckWorkflow } from './src/components/workflows/PackagingCheckWorkflow';
 import { TranslatePackagingWorkflow } from './src/components/workflows/TranslatePackagingWorkflow';
@@ -62,6 +62,8 @@ import { ModelSelection } from './src/components/common/ModelSelection';
 import { AppHomeScreen, AppTile } from './src/components/common/AppHomeScreen';
 import { HistoryView } from './src/components/history/HistoryView';
 import {
+  CAMERA_APERTURES,
+  CAMERA_ISO,
   TONE_STYLES
 } from './constants';
 import { analyzePackagingContent, extractStandardParamsWithAI, generateProductImage, editProductImage, analyzeProductMaterials, getAiSuggestions, analyzeConceptAndCamera, analyzeTechConceptAndCamera, suggestPropsForConcept, getFallbackProps, suggestTechVisuals, suggestTechConcepts, analyzeStagingScene, analyzeStudioConcept, generateImageForChat, chatWithAI } from './services/geminiService';
@@ -494,13 +496,7 @@ const App: React.FC = () => {
         setSettings(prev => ({ ...prev, referenceImage: base64 }));
       } else if (type === 'product') {
         const newImages = await Promise.all(Array.from(files).map((file) => resizeImage(file as File)));
-        const isSingleProductWorkflow = ['TECH_PS', 'SCENE_STAGING', 'COLOR_CHANGE'].includes(settings.visualStyle);
-        setSettings(prev => ({
-          ...prev,
-          productImages: isSingleProductWorkflow ? newImages.slice(0, 1) : [...prev.productImages, ...newImages].slice(0, 5),
-          whiteBGMaterialsDescription: '',
-          whiteBGSelectedCategories: ['METAL'],
-        }));
+        setSettings(prev => ({ ...prev, productImages: [...prev.productImages, ...newImages].slice(0, 5) }));
       } else if (type === 'track') {
         const base64 = await resizeImage(files[0]);
         setSettings(prev => ({ ...prev, trackImage: base64 }));
@@ -518,15 +514,13 @@ const App: React.FC = () => {
     if ('target' in filesOrEvent) filesOrEvent.target.value = '';
   };
 
-  // --- LOGIC CONCEPT WORKFLOW (STRICT 4 STEPS) ---
+  // --- LOGIC CONCEPT WORKFLOW (OPTIMIZED 3 STEPS - UNIFIED INFERENCE) ---
   const handleConceptAnalysis = async () => {
     if (!settings.productName || settings.productImages.length === 0) return setAlertMessage("Vui lòng nhập tên và tải ít nhất 1 ảnh sản phẩm.");
     setAppState(AppState.ANALYZING);
-    setLoadingMessage("AI đang phân tích dữ liệu và đề xuất phối cảnh...");
+    setLoadingMessage("AI đang phân tích và đề xuất toàn diện Phong cách & Đạo cụ...");
     try {
       const dimStr = `${settings.dimensions.length}x${settings.dimensions.width}x${settings.dimensions.height}mm`;
-      // Lấy chỉ dẫn đúc kết từ các ảnh cùng dòng SP đã được duyệt "Rất tốt!"
-      // để lồng ngay vào bước gợi ý concept, không chỉ dùng ở bước tạo ảnh cuối.
       const { guidanceText } = await fetchCategoryGuidance({
         visualStyle: 'CONCEPT',
         productName: settings.productName,
@@ -534,11 +528,61 @@ const App: React.FC = () => {
       });
       setConceptCategoryGuidance(guidanceText);
       const result = await analyzeConceptAndCamera(settings.productName, dimStr, settings.productImages, settings.referenceImage, guidanceText || undefined);
-      setSuggestions(prev => ({ ...prev, concepts: result.concepts }));
-      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0]?.prompt || '', conceptTitle: result.concepts[0]?.title || '' }));
+      
+      const firstConcept = result.concepts[0];
+      const initialProps = (firstConcept?.props && firstConcept.props.length > 0)
+        ? firstConcept.props
+        : getFallbackProps(settings.productName, 'LIFESTYLE');
+      const initialPlacement = firstConcept?.placement || "Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ";
+
+      setSuggestions(prev => ({ 
+        ...prev, 
+        concepts: result.concepts,
+        props: initialProps
+      }));
+
+      const initialSelectedProps = initialProps.slice(0, 3).map(p => ({
+        name: p,
+        size: 'auto' as const,
+        position: 'auto' as const,
+        rotation: 'auto' as const
+      }));
+
+      setSettings(prev => ({
+        ...prev,
+        camera: result.suggestedCamera,
+        concept: firstConcept?.prompt || '',
+        conceptTitle: firstConcept?.title || '',
+        placement: initialPlacement,
+        props: initialSelectedProps
+      }));
       setConceptStep(2);
-    } catch (e: any) { console.error(e); }
-    finally { setAppState(AppState.READY); }
+    } catch (e: any) { 
+      console.error(e); 
+      setAlertMessage("Có lỗi khi phân tích. Vui lòng thử lại.");
+    } finally { 
+      setAppState(AppState.READY); 
+    }
+  };
+
+  const handleSelectConcept = (c: ConceptSuggestion) => {
+    const conceptProps = (c.props && c.props.length > 0) ? c.props : suggestions.props;
+    setSuggestions(prev => ({
+      ...prev,
+      props: conceptProps
+    }));
+    setSettings(prev => ({
+      ...prev,
+      concept: c.prompt,
+      conceptTitle: c.title,
+      placement: c.placement || prev.placement || "Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ",
+      props: conceptProps.slice(0, 3).map(p => ({
+        name: p,
+        size: 'auto',
+        position: 'auto',
+        rotation: 'auto'
+      }))
+    }));
   };
 
   const handlePropSuggestion = async () => {
@@ -552,7 +596,6 @@ const App: React.FC = () => {
         : getFallbackProps(settings.productName, 'LIFESTYLE');
 
       setSuggestions(prev => ({ ...prev, props: validProps }));
-      // Tự động chọn sẵn 2-3 đạo cụ tiêu biểu nhất từ gợi ý AI
       const initialSelected = validProps.slice(0, 3).map(p => ({
         name: p,
         size: 'auto',
@@ -565,18 +608,8 @@ const App: React.FC = () => {
         props: initialSelected,
         placement: result.placement || prev.placement || "Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ"
       }));
-      setConceptStep(3);
     } catch (e: any) {
       console.error("handlePropSuggestion error:", e);
-      const fallback = getFallbackProps(settings.productName, 'LIFESTYLE');
-      setSuggestions(prev => ({ ...prev, props: fallback }));
-      setSettings(prev => ({
-        ...prev,
-        concept: finalConcept,
-        props: fallback.slice(0, 3).map(p => ({ name: p, size: 'auto', position: 'auto', rotation: 'auto' })),
-        placement: prev.placement || "Đặt trên mặt bàn bếp, ánh sáng tự nhiên nghiêng 45 độ"
-      }));
-      setConceptStep(3);
     } finally {
       setAppState(AppState.READY);
     }
@@ -717,11 +750,11 @@ const App: React.FC = () => {
       finally { setAppState(AppState.READY); }
   };
 
-  // --- LOGIC STUDIO WORKFLOW ---
+  // --- LOGIC STUDIO WORKFLOW (OPTIMIZED 3 STEPS - UNIFIED INFERENCE) ---
   const handleStudioAnalysis = async () => {
     if (!settings.productName || settings.productImages.length === 0) return setAlertMessage("Vui lòng nhập tên và tải ít nhất 1 ảnh sản phẩm.");
     setAppState(AppState.ANALYZING);
-    setLoadingMessage("AI đang phân tích và đề xuất Studio Concept...");
+    setLoadingMessage("AI đang phân tích và đề xuất toàn diện Studio Concept & Đạo cụ...");
     try {
       const dimStr = `${settings.dimensions.length}x${settings.dimensions.width}x${settings.dimensions.height}mm`;
       const { guidanceText } = await fetchCategoryGuidance({
@@ -731,11 +764,61 @@ const App: React.FC = () => {
       });
       setConceptCategoryGuidance(guidanceText);
       const result = await analyzeStudioConcept(settings.productName, dimStr, settings.productImages, guidanceText || undefined);
-      setSuggestions(prev => ({ ...prev, concepts: result.concepts }));
-      setSettings(prev => ({ ...prev, camera: result.suggestedCamera, concept: result.concepts[0]?.prompt || '' }));
+
+      const firstConcept = result.concepts[0];
+      const initialProps = (firstConcept?.props && firstConcept.props.length > 0)
+        ? firstConcept.props
+        : getFallbackProps(settings.productName, 'STUDIO');
+      const initialPlacement = firstConcept?.placement || "Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm";
+
+      setSuggestions(prev => ({ 
+        ...prev, 
+        concepts: result.concepts,
+        props: initialProps
+      }));
+
+      const initialSelectedProps = initialProps.slice(0, 3).map(p => ({
+        name: p,
+        size: 'auto' as const,
+        position: 'auto' as const,
+        rotation: 'auto' as const
+      }));
+
+      setSettings(prev => ({
+        ...prev,
+        camera: result.suggestedCamera,
+        concept: firstConcept?.prompt || '',
+        conceptTitle: firstConcept?.title || '',
+        placement: initialPlacement,
+        props: initialSelectedProps
+      }));
       setStudioStep(2);
-    } catch (e: any) { console.error(e); }
-    finally { setAppState(AppState.READY); }
+    } catch (e: any) { 
+      console.error(e); 
+      setAlertMessage("Có lỗi khi phân tích studio. Vui lòng thử lại.");
+    } finally { 
+      setAppState(AppState.READY); 
+    }
+  };
+
+  const handleSelectStudioConcept = (c: ConceptSuggestion) => {
+    const conceptProps = (c.props && c.props.length > 0) ? c.props : suggestions.props;
+    setSuggestions(prev => ({
+      ...prev,
+      props: conceptProps
+    }));
+    setSettings(prev => ({
+      ...prev,
+      concept: c.prompt,
+      conceptTitle: c.title,
+      placement: c.placement || prev.placement || "Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm",
+      props: conceptProps.slice(0, 3).map(p => ({
+        name: p,
+        size: 'auto',
+        position: 'auto',
+        rotation: 'auto'
+      }))
+    }));
   };
 
   const handleStudioPropSuggestion = async () => {
@@ -749,7 +832,6 @@ const App: React.FC = () => {
         : getFallbackProps(settings.productName, 'STUDIO');
 
       setSuggestions(prev => ({ ...prev, props: validProps }));
-      // Tự động chọn sẵn 2-3 đạo cụ studio tiêu biểu nhất từ AI
       const initialSelected = validProps.slice(0, 3).map(p => ({
         name: p,
         size: 'auto',
@@ -762,18 +844,8 @@ const App: React.FC = () => {
         props: initialSelected,
         placement: result.placement || prev.placement || "Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm"
       }));
-      setStudioStep(3);
     } catch (e: any) {
       console.error("handleStudioPropSuggestion error:", e);
-      const fallback = getFallbackProps(settings.productName, 'STUDIO');
-      setSuggestions(prev => ({ ...prev, props: fallback }));
-      setSettings(prev => ({
-        ...prev,
-        concept: finalConcept,
-        props: fallback.slice(0, 3).map(p => ({ name: p, size: 'auto', position: 'auto', rotation: 'auto' })),
-        placement: prev.placement || "Đặt chính giữa bục studio, góc chụp ngang tầm mắt tôn dáng sản phẩm"
-      }));
-      setStudioStep(3);
     } finally {
       setAppState(AppState.READY);
     }
@@ -1606,6 +1678,7 @@ const App: React.FC = () => {
                    setIsAnalyzingMaterial={setIsAnalyzingMaterial}
                    setAlertMessage={setAlertMessage}
                    handleConceptAnalysis={handleConceptAnalysis}
+                   handleSelectConcept={handleSelectConcept}
                    handlePropSuggestion={handlePropSuggestion}
                    handleMorePropSuggestion={handleMorePropSuggestion}
                    handleAutoSelectProps={handleAutoSelectProps}
@@ -1703,6 +1776,7 @@ const App: React.FC = () => {
                    setIsAnalyzingMaterial={setIsAnalyzingMaterial}
                    setAlertMessage={setAlertMessage}
                    handleStudioAnalysis={handleStudioAnalysis}
+                   handleSelectStudioConcept={handleSelectStudioConcept}
                    handleStudioPropSuggestion={handleStudioPropSuggestion}
                    handleMoreStudioPropSuggestion={handleMoreStudioPropSuggestion}
                    handleAutoSelectProps={handleAutoSelectProps}
@@ -1770,18 +1844,42 @@ const App: React.FC = () => {
 
   const renderCameraSettings = (onBack: () => void) => (
     <div className="space-y-5">
+      <div className="bg-[#242526]  rounded-xl p-4 space-y-4 border border-[#3E4042]">
+         <div className="space-y-2">
+            <div className="flex justify-between text-[9px] font-bold text-white uppercase"><span>Góc chụp</span><span className="text-[#caf0f8]">{settings.camera.angle}°</span></div>
+            <input type="range" min="-15" max="90" step="5" className="w-full h-1 bg-[#3A3B3C] rounded-lg appearance-none cursor-pointer" value={settings.camera.angle} onChange={e => setSettings({...settings, camera: {...settings.camera, angle: parseInt(e.target.value)}})} />
+         </div>
+         <div className="space-y-2">
+            <div className="flex justify-between text-[9px] font-bold text-white uppercase"><span>Tiêu cự</span><span className="text-[#caf0f8]">{settings.camera.focalLength}mm</span></div>
+            <input type="range" min="12" max="200" step="1" className="w-full h-1 bg-[#3A3B3C] rounded-lg appearance-none cursor-pointer" value={settings.camera.focalLength} onChange={e => setSettings({...settings, camera: {...settings.camera, focalLength: parseInt(e.target.value)}})} />
+         </div>
+         <div className="grid grid-cols-2 gap-3">
+           <div>
+              <label className="block text-[8px] font-bold text-white uppercase mb-1">Khẩu độ</label>
+              <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-[10px] text-white outline-none focus:border-[#caf0f8]" value={settings.camera.aperture} onChange={e => setSettings({...settings, camera: {...settings.camera, aperture: e.target.value}})}>
+                {CAMERA_APERTURES.map(a => <option key={a} value={a} className="bg-[#242526]">{a}</option>)}
+              </select>
+           </div>
+           <div>
+              <label className="block text-[8px] font-bold text-white uppercase mb-1">ISO</label>
+              <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-[10px] text-white outline-none focus:border-[#caf0f8]" value={settings.camera.iso} onChange={e => setSettings({...settings, camera: {...settings.camera, iso: e.target.value}})}>
+                {CAMERA_ISO.map(i => <option key={i} value={i} className="bg-[#242526]">{i}</option>)}
+              </select>
+           </div>
+         </div>
+      </div>
       <div className="grid grid-cols-1 gap-3">
         <div>
-           <label className="block text-[9px] font-bold text-white uppercase mb-1">Tỷ lệ khung hình</label>
-           <select className="w-full bg-[#242526] border border-[#3E4042] rounded-lg p-2.5 text-xs text-white outline-none focus:border-[#1877F2]" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
+           <label className="block text-[9px] font-bold text-white uppercase mb-1">Tỷ lệ</label>
+           <select className="w-full bg-[#242526]  border border-[#3E4042] rounded-lg p-2 text-[10px] text-white outline-none" value={settings.aspectRatio} onChange={e => setSettings({...settings, aspectRatio: e.target.value as AspectRatio})}>
               <option value="1:1" className="bg-[#242526]">1:1 Vuông</option><option value="16:9" className="bg-[#242526]">16:9 HD</option><option value="9:16" className="bg-[#242526]">9:16</option><option value="4:3" className="bg-[#242526]">4:3</option><option value="3:4" className="bg-[#242526]">3:4</option><option value="1:4" className="bg-[#242526]">1:4</option><option value="4:1" className="bg-[#242526]">4:1</option>
            </select>
         </div>
       </div>
       {renderModelSelection()}
       <div className="flex gap-2">
-        <button onClick={onBack} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold hover:bg-[#3A3B3C] transition-colors">Quay lại</button>
-        <button onClick={() => startGeneration()} className="flex-[2] bg-[#1877F2] text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl hover:brightness-110 transition-all">Tạo ảnh</button>
+        <button onClick={onBack} className="flex-1 py-4 border border-[#3E4042] text-white rounded-xl uppercase text-[10px] font-bold">Quay lại</button>
+        <button onClick={() => startGeneration()} className="flex-[2] bg-[#1877F2] text-white font-bold py-4 rounded-xl uppercase text-[12px] shadow-xl">Tạo ảnh</button>
       </div>
     </div>
   );

@@ -16,21 +16,21 @@ export const GalleryRail: React.FC<GalleryRailProps> = ({
   onClearGallery
 }) => {
   return (
-    <div className="w-full shrink-0 border-t border-[#3E4042] bg-[#18191A] xl:bg-[#242526] z-10 flex flex-col h-[260px]">
-      <div className="p-4 flex items-center justify-between shrink-0">
+    <div className="w-full shrink-0 border-t border-[#3E4042] bg-[#18191A] xl:bg-[#242526] z-10 flex flex-col h-[190px] sm:h-[220px] xl:h-[250px] mb-16 md:mb-0">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <ImageIcon size={18} className="text-[#1877F2]" />
-          <span className="font-semibold text-white text-[16px]">Bộ sưu tập ảnh đã tạo</span>
+          <ImageIcon size={16} className="text-[#1877F2]" />
+          <span className="font-semibold text-white text-sm sm:text-base">Ảnh đã tạo</span>
           <span className="text-xs text-gray-400">({gallery.length})</span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[12px] text-gray-400 hidden sm:inline">
-            Ảnh lưu tạm trong phiên làm việc. Hãy tải ảnh quan trọng về máy của bạn.
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-400 hidden lg:inline">
+            Ảnh lưu tạm trong phiên làm việc. Hãy tải ảnh về máy.
           </span>
           {gallery.length > 0 && (
             <button 
               title="Xóa toàn bộ ảnh đã tạo" 
-              className="text-red-400 hover:text-red-300 font-semibold text-[13px] hover:underline flex items-center gap-1 transition-colors" 
+              className="text-red-400 hover:text-red-300 font-semibold text-xs hover:underline flex items-center gap-1 transition-colors p-1" 
               onClick={onClearGallery}
             >
               <Trash2 size={13} />
@@ -40,7 +40,7 @@ export const GalleryRail: React.FC<GalleryRailProps> = ({
         </div>
       </div>
       
-      <div className="flex-1 flex gap-4 overflow-x-auto px-4 pb-6 custom-scrollbar items-center">
+      <div className="flex-1 flex gap-3 sm:gap-4 overflow-x-auto px-3 sm:px-4 pb-3 sm:pb-4 custom-scrollbar items-center">
         {gallery.map(img => (
           <div 
             key={img.id} 

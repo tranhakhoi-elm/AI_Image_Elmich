@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode-svg';
-import { Download } from 'lucide-react';
+import { Download, ArrowLeft } from 'lucide-react';
 
-export const BarcodeGenerator = () => {
+interface BarcodeGeneratorProps {
+  onBackToMenu?: () => void;
+}
+
+export const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ onBackToMenu }) => {
   const [activeTab, setActiveTab] = useState<'CODE128' | 'EAN' | 'QR'>('CODE128');
 
   // Code 128 State
@@ -147,31 +151,44 @@ export const BarcodeGenerator = () => {
   };
 
   return (
-    <div className="bg-[#18191A] min-h-[calc(100vh-80px)] text-white p-6 rounded-2xl border border-[#3E4042]">
-      <h2 className="text-xl font-bold mb-6 flex items-center gap-2">Tạo Mã Vạch & QR Code (SVG)</h2>
+    <div className="bg-[#18191A] min-h-[calc(100vh-80px)] text-white p-3 sm:p-6 pb-24 md:pb-12 rounded-2xl border border-[#3E4042]">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          {onBackToMenu && (
+            <button
+              onClick={onBackToMenu}
+              className="p-2 rounded-xl bg-[#242526] border border-[#3E4042] text-gray-300 hover:text-white transition-colors"
+              title="Quay lại Menu"
+            >
+              <ArrowLeft size={16} />
+            </button>
+          )}
+          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">Tạo Mã Vạch & QR (SVG)</h2>
+        </div>
+      </div>
       
-      <div className="flex gap-2 mb-8 bg-[#242526] p-1 rounded-xl w-fit">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-[#242526] p-1 rounded-xl w-full sm:w-fit">
         <button 
           onClick={() => setActiveTab('CODE128')}
-          className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'CODE128' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'}`}
+          className={`py-2 px-3 sm:px-6 rounded-lg text-xs sm:text-sm font-semibold transition-all text-center cursor-pointer ${activeTab === 'CODE128' ? 'bg-[#1877F2] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
         >
           Code 128
         </button>
         <button 
           onClick={() => setActiveTab('EAN')}
-          className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'EAN' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'}`}
+          className={`py-2 px-3 sm:px-6 rounded-lg text-xs sm:text-sm font-semibold transition-all text-center cursor-pointer ${activeTab === 'EAN' ? 'bg-[#1877F2] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
         >
           EAN-13
         </button>
         <button 
           onClick={() => setActiveTab('QR')}
-          className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'QR' ? 'bg-[#1877F2] text-white' : 'text-gray-400 hover:text-white'}`}
+          className={`py-2 px-3 sm:px-6 rounded-lg text-xs sm:text-sm font-semibold transition-all text-center cursor-pointer ${activeTab === 'QR' ? 'bg-[#1877F2] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
         >
           QR Code
         </button>
       </div>
 
-      <div className="bg-[#242526] border border-[#3E4042] rounded-2xl p-8 max-w-2xl">
+      <div className="bg-[#242526] border border-[#3E4042] rounded-2xl p-4 sm:p-8 max-w-2xl">
         {activeTab === 'CODE128' && (
           <div className="space-y-6">
             <div>

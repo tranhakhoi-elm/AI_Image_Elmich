@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { MessageCircle, History } from 'lucide-react';
+import { MessageCircle, History, Network } from 'lucide-react';
 
 export interface AppTile {
   id: string;
@@ -14,47 +14,67 @@ interface AppHomeScreenProps {
   onSelectTool: (id: string) => void;
   onSelectChat: () => void;
   onSelectHistory: () => void;
+  onSelectCanvas?: () => void;
 }
 
 /**
- * Màn hình chọn công cụ ngay sau khi mở khóa — thay cho sidebar danh sách
- * dài trước đây. Trình bày như springboard iPhone: mỗi công cụ/Trợ lý
- * Chat/Lịch sử là 1 icon vuông bo góc, không còn phần "Trạng thái làm việc"
- * hay panel nào khác chen vào màn hình này.
+ * Màn hình chọn công cụ ngay sau khi mở khóa — trình bày như springboard iPhone:
+ * mỗi công cụ / Lịch sử / Workflow là 1 icon vuông bo góc đặc trưng của Elmich Studio.
  */
-export const AppHomeScreen: React.FC<AppHomeScreenProps> = ({ tools, onSelectTool, onSelectChat, onSelectHistory }) => {
+export const AppHomeScreen: React.FC<AppHomeScreenProps> = ({
+  tools,
+  onSelectTool,
+  onSelectChat,
+  onSelectHistory,
+  onSelectCanvas,
+}) => {
   const squareTiles: (AppTile & { onClick: () => void })[] = [
     ...tools.map(t => ({ ...t, onClick: () => onSelectTool(t.id) })),
+    { id: '__canvas', icon: <Network size={30} />, title: 'Workflow AI', color: 'bg-cyan-600', onClick: () => onSelectCanvas?.() },
     { id: '__history', icon: <History size={30} />, title: 'Lịch sử', color: 'bg-gray-500', onClick: onSelectHistory },
   ];
 
   return (
-    <div className="flex-1 w-full flex items-start justify-center overflow-y-auto custom-scrollbar px-6 py-10 xl:py-16">
-      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-4 gap-y-8 max-w-3xl w-full">
-        {squareTiles.map(tile => (
-          <motion.button
-            key={tile.id}
-            onClick={tile.onClick}
-            whileTap={{ scale: 0.92 }}
-            className="flex flex-col items-center gap-2"
-          >
-            <div className={`w-full aspect-square rounded-2xl ${tile.color} text-white flex items-center justify-center shadow-lg hover:brightness-110 transition-all`}>
-              {tile.icon}
-            </div>
-            <span className="text-[11px] font-medium text-white text-center leading-tight line-clamp-2">{tile.title}</span>
-          </motion.button>
-        ))}
+    <div className="flex-1 w-full flex items-start justify-center overflow-y-auto custom-scrollbar px-3 sm:px-6 py-6 sm:py-10 xl:py-12 pb-24 md:pb-12">
+      <div className="flex flex-col gap-5 sm:gap-6 max-w-3xl w-full">
+        {/* Header title */}
+        <div className="text-center space-y-1">
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            Ai Image Elmich Studio
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-400">
+            Hệ thống thiết kế đồ họa & kiểm định bao bì gia dụng thông minh
+          </p>
+        </div>
 
-        {/* Trợ lý Chat AI: đặt cuối cùng, dạng 1 thanh ngang chiếm trọn
-            chiều rộng lưới (bằng đúng số cột đang hiển thị) thay vì 1 ô vuông. */}
-        <motion.button
-          onClick={onSelectChat}
-          whileTap={{ scale: 0.97 }}
-          className="col-span-full flex items-center justify-center gap-3 h-16 sm:h-20 rounded-2xl bg-pink-500 text-white shadow-lg hover:brightness-110 transition-all"
-        >
-          <MessageCircle size={30} />
-          <span className="font-semibold text-[15px] sm:text-base">Trợ lý Chat AI</span>
-        </motion.button>
+        {/* Springboard grid of tools */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 sm:gap-4 w-full">
+          {squareTiles.map(tile => (
+            <motion.button
+              key={tile.id}
+              onClick={tile.onClick}
+              whileTap={{ scale: 0.92 }}
+              className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-2xl hover:bg-[#242526] transition-colors cursor-pointer"
+            >
+              <div className={`w-full aspect-square rounded-2xl ${tile.color} text-white flex items-center justify-center shadow-lg hover:brightness-110 transition-all min-h-[52px]`}>
+                {tile.icon}
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-medium text-white text-center leading-tight line-clamp-2 h-7 flex items-center justify-center">
+                {tile.title}
+              </span>
+            </motion.button>
+          ))}
+
+          {/* Trợ lý Chat AI */}
+          <motion.button
+            onClick={onSelectChat}
+            whileTap={{ scale: 0.97 }}
+            className="col-span-full flex items-center justify-center gap-2.5 sm:gap-3 h-14 sm:h-18 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-xl hover:brightness-110 transition-all mt-2 cursor-pointer"
+          >
+            <MessageCircle size={24} className="sm:w-[28px] sm:h-[28px]" />
+            <span className="font-bold text-sm sm:text-base">Trợ lý Chat Tư Vấn Đồ Họa AI</span>
+          </motion.button>
+        </div>
       </div>
     </div>
   );

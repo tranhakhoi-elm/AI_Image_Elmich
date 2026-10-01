@@ -169,7 +169,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           timestamp: Date.now(),
         }).catch(() => {});
       } else {
-        const defaultChatModel = 'gemini-2.5-flash';
+        const defaultChatModel = 'gemini-3.8-flash';
         const replyText = await chatWithAI(messagesToSend, defaultChatModel);
         newModelMsg = {
           id: Date.now().toString() + 'm',
@@ -320,9 +320,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
       </aside>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-screen bg-[#242526] text-white min-w-0">
-        <div className="px-4 md:px-6 py-3 border-b border-[#3E4042] flex items-center justify-between bg-[#242526] z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="flex-1 flex flex-col h-[100dvh] bg-[#242526] text-white min-w-0 overflow-hidden">
+        <div className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 border-b border-[#3E4042] flex items-center justify-between bg-[#242526] z-10 shrink-0 shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={onBackToHome}
               className="p-2 rounded-xl bg-[#18191A] border border-[#3E4042] text-gray-300 hover:text-white shrink-0"
@@ -338,7 +338,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <Menu size={18} />
             </button>
             <div className="min-w-0 flex items-center gap-2">
-              <h2 className="font-bold text-xl truncate">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
+              <h2 className="font-bold text-base sm:text-xl truncate">{activeSessionId ? (chatSessions.find(s => s.id === activeSessionId)?.title || 'Đoạn chat') : 'Đoạn chat mới'}</h2>
               <button
                 onClick={handleNewChat}
                 className="hidden sm:inline-flex items-center gap-1 text-[11px] bg-[#18191A] border border-[#3E4042] hover:border-[#1877F2] text-gray-300 hover:text-white px-2.5 py-1 rounded-lg transition-colors shrink-0"
@@ -351,7 +351,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:px-24 xl:px-48 flex flex-col gap-6 custom-scrollbar text-[15px]">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:px-24 xl:px-48 flex flex-col gap-4 sm:gap-6 custom-scrollbar text-[15px]">
           {chatMessages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-white space-y-4 opacity-50">
               <Wand2 size={48} />
@@ -403,62 +403,62 @@ export const ChatView: React.FC<ChatViewProps> = ({
           <div ref={chatMessagesEndRef} />
         </div>
 
-        <div className="p-4 md:p-6 lg:px-24 xl:px-48 border-t border-[#3E4042] bg-[#242526] shrink-0">
-          <div className="flex items-center flex-wrap gap-4 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white font-semibold">Chế độ:</span>
+        <div className="p-3 sm:p-4 md:p-6 lg:px-24 xl:px-48 border-t border-[#3E4042] bg-[#242526] shrink-0 pb-20 md:pb-6">
+          <div className="flex items-center flex-wrap gap-2 sm:gap-3 mb-2.5 sm:mb-3">
+            <div className="flex items-center gap-1.5 bg-[#18191A] px-2.5 py-1 rounded-lg border border-[#3E4042]">
+              <span className="text-[11px] text-gray-300 font-semibold">Chế độ:</span>
               <select
                 value={chatMode}
                 onChange={e => setChatMode(e.target.value as 'chat' | 'image')}
-                className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2] cursor-pointer"
+                className="bg-transparent border-none text-xs outline-none text-white font-bold cursor-pointer"
               >
-                <option value="chat">Chat & Tư vấn</option>
-                <option value="image">Tạo ảnh AI</option>
+                <option value="chat" className="bg-[#18191A] text-white">Chat & Tư vấn</option>
+                <option value="image" className="bg-[#18191A] text-white">Tạo ảnh AI</option>
               </select>
             </div>
 
             {chatMode === 'image' && (
               <>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-white font-semibold">Tỷ lệ:</span>
+                <div className="flex items-center gap-1.5 bg-[#18191A] px-2.5 py-1 rounded-lg border border-[#3E4042]">
+                  <span className="text-[11px] text-gray-300 font-semibold">Tỷ lệ:</span>
                   <select
                     value={chatImageAspectRatio}
                     onChange={e => setChatImageAspectRatio(e.target.value)}
-                    className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
+                    className="bg-transparent border-none text-xs outline-none text-white font-bold cursor-pointer"
                   >
-                    <option value="1:1">1:1 (Vuông)</option>
-                    <option value="16:9">16:9 (Ngang)</option>
-                    <option value="9:16">9:16 (Dọc)</option>
-                    <option value="4:3">4:3</option>
-                    <option value="3:4">3:4</option>
+                    <option value="1:1" className="bg-[#18191A] text-white">1:1 (Vuông)</option>
+                    <option value="16:9" className="bg-[#18191A] text-white">16:9 (Ngang)</option>
+                    <option value="9:16" className="bg-[#18191A] text-white">9:16 (Dọc)</option>
+                    <option value="4:3" className="bg-[#18191A] text-white">4:3</option>
+                    <option value="3:4" className="bg-[#18191A] text-white">3:4</option>
                   </select>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-white font-semibold">Chất lượng:</span>
+                <div className="flex items-center gap-1.5 bg-[#18191A] px-2.5 py-1 rounded-lg border border-[#3E4042]">
+                  <span className="text-[11px] text-gray-300 font-semibold">Cỡ:</span>
                   <select
                     value={chatImageQuality}
                     onChange={e => setChatImageQuality(e.target.value)}
-                    className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
+                    className="bg-transparent border-none text-xs outline-none text-white font-bold cursor-pointer"
                   >
-                    <option value="1K">1K</option>
-                    <option value="2K">2K</option>
+                    <option value="1K" className="bg-[#18191A] text-white">1K</option>
+                    <option value="2K" className="bg-[#18191A] text-white">2K</option>
                   </select>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-white font-semibold">Model:</span>
+                <div className="flex items-center gap-1.5 bg-[#18191A] px-2.5 py-1 rounded-lg border border-[#3E4042]">
+                  <span className="text-[11px] text-gray-300 font-semibold">Model:</span>
                   <select
                     value={chatImageModel}
                     onChange={e => setChatImageModel(e.target.value as 'FLASH' | 'PRO')}
-                    className="bg-[#18191A] border-none rounded-md px-3 py-1.5 text-sm outline-none text-white font-medium focus:ring-1 focus:ring-[#1877F2]"
+                    className="bg-transparent border-none text-xs outline-none text-white font-bold cursor-pointer"
                   >
-                    <option value="FLASH">Flash (nhanh, rẻ)</option>
-                    <option value="PRO">Pro (chất lượng cao)</option>
+                    <option value="FLASH" className="bg-[#18191A] text-white">Flash</option>
+                    <option value="PRO" className="bg-[#18191A] text-white">Pro</option>
                   </select>
                 </div>
               </>
             )}
           </div>
-          <div className="flex flex-col gap-3 bg-[#18191A] p-3 rounded-2xl border border-[#3E4042] focus-within:border-[#1877F2] focus-within:ring-1 focus-within:ring-[#1877F2] transition-colors shadow-sm">
+          <div className="flex flex-col gap-2 sm:gap-3 bg-[#18191A] p-2 sm:p-3 rounded-2xl border border-[#3E4042] focus-within:border-[#1877F2] focus-within:ring-1 focus-within:ring-[#1877F2] transition-colors shadow-sm">
             {chatInputImageBase64 && (
               <div className="relative inline-block w-20 h-20 bg-[#242526] rounded-lg border border-[#3E4042] p-1 shadow-sm">
                 <img src={chatInputImageBase64} alt="Upload preview" className="w-full h-full object-contain rounded-md" />

@@ -3,7 +3,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#18191A">
     <title>Ai Image Elmich</title>
     <meta name="description" content="Hệ thống AI Studio toàn diện của Elmich dành cho thiết kế hình ảnh sản phẩm, kiểm duyệt bao bì tự động, phân tích kỹ thuật, dịch thuật bao bì và trợ lý đồ họa thông minh.">
     <meta property="og:title" content="Ai Image Elmich">
@@ -47,6 +50,14 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
             border: 1px solid #3E4042 !important;
             backdrop-filter: none !important;
+        }
+
+        /* Ẩn hoàn toàn logo và watermark quảng cáo của React Flow */
+        .react-flow__attribution {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         .vibrant-button {

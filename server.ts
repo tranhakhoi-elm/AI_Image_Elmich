@@ -13,6 +13,12 @@ import {
   rateImageRecord,
 } from "./lib/historyStore.js";
 import { getCategoryGuidanceFor } from "./lib/categoryGuidance.js";
+import {
+  listServerWorkflows,
+  saveServerWorkflow,
+  deleteServerWorkflow,
+} from "./lib/workflowStore.js";
+import { GoogleGenAI } from "@google/genai";
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config();
@@ -225,6 +231,97 @@ app.get("/api/history/category-guidance", async (req: any, res: any) => {
   } catch (error: any) {
     console.error("Error getting category guidance:", error.message);
     res.status(200).json({ success: false, error: error.message, category: null, guidanceText: null });
+  }
+});
+
+// Canvas Workflows API - Lưu trữ quy trình lên server hệ thống (Git / File system / Firestore)
+app.get("/api/canvas/workflows", async (req: any, res: any) => {
+  try {
+    const list = await listServerWorkflows();
+    res.json({ success: true, items: list });
+  } catch (error: any) {
+    console.error("Error listing canvas workflows:", error.message);
+    res.status(200).json({ success: false, error: error.message, items: [] });
+  }
+});
+
+app.post("/api/canvas/workflows", async (req: any, res: any) => {
+  try {
+    if (req.body?.action === 'delete' && req.body?.id) {
+      await deleteServerWorkflow(req.body.id);
+      return res.json({ success: true });
+    }
+    const workflow = await saveServerWorkflow(req.body || {});
+    res.json({ success: true, workflow });
+  } catch (error: any) {
+    console.error("Error saving canvas workflow:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Dedicated POST fallback delete route for environments where DELETE method is restricted
+app.post("/api/canvas/workflows/delete", async (req: any, res: any) => {
+  try {
+    const id = (req.query?.id as string) || (req.body?.id as string);
+    if (!id) {
+      return res.status(400).json({ success: false, error: "Thiếu id quy trình." });
+    }
+    await deleteServerWorkflow(id);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error("Error deleting canvas workflow via POST fallback:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete("/api/canvas/workflows", async (req: any, res: any) => {
+  try {
+    const id = (req.query.id as string) || (req.body?.id as string);
+    if (!id) {
+      return res.status(400).json({ success: false, error: "Thiếu id quy trình." });
+    }
+    await deleteServerWorkflow(id);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error("Error deleting canvas workflow:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Server-side Gemini API proxy (bảo mật khóa API & tránh lỗi quyền 403 trình duyệt)
+let geminiClientInstance: GoogleGenAI | null = null;
+const getGeminiClient = () => {
+  if (!geminiClientInstance) {
+    geminiClientInstance = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
+  }
+  return geminiClientInstance;
+};
+
+app.post("/api/gemini/generate-content", async (req: any, res: any) => {
+  try {
+    const { model, contents, config } = req.body;
+    const ai = getGeminiClient();
+    const response = await ai.models.generateContent({
+      model: model || "gemini-3.8-flash",
+      contents,
+      config,
+    });
+    res.json({ success: true, response });
+  } catch (error: any) {
+    console.error("Gemini server API error:", error?.message || error);
+    const status = error?.status || (error?.message?.includes('403') ? 403 : 500);
+    res.status(status).json({
+      success: false,
+      error: error?.message || "Lỗi xử lý Gemini",
+      status: error?.status,
+    });
   }
 });
 
