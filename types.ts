@@ -29,10 +29,15 @@ export interface CameraSettings {
 }
 
 export interface ColorChangeEntry {
+  id?: string;
   partName: string;
+  targetRgb?: { r: number; g: number; b: number };
+  targetHex?: string;
+  finish?: 'MATTE' | 'GLOSSY' | 'METALLIC' | 'SATIN';
+  description?: string;
+  pin?: { x: number; y: number }; // Percentage (0 - 100) on product image
   sampleImage?: string;
   pantoneCode?: string;
-  description?: string;
 }
 
 export interface ProductDimensions {

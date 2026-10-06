@@ -1258,40 +1258,60 @@ BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pu
     `;
   } else if (settings.visualStyle === "COLOR_CHANGE") {
     const changes = settings.colorChanges.map((c, i) => {
-      let changeStr = `- Part / Position to recolor: "${c.partName}"`;
-      if (c.pantoneCode) changeStr += ` to Pantone Color: "${c.pantoneCode}"`;
-      if (c.description) changeStr += ` describing: "${c.description}"`;
-      if (c.sampleImage) changeStr += ` (Reference the target/desired color/texture in Image ${i + 2} provided)`;
+      let changeStr = `[RECOLOR TARGET ${i + 1}] Part / Area: "${c.partName}"`;
+      if (c.pin) {
+        changeStr += `\n  - Spatial Pin Location on Image 1: Coordinates at approximately ${c.pin.x}% horizontally (X) and ${c.pin.y}% vertically (Y) from top-left.`;
+      }
+      if (c.targetRgb) {
+        changeStr += `\n  - Exact Target Color: sRGB(${c.targetRgb.r}, ${c.targetRgb.g}, ${c.targetRgb.b}) / HEX ${c.targetHex || ''}`;
+      } else if (c.targetHex) {
+        changeStr += `\n  - Exact Target Color: HEX ${c.targetHex}`;
+      } else if (c.pantoneCode) {
+        changeStr += `\n  - Target Pantone Color: "${c.pantoneCode}"`;
+      }
+      if (c.finish) {
+        const finishMap: Record<string, string> = {
+          MATTE: 'Matte non-glossy fine-powder coating with uniform diffuse reflection and subtle micro-texture',
+          GLOSSY: 'High-gloss lacquer finish with crisp specular reflections and clear-coat luster',
+          METALLIC: 'Metallic pearlescent coat with microscopic metallic flecks and subtle directional sheen',
+          SATIN: 'Smooth semi-matte satin luster with soft velvety light dissipation'
+        };
+        changeStr += `\n  - Surface Finish: ${finishMap[c.finish] || c.finish}`;
+      }
+      if (c.description) {
+        changeStr += `\n  - Area Boundaries & Specific Details: "${c.description}"`;
+      }
+      if (c.sampleImage) {
+        changeStr += `\n  - Auxiliary Color Swatch: Reference color in attached sample image.`;
+      }
       return changeStr;
-    }).join('\n');
+    }).join('\n\n');
 
     finalPrompt = `
 Style Guide Requirements:
 ${designColorEditing}
 
-Product Recoloring & Color Editing Task:
-We have a product named "${settings.productName}".
-Your task is to generate/edit the product image to change the colors of specified parts while meticulously preserving the design, format, and details of the original product.
+Product Selective Recoloring & Surface Finish Task:
+Product Name: "${settings.productName || 'Elmich Household Product'}"
 
-INPUT IMAGES DEFINITION:
-- Image 1 (First uploaded image): This is the ORIGINAL/BASE product image of "${settings.productName}". You MUST edit this image ONLY. This is your template and canvas. Do NOT modify its geometry, silhouette, size, or perspective.
-- Image 2 and onwards: These are color references/sample images indicating the target colors, tones, or materials to be applied to specified parts of Image 1. DO NOT edit or use these as your template; they are only reference samples!
+Your task is to recolor the specified targeted sections of the product in Image 1 according to exact RGB color codes and pin coordinates, while keeping the rest of the product untouched.
 
-COLOR CHANGE SPECIFICATIONS:
-You must recolor specified parts of Image 1 based on these instructions and reference images (Image 2 onwards):
-${changes || "Change the product colors to match professional kitchenware premium colors."}
+INPUT IMAGE DEFINITION:
+- Image 1: The BASE / ORIGINAL product image. You MUST edit this exact product in place.
+- All non-recolored components (e.g. brushed stainless steel Inox 304 trims, chrome rims, transparent glass parts, silicone seals, digital LED displays, and Elmich brand logos) MUST remain completely unchanged and pristine.
 
-STRICT PRESERVATION RULES (MANDATORY):
-1. Original Geometry and Shape: Preserve the exact structural boundaries, dimensions, camera perspective, lens angles, physical silhouette, and coordinates of the product as seen in Image 1. Do not distort, warp, or duplicate the product. Do NOT use the shapes or dimensions of the reference sample images (Image 2 onwards).
-2. Material Texture & Surface Details: Maintain the exact surface textures (e.g., brushed stainless steel inox metal, glossy glazed ceramic coating, matte premium plastic polymers) of each part in Image 1. The color change must look like a perfectly uniform pigment layer applied to that material, retaining its specific roughness, micro-scratches, or pores as seen in Image 1.
-3. Luma & Accent Preservation (Luma Preservation): Preserve original specular highlights, reflections, and dark light-occluded crevices of Image 1. Highlights should remain white or light-grey, reflecting the light source, rather than being painted over with color.
-4. Lighting System: Retain the identical commercial 3-Point studio lighting (Key Light, Fill Light, Rim Light) and shading of Image 1.
-5. Color Bleeding (Color Bleed): Realistic light reflection (color bleed) of the new product color onto adjacent stainless steel or surrounding reflective surfaces.
-6. Grounding and Shadows: Keep identical contact shadows (dense dark shadow at base of coordinates) and soft ambient key shadows on the floor/surface exactly as in Image 1.
-7. Background: The background of Image 1 must be preserved without any other changes. Do not use the background of reference sample images.
+SPECIFIC RECOLORING INSTRUCTIONS:
+${changes || "- Recolor the main product body with designated premium color, keeping accents intact."}
 
-Output style: Premium commercial cookware photography, hyper-detailed, 8k resolution, photorealistic.
-    `;
+CRITICAL EXECUTION CONSTRAINTS:
+1. Exact Color Fidelity: Render the exact target sRGB color specified without tint shift, desaturation, or over-saturation.
+2. Geometry & Outline Preservation: Zero shape warping, zero silhouette distortion. Every edge, bevel, seam, and screw must align 100% with Image 1.
+3. Texture & Highlight Preservation (Luma Integrity): Retain the realistic highlights, natural shadows, reflections, and ambient occlusion from Image 1. The new color should look like a factory powder-coated or molded pigment layer with natural light interaction, NOT flat digital paint.
+4. Color Bleed: Realistic soft color bounce (color bleed) on adjacent stainless steel and floor reflections.
+5. Background & Lighting: Retain the identical background and studio lighting from Image 1.
+
+Output style: Premium commercial product photography, hyper-detailed, 8k resolution, photorealistic.
+`;
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS" || settings.visualStyle === "STUDIO") {
     
     let spaceInstruction = "";
