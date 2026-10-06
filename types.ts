@@ -28,14 +28,17 @@ export interface CameraSettings {
   isMacro: boolean;
 }
 
+export type SurfaceFinish = 'MATTE' | 'GLOSSY' | 'METALLIC' | 'SATIN' | 'INOX_POLISHED' | 'INOX_BRUSHED';
+
 export interface ColorChangeEntry {
   id?: string;
   partName: string;
   targetRgb?: { r: number; g: number; b: number };
   targetHex?: string;
-  finish?: 'MATTE' | 'GLOSSY' | 'METALLIC' | 'SATIN';
+  finish?: SurfaceFinish;
   description?: string;
   pin?: { x: number; y: number }; // Percentage (0 - 100) on product image
+  region?: { x: number; y: number; width: number; height: number }; // Bounding box percentage (0 - 100)
   sampleImage?: string;
   pantoneCode?: string;
 }

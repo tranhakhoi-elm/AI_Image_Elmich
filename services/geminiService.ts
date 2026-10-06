@@ -1259,7 +1259,9 @@ BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pu
   } else if (settings.visualStyle === "COLOR_CHANGE") {
     const changes = settings.colorChanges.map((c, i) => {
       let changeStr = `[RECOLOR TARGET ${i + 1}] Part / Area: "${c.partName}"`;
-      if (c.pin) {
+      if (c.region) {
+        changeStr += `\n  - Spatial Bounding Region on Image 1: Bounding Box from Left: ${c.region.x}%, Top: ${c.region.y}% to Right: ${Math.round(c.region.x + c.region.width)}%, Bottom: ${Math.round(c.region.y + c.region.height)}% (Width: ${c.region.width}%, Height: ${c.region.height}%). Confine recoloring strictly within this spatial area.`;
+      } else if (c.pin) {
         changeStr += `\n  - Spatial Pin Location on Image 1: Coordinates at approximately ${c.pin.x}% horizontally (X) and ${c.pin.y}% vertically (Y) from top-left.`;
       }
       if (c.targetRgb) {
@@ -1274,7 +1276,9 @@ BACKGROUND SANITIZATION (MANDATORY): The background must be 100% flat, solid, pu
           MATTE: 'Matte non-glossy fine-powder coating with uniform diffuse reflection and subtle micro-texture',
           GLOSSY: 'High-gloss lacquer finish with crisp specular reflections and clear-coat luster',
           METALLIC: 'Metallic pearlescent coat with microscopic metallic flecks and subtle directional sheen',
-          SATIN: 'Smooth semi-matte satin luster with soft velvety light dissipation'
+          SATIN: 'Smooth semi-matte satin luster with soft velvety light dissipation',
+          INOX_POLISHED: 'Mirror-polished food-grade 304 stainless steel (Inox bóng gương / Chrome) with ultra-high reflectivity, crystal-clear specular highlights, razor-sharp metallic luster, and clean studio reflections without distortion',
+          INOX_BRUSHED: 'Brushed food-grade 304 stainless steel with ultra-fine longitudinal brushed satin grain, subtle anisotropic metallic sheen, and authentic soft highlight dissipation'
         };
         changeStr += `\n  - Surface Finish: ${finishMap[c.finish] || c.finish}`;
       }
@@ -1294,7 +1298,7 @@ ${designColorEditing}
 Product Selective Recoloring & Surface Finish Task:
 Product Name: "${settings.productName || 'Elmich Household Product'}"
 
-Your task is to recolor the specified targeted sections of the product in Image 1 according to exact RGB color codes and pin coordinates, while keeping the rest of the product untouched.
+Your task is to recolor the specified targeted sections of the product in Image 1 according to exact RGB color codes and spatial coordinates, while rendering the product on a spotless pure white studio background with 100% complete product framing.
 
 INPUT IMAGE DEFINITION:
 - Image 1: The BASE / ORIGINAL product image. You MUST edit this exact product in place.
@@ -1306,11 +1310,19 @@ ${changes || "- Recolor the main product body with designated premium color, kee
 CRITICAL EXECUTION CONSTRAINTS:
 1. Exact Color Fidelity: Render the exact target sRGB color specified without tint shift, desaturation, or over-saturation.
 2. Geometry & Outline Preservation: Zero shape warping, zero silhouette distortion. Every edge, bevel, seam, and screw must align 100% with Image 1.
-3. Texture & Highlight Preservation (Luma Integrity): Retain the realistic highlights, natural shadows, reflections, and ambient occlusion from Image 1. The new color should look like a factory powder-coated or molded pigment layer with natural light interaction, NOT flat digital paint.
-4. Color Bleed: Realistic soft color bounce (color bleed) on adjacent stainless steel and floor reflections.
-5. Background & Lighting: Retain the identical background and studio lighting from Image 1.
+3. Texture & Highlight Preservation (Luma Integrity): Retain the realistic highlights, natural shadows, reflections, and ambient occlusion from Image 1. When applying Inox polished finish, render authentic chrome-like specular gleam and mirror clarity.
+4. Color Bleed: Realistic soft color bounce (color bleed) on adjacent stainless steel and ground reflections.
 
-Output style: Premium commercial product photography, hyper-detailed, 8k resolution, photorealistic.
+BACKGROUND & ENVIRONMENT (STRICT MANDATORY):
+- Seamless Pure White Studio Background (#FFFFFF): The product MUST be isolated on a 100% solid, pure, clean, spotless seamless white backdrop (#FFFFFF) from corner to corner. No room scenery, no kitchen background, no clutter, no gradient tint.
+- Natural Soft Contact Shadow: Realistic soft dark-gray contact ambient occlusion drop shadow directly grounded beneath the product base/feet onto the pure white floor, ensuring the product is firmly seated and not floating.
+
+FRAMING & COMPLETE PRODUCT VIEW (ZERO CROPPING - STRICT MANDATORY):
+- 100% Full Product View: The generated output MUST show the entire complete product in frame. All parts (top lid, handle, steam knob, spout, side handles, buttons, digital display, base, and rubber feet) must be 100% fully visible.
+- Zero Cutoff / No Cropping: Absolutely NO cutting off of any product edge, handle, or base.
+- Generous Safe Margins: Maintain a comfortable 15% to 20% white space padding margin between the outer boundaries of the product and all 4 edges of the frame. Strictly avoid tight cropping or aggressive zoom-in.
+
+Output style: Premium commercial catalog product photography, hyper-detailed, 8k resolution, photorealistic.
 `;
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS" || settings.visualStyle === "STUDIO") {
     

@@ -14,12 +14,14 @@ import {
   Eye, 
   Check, 
   CheckCircle2, 
-  Info 
+  Info,
+  Crop
 } from 'lucide-react';
-import { AspectRatio, ColorChangeEntry, GenerationSettings } from '../../../types';
+import { AspectRatio, ColorChangeEntry, GenerationSettings, SurfaceFinish } from '../../../types';
 import { FileDropzone } from '../common/FileDropzone';
 import { ModelSelection } from '../common/ModelSelection';
 import { StepIndicator } from '../common/StepIndicator';
+import { ColorRegionSelector } from './ColorRegionSelector';
 
 interface ColorChangeWorkflowProps {
   settings: GenerationSettings;
@@ -53,7 +55,6 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
   startGeneration,
 }) => {
   const productFilesRef = useRef<HTMLInputElement>(null);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Form states cho mảng màu đang thao tác
   const [partName, setPartName] = useState('');
@@ -61,8 +62,8 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
   const [r, setR] = useState(200);
   const [g, setG] = useState(16);
   const [b, setB] = useState(46);
-  const [finish, setFinish] = useState<'MATTE' | 'GLOSSY' | 'METALLIC' | 'SATIN'>('MATTE');
-  const [currentPin, setCurrentPin] = useState<{ x: number; y: number } | null>(null);
+  const [finish, setFinish] = useState<SurfaceFinish>('MATTE');
+  const [draftRegion, setDraftRegion] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [activeEntryIndex, setActiveEntryIndex] = useState<number | null>(null);
 
   // Chuyển đổi RGB sang HEX
@@ -88,19 +89,6 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
 
   const currentHex = rgbToHex(r, g, b);
 
-  // Click lên ảnh để ghim vị trí mảng màu
-  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageContainerRef.current) return;
-    const rect = imageContainerRef.current.getBoundingClientRect();
-    const xPct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    const yPct = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-
-    const clampedX = Math.max(2, Math.min(98, xPct));
-    const clampedY = Math.max(2, Math.min(98, yPct));
-
-    setCurrentPin({ x: clampedX, y: clampedY });
-  };
-
   // Thêm hoặc cập nhật mảng màu vào danh sách
   const handleAddOrUpdateColor = () => {
     if (!partName.trim()) return;
@@ -112,7 +100,8 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
       targetHex: currentHex,
       finish,
       description: description.trim(),
-      pin: currentPin || undefined
+      region: draftRegion || undefined,
+      pin: draftRegion ? { x: Math.round(draftRegion.x + draftRegion.width / 2), y: Math.round(draftRegion.y + draftRegion.height / 2) } : undefined
     };
 
     if (activeEntryIndex !== null) {
@@ -134,7 +123,7 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
     // Reset form nhẹ nhàng
     setPartName('');
     setDescription('');
-    setCurrentPin(null);
+    setDraftRegion(null);
   };
 
   // Chọn một mảng từ danh sách để sửa
@@ -148,7 +137,7 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
       setB(entry.targetRgb.b);
     }
     if (entry.finish) setFinish(entry.finish);
-    if (entry.pin) setCurrentPin(entry.pin);
+    setDraftRegion(entry.region || null);
   };
 
   // Xóa mảng màu
@@ -161,7 +150,7 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
       setActiveEntryIndex(null);
       setPartName('');
       setDescription('');
-      setCurrentPin(null);
+      setDraftRegion(null);
     }
   };
 
@@ -190,7 +179,7 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
       <StepIndicator 
         current={colorChangeStep} 
         total={3} 
-        labels={['1. Ảnh sản phẩm gốc', '2. Ghim mảng & Mã RGB', '3. Xuất bản']} 
+        labels={['1. Ảnh sản phẩm gốc', '2. Khoanh vùng & Mã RGB', '3. Xuất bản']} 
       />
 
       <AnimatePresence mode="wait">
@@ -267,87 +256,34 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
             </div>
           )}
 
-          {/* ======================= BƯỚC 2: GHIM MẢNG & CHỌN MÃ RGB ======================= */}
+          {/* ======================= BƯỚC 2: KHOANH VÙNG & CHỌN MÃ RGB ======================= */}
           {colorChangeStep === 2 && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                {/* CỘT TRÁI (7/12): Canvas ghim điểm tương tác trên ảnh */}
+                {/* CỘT TRÁI (7/12): Canvas chọn vùng tương tác trên ảnh */}
                 <div className="lg:col-span-7 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
-                      <MapPin size={14} className="text-rose-400" />
-                      Click lên ảnh để ghim vị trí mảng cần đổi
-                    </label>
-                    {currentPin && (
-                      <span className="text-[10px] text-rose-300 font-mono bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                        Đang ghim: X {currentPin.x}% • Y {currentPin.y}%
-                      </span>
-                    )}
-                  </div>
-
-                  <div 
-                    ref={imageContainerRef}
-                    onClick={handleImageClick}
-                    className="relative rounded-2xl overflow-hidden border border-[#3E4042] bg-[#101112] max-h-[460px] flex items-center justify-center cursor-crosshair group select-none shadow-xl"
-                  >
-                    <img 
-                      src={settings.productImages[0]} 
-                      alt="Ảnh sản phẩm gốc" 
-                      className="max-h-[450px] w-auto max-w-full object-contain pointer-events-none rounded-lg block" 
-                      referrerPolicy="no-referrer" 
-                    />
-
-                    {/* Hiển thị các pin đã lưu */}
-                    {settings.colorChanges.map((entry, idx) => {
-                      if (!entry.pin) return null;
-                      const isHoveredOrActive = activeEntryIndex === idx;
-                      const pinColor = entry.targetHex || rgbToHex(entry.targetRgb?.r || 200, entry.targetRgb?.g || 16, entry.targetRgb?.b || 46);
-
-                      return (
-                        <div
-                          key={idx}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectEntryToEdit(entry, idx);
-                          }}
-                          style={{ left: `${entry.pin.x}%`, top: `${entry.pin.y}%` }}
-                          className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group/pin"
-                        >
-                          <div 
-                            style={{ backgroundColor: pinColor }}
-                            className={`w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-lg transition-transform ${
-                              isHoveredOrActive ? 'scale-125 ring-4 ring-white/50' : 'hover:scale-110'
-                            }`}
-                          >
-                            {idx + 1}
-                          </div>
-                          <div className="absolute left-1/2 -translate-x-1/2 bottom-8 px-2 py-0.5 bg-black/80 text-white rounded text-[10px] whitespace-nowrap shadow-md pointer-events-none opacity-0 group-hover/pin:opacity-100 transition-opacity">
-                            {entry.partName}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {/* Pin đang chọn mới */}
-                    {currentPin && (
-                      <div
-                        style={{ left: `${currentPin.x}%`, top: `${currentPin.y}%` }}
-                        className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 animate-pulse"
-                      >
-                        <div 
-                          style={{ backgroundColor: currentHex }}
-                          className="w-8 h-8 rounded-full text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-2xl ring-4 ring-rose-400"
-                        >
-                          📍
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-gray-400 italic">
-                    💡 Mẹo: Bấm trực tiếp vào bộ phận (ví dụ: thân nồi, quai xách, viền nắp) để đánh dấu chính xác tọa độ cho AI.
-                  </p>
+                  <ColorRegionSelector
+                    imageUrl={settings.productImages[0]}
+                    entries={settings.colorChanges}
+                    onEntriesChange={(newEntries) => {
+                      setSettings(prev => ({ ...prev, colorChanges: newEntries }));
+                    }}
+                    activeEntryIndex={activeEntryIndex}
+                    onSelectEntry={(idx) => {
+                      if (idx !== null && settings.colorChanges[idx]) {
+                        handleSelectEntryToEdit(settings.colorChanges[idx], idx);
+                      } else {
+                        setActiveEntryIndex(null);
+                        setPartName('');
+                        setDescription('');
+                        setDraftRegion(null);
+                      }
+                    }}
+                    draftRegion={draftRegion}
+                    onDraftRegionChange={setDraftRegion}
+                    activeColorHex={currentHex}
+                  />
                 </div>
 
                 {/* CỘT PHẢI (5/12): Bộ chọn mã màu RGB & mô tả chi tiết */}
@@ -363,7 +299,7 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
                           setActiveEntryIndex(null);
                           setPartName('');
                           setDescription('');
-                          setCurrentPin(null);
+                          setDraftRegion(null);
                         }}
                         className="text-[10px] text-gray-400 hover:text-white"
                       >
@@ -515,12 +451,14 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
                     <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">
                       Chất liệu hoàn thiện bề mặt
                     </label>
-                    <div className="grid grid-cols-4 gap-1.5 text-center">
+                    <div className="grid grid-cols-3 gap-1.5 text-center">
                       {[
                         { id: 'MATTE' as const, label: 'Sơn mờ' },
-                        { id: 'GLOSSY' as const, label: 'Bóng cao cấp' },
+                        { id: 'GLOSSY' as const, label: 'Sơn bóng' },
                         { id: 'METALLIC' as const, label: 'Ánh kim' },
-                        { id: 'SATIN' as const, label: 'Satin mịn' }
+                        { id: 'SATIN' as const, label: 'Satin mịn' },
+                        { id: 'INOX_POLISHED' as const, label: '✨ Inox bóng gương' },
+                        { id: 'INOX_BRUSHED' as const, label: 'Inox xước 304' }
                       ].map(item => (
                         <button
                           key={item.id}
@@ -620,10 +558,18 @@ export const ColorChangeWorkflow: React.FC<ColorChangeWorkflowProps> = ({
                           )}
 
                           <div className="mt-2 pt-2 border-t border-[#3E4042]/50 flex items-center justify-between text-[9px] text-gray-400">
-                            <span>Bề mặt: <strong className="text-white">{item.finish || 'MATTE'}</strong></span>
-                            {item.pin && (
-                              <span className="text-emerald-400">Đã ghim (X:{item.pin.x}%, Y:{item.pin.y}%)</span>
-                            )}
+                            <span>Bề mặt: <strong className="text-white">
+                              {item.finish === 'INOX_POLISHED' ? '✨ Inox bóng gương' :
+                               item.finish === 'INOX_BRUSHED' ? 'Inox xước 304' :
+                               item.finish === 'GLOSSY' ? 'Sơn bóng' :
+                               item.finish === 'METALLIC' ? 'Ánh kim' :
+                               item.finish === 'SATIN' ? 'Satin mịn' : 'Sơn mờ'}
+                            </strong></span>
+                            {item.region ? (
+                              <span className="text-emerald-400">Vùng ({item.region.width.toFixed(0)}% × {item.region.height.toFixed(0)}%)</span>
+                            ) : item.pin ? (
+                              <span className="text-emerald-400">Ghim (X:{item.pin.x}%, Y:{item.pin.y}%)</span>
+                            ) : null}
                           </div>
                         </div>
                       );
