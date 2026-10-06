@@ -1,10 +1,9 @@
 import React from 'react';
-import { Home, Network, MessageCircle, History, BookOpen } from 'lucide-react';
+import { Home, MessageCircle, History, BookOpen } from 'lucide-react';
 
 interface HeaderProps {
-  viewMode: 'studio' | 'chat' | 'history' | 'canvas';
+  viewMode: 'studio' | 'chat' | 'history';
   onSelectStudio: () => void;
-  onSelectCanvas: () => void;
   onSelectChat: () => void;
   onSelectHistory: () => void;
   onOpenHandbook: () => void;
@@ -13,7 +12,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   viewMode,
   onSelectStudio,
-  onSelectCanvas,
   onSelectChat,
   onSelectHistory,
   onOpenHandbook,
@@ -52,20 +50,6 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Home size={15} />
           <span>Studio</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onSelectCanvas}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            viewMode === 'canvas'
-              ? 'bg-cyan-600 text-white shadow-sm'
-              : 'text-gray-400 hover:text-white hover:bg-[#242526]'
-          }`}
-        >
-          <Network size={15} />
-          <span>Workflow AI</span>
-          <span className="text-[9px] px-1 py-0.5 bg-cyan-400/20 text-cyan-300 rounded font-black leading-none uppercase">LAB</span>
         </button>
 
         <button

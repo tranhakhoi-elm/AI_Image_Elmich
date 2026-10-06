@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig, ConceptSuggestion } from "../types";
+import { GenerationSettings, AISuggestions, AIConceptAnalysis, CameraSettings, PropConfig, ConceptSuggestion, AspectRatio, ImageSize, ImageModelTier, DielineStructureAnalysis } from "../types";
 import { reportToLark, calculateGeminiCost, calculateImagenCost } from "./metricsService";
 
 const trackGeminiUsage = async (response: any, taskName: string, modelName: string = "gemini-2.5-flash") => {
@@ -1018,49 +1018,135 @@ ${designTechEffects}
 Ocean night cinemetic. Product ${settings.productName}. Text "${settings.techTitle}". ${settings.selectedTechConcept}. Neon reflections, Camera: ${formatCameraSettings(settings.camera)}. 8k.`;
     }
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
-    const prodName = settings.productName || "Product";
-    const dim = settings.dimensions;
-    const hasDimensions = dim && (dim.length || dim.width || dim.height);
-    const dimPhrase = hasDimensions 
-      ? `The 3D box must have physical outer proportions representing dimensions of ${dim.length || "150"}mm (Length) x ${dim.width || "150"}mm (Width) x ${dim.height || "200"}mm (Height).`
-      : "The 3D box must have realistic square or rectangular product container packaging proportions.";
+    const prodName = settings.productName || "Elmich Packaging Box";
+    const layout = settings.packagingMockupLayout || "SEPARATE_VIEWS";
+    const handleType = settings.packagingHandleType || "PLASTIC_CLEAR";
+    const substrate = settings.packagingPaperSubstrate || (settings.packagingMaterial === "CARTON_BW" ? "KRAFT_CORRUGATED" : "IVORY_DUPLEX_COATED");
 
-    const matType = settings.packagingMaterial === "CARTON_BW" 
-      ? "Industrial Kraft Corrugated Cardboard box (Thùng carton nâu xi măng nhám, chất liệu bìa carton thô ráp nguyên bản)" 
-      : "Premium coated white folding boxboard or SBS paperboard with high-quality printing (Hộp giấy màu phủ mịn bồi carton cao cấp)";
-      
-    const matDetails = settings.packagingMaterial === "CARTON_BW"
-      ? "Texture: rough, natural raw fibrous kraft paper texture with micro-fibers, crease lines showing exposed light-brown cardboard pulp inside the folded seams. Printing: simple grayscale, matte black, or vintage dark ink colors directly screen-printed onto the brown container."
-      : "Texture: smooth, silk-coated finish with slight satin luster on premium thick paperboard. The folds are crisp, showing white or colored paper pulp precisely. High-brightness, vibrant corporate color reproduction.";
+    // 1. Perspective View & Composition determination
+    let viewInstruction = "";
+    let viewTitle = "";
+    if (layout === "DUAL_FRONT_BACK") {
+      viewTitle = "DUAL PACKAGING PRESENTATION (BỘ ĐÔI HỘP MẶT TRƯỚC VÀ MẶT SAU TRÊN CÙNG 1 ẢNH NỀN TRẮNG)";
+      viewInstruction = `
+COMPOSITION: Exactly TWO (2) identical 3D packaging boxes placed side-by-side on an absolute pure white commercial studio floor and backdrop (#FFFFFF).
+- Left Box (3/4 Front Perspective): Rotated 30°-35° to prominently present the FRONT PANEL (hero product photo, prominent Elmich logo, model headline), the RIGHT SIDE PANEL receding into perspective, and the TOP LID with the handle.
+- Right Box (3/4 Back Perspective): Rotated to prominently present the BACK PANEL (technical specifications table, barcodes, compliance marks, warranty badges), the LEFT SIDE PANEL, and the TOP LID with the handle.
+- Visual Balance: Both boxes stand at identical scale and horizon line, parallel with balanced commercial spacing, demonstrating the complete front and back designs in a single unified commercial hero presentation.`;
+    } else if (layout === "BACK_ONLY" || (layout === "SEPARATE_VIEWS" && variantSeed === 2)) {
+      viewTitle = "BACK PERSPECTIVE 3D MOCKUP (MẶT SAU BAO BÌ - 3/4 REAR PERSPECTIVE)";
+      viewInstruction = `
+COMPOSITION: A single premium 3D packaging box rotated at a 3/4 rear perspective angle (35-degree horizontal rotation).
+- Main Focus: The BACK PANEL is facing directly toward the camera, clearly displaying all technical parameters, specifications table, barcode, QR code, certifications, and compliance text in razor-sharp focus and 100% legibility.
+- Visible Faces: Back Panel (primary focus), Side Panel receding into 3-point perspective, and Top Lid visible from an elevated camera angle (25 degrees elevation).
+- The front panel is on the far hidden side in this rear perspective view.`;
+    } else {
+      // Default / FRONT_ONLY / SEPARATE_VIEWS with variantSeed === 1
+      viewTitle = "FRONT PERSPECTIVE 3D MOCKUP (MẶT TRƯỚC BAO BÌ - 3/4 FRONT PERSPECTIVE)";
+      viewInstruction = `
+COMPOSITION: A single premium 3D packaging box rotated at a 3/4 front perspective angle (35-degree horizontal rotation).
+- Main Focus: The FRONT PANEL is facing directly toward the camera, prominently displaying the main product photograph, brand logo "Elmich", product name, and main selling badges in razor-sharp focus.
+- Visible Faces: Front Panel (primary focus), Right Side Panel receding into 3-point perspective, and Top Lid visible from an elevated camera angle (25 degrees elevation).
+- The back panel is on the far hidden side in this front perspective view.`;
+    }
 
-    const outputScene = settings.packagingOutputStyle === "WHITE_BG_ROTATED"
-      ? "White Background Studio: Placed strictly on an absolute pure, clean, seamless white commercial studio backdrop (#FFFFFF). The 3D box is rotated at a 3/4 perspective angle to clearly display three sides of the package (Front, Right/Side, Top)."
-      : "Lifestyle Context: Placed elegantly inside a premium, modern minimalist lifestyle setting, such as on a clean light-refracting oak wood table, a solid concrete shelf, or a matte marble platform. The background is softly out-of-focus (gentle shallow depth-of-field) with natural organic window shadows, minimal natural props like a tiny green leaves plant branch.";
+    // 2. Plastic Handle Specification (Vietnamese standard)
+    let handleInstruction = "";
+    if (handleType === "PLASTIC_CLEAR") {
+      handleInstruction = `
+VIETNAMESE PACKAGING TRANSLUCENT PLASTIC HANDLE (QUAI NHỰA TRONG DẺO BÁN NGUYỆT CHUẨN VIỆT NAM):
+- Handle Structure: A flexible, semi-circular curved arch handle (quai xách nhựa dẻo trong suốt) anchored into two standard die-cut rectangular slots positioned symmetrically on the top lid.
+- Material Properties: Semi-clear, frosted translucent polyethylene/polypropylene material ('translucent milky-clear flexible molded plastic'). Captures delicate ambient light refraction, subtle white specular rim highlights along the curved ridge, and casts a soft subtle contact micro-shadow directly onto the top lid beneath the arched grip.
+- Anchor Clips: Two flat rectangular T-ends or anchor studs securely clipped into the two die-cut slots on the top lid, flush against the cardboard surface.`;
+    } else if (handleType === "PLASTIC_OPAQUE") {
+      handleInstruction = `
+MOLDED SOLID PLASTIC HANDLE:
+- Handle Structure: An opaque white or Elmich brand-color molded plastic handle anchored into two rectangular slots on the top lid with clean mechanical finish and soft grip contours.`;
+    } else if (handleType === "ROPE_RIBBON") {
+      handleInstruction = `
+PREMIUM WOVEN CORD HANDLE:
+- Handle Structure: Braided textile cord handle with knotted ends inserted securely through top die-cut eyelets.`;
+    } else {
+      handleInstruction = `
+STANDARD FOLDING LID WITHOUT HANDLE:
+- Handle Structure: Clean standard folding box lid with flush seamless flaps, without any plastic handle.`;
+    }
 
+    // 3. Substrate & Paper Texture
+    let substrateInstruction = "";
+    if (substrate === "KRAFT_CORRUGATED") {
+      substrateInstruction = `
+PAPERBOARD SUBSTRATE: Industrial Kraft Corrugated Cardboard box (Thùng carton nâu xi măng nhám).
+- Texture: Natural raw fibrous kraft paper texture with micro-fibers, crease lines showing exposed light-brown cardboard pulp inside folded seams. Printing: matte ink absorption, visible fluting micro-ridges.`;
+    } else if (substrate === "MATTE_ART_PAPER") {
+      substrateInstruction = `
+PAPERBOARD SUBSTRATE: Premium Matte Art Paperboard (Giấy mỹ thuật phủ mờ cao cấp).
+- Texture: Non-reflective velvety matte coating with deep color saturation and razor-sharp typographic edges.`;
+    } else {
+      substrateInstruction = `
+PAPERBOARD SUBSTRATE: Premium Coated Ivory / Duplex Paperboard laminated over E-flute corrugated cardboard (Hộp bồi sóng E / Ivory bóng mịn chuẩn gia dụng Elmich).
+- Texture: Smooth coated finish with elegant satin luster on thick multi-layer paperboard. Crisp folded edges showing realistic paperboard thickness (1.2mm - 1.5mm micro-radiused crease), catching clean, crisp studio softbox specular highlights along folded boundaries. Vibrant, rich corporate color reproduction.`;
+    }
+
+    // 4. Dieline Analysis & Cropped Face Details (if provided)
+    let dielineContext = "";
+    if (settings.dielineAnalysis) {
+      dielineContext = `
+RECOGNIZED DIELINE STRUCTURE & FOLDING MAPPING:
+- Box Type: ${settings.dielineAnalysis.boxType || 'Standard Household Box'}
+- Front Panel Content: ${settings.dielineAnalysis.frontPanelDescription || 'Hero product photo, Elmich branding, main model headline'}
+- Back Panel Content: ${settings.dielineAnalysis.backPanelDescription || 'Detailed specifications table, barcode, QR code, legal marks'}
+- Side Panels Content: ${settings.dielineAnalysis.sidePanelsDescription || 'Brand features, icons, bullet points'}
+- Top Lid Content: ${settings.dielineAnalysis.topPanelDescription || 'Top lid flap with handle slots'}
+- Folding Guidance: ${settings.dielineAnalysis.foldingGuidance || 'Fold strictly along all 4 vertical creases creating square box form'}
+`;
+    }
+
+    let faceImagesContext = "";
+    const hasCroppedFaces = !!(settings.packagingFaces.front || settings.packagingFaces.back);
+    if (hasCroppedFaces) {
+      faceImagesContext = `
+EXPLICIT MAPPED 5-PANEL GRAPHIC INPUTS (CROPPED DIRECTLY ACCORDING TO PHYSICAL PROPORTIONS):
+The attached input images contain the exact pre-cropped panels corresponding to the physical faces of the box:
+- Image 1: The master 2D flat unfolded dieline layout reference.
+- Subsequent Images: High-resolution crops of the Front, Back, Left, Right, and Top Lid panels.
+Apply these exact pre-aligned graphics directly onto each respective surface of the 3D box model with 100% typographic and visual fidelity without distortion or mirroring.
+`;
+    }
+
+    // 5. Overall prompt composition
     finalPrompt = `
 Style Guide Requirements:
 ${designPackagingMockup}
 
-3D Packaging Mockup Reconstruction & Folding Task:
-We have a product named "${prodName}".
-Your task is to reconstruct a high-quality, photorealistic 3D paper container box mockup using the provided 2D flat custom die-line graphic layout from the input image (Image 1).
+3D PACKAGING MOCKUP RECONSTRUCTION & RENDERING TASK:
+Product / Project Name: "${prodName}"
+Target View: ${viewTitle}
 
-DIMENSIONS & MATERIAL STRUCTURE:
-- ${dimPhrase}
-- Packaging Box Material: ${matType}
-- Material Surface Properties: ${matDetails}
+Your mission is to reconstruct an ultra-photorealistic, high-end commercial 3D packaging mockup from the provided 2D flat unfolded dieline layout image (Image 1).
 
-CREATIVE WRAPPING & RECONSTRUCTION RULES (MANDATORY):
-1. Precision 3D Folding: You must fold, wrap, and map the exact 2D graphic design layout from the flat layout image (Image 1) onto the respective faces of the 3D box.
-2. Graphic & Branding Fidelity: All brand logos ("Elmich"), typography, product photos, detailed labels, lists of specifications, certificates, and decorative color patches from Image 1 must transfer cleanly and become perfectly readable on the 3D folded surfaces. No weird gibberish text or distorted details.
-3. Realistic Seams, Flaps, and Creases: The paper seams where flaps lock together must be clearly modeled with paper thickness (approximately 1-2mm card edge). Edges must show natural crease lines (softly rounded edge highlights) reflecting light to define the box shape, rather than sharp computer-generated vectors.
-4. Professional Camera Specifications: ${formatCameraSettings(settings.camera)}
-5. Scene Setup:
-   - ${outputScene}
-6. Lighting and Grounding: Clean 3-point commercial studio lighting. A dark, diffuse, realistic contact shadow (grounding) must sit correctly beneath the bottom edges of the box, with soft ambient light shadows trailing off. No floating.
+${viewInstruction}
+
+${handleInstruction}
+
+${substrateInstruction}
+
+${dielineContext}
+
+${faceImagesContext}
+
+CRITICAL PACKAGING FOLDING & GRAPHIC FIDELITY RULES:
+1. Precision 3D Folding: Accurately map the corresponding graphic artwork from the flat 2D layout (Image 1) onto each 3D box face (Front, Back, Sides, Top Lid).
+2. Orientation of Top Lid: Any text, logos, or markings on the Top Lid MUST be oriented correctly upright and readable from the camera's perspective—never rendered upside down or mirrored.
+3. Seams, Flaps, and Creases: The paper seams where flaps lock together must be visibly modeled with realistic paperboard thickness. Folds must show natural crease lines (softly rounded edge highlights) reflecting studio softbox light.
+4. Typography & Artwork Fidelity: 100% fidelity to the source design. Logos ("Elmich"), typography, icons, specifications table, and barcodes must remain crisp, legible, and uncorrupted (no AI hallucination text or blurry artifacts).
+5. Grounding & Studio Environment:
+   - Environment: Strictly pure seamless white commercial studio backdrop (#FFFFFF). Zero colored tints or gray gradients.
+   - Grounding: Crisp, dark contact drop shadows directly beneath the box edges, softly diffusing outward into pure white (#FFFFFF). The box MUST be firmly grounded on the studio floor, never floating.
+   - Lighting: Commercial 3-point softbox studio lighting, perfectly balanced exposure, subtle specular highlights along box edges.
 
 Output style: Premium commercial packaging mockup, hyper-detailed rendering, photorealistic 8k.
-    `;
+`;
   } else if (settings.visualStyle === "3D_TO_REAL_WHITE_BG") {
     const productName = settings.productName || "Product";
     const matDesc = settings.whiteBGMaterialsDescription || "";
@@ -1396,7 +1482,17 @@ Output style: Premium commercial cookware photography, hyper-detailed, 8k resolu
       if (c.sampleImage) parts.push({ inlineData: { data: c.sampleImage.split(',')[1], mimeType: 'image/png' } });
     });
   } else if (settings.visualStyle === "PACKAGING_MOCKUP") {
-    if (settings.packagingDesignType === "FLAT_DESIGN" && settings.packagingFaces.flat) parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
+    if (settings.packagingFaces.flat) {
+      parts.push({ inlineData: { data: settings.packagingFaces.flat.split(',')[1], mimeType: 'image/png' } });
+    }
+    // Also attach cropped individual faces if available for 100% precision
+    const faceKeys: (keyof typeof settings.packagingFaces)[] = ['front', 'back', 'left', 'right', 'top'];
+    faceKeys.forEach(k => {
+      const faceImg = settings.packagingFaces[k];
+      if (faceImg && faceImg.startsWith('data:')) {
+        parts.push({ inlineData: { data: faceImg.split(',')[1], mimeType: 'image/png' } });
+      }
+    });
   } else if (settings.referenceImage && (settings.visualStyle === "TRACING_ASSISTANT" || settings.visualStyle === "TECH_EFFECTS" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "CONCEPT" || settings.visualStyle === "LINE_ART")) {
     let finalRefImage = settings.referenceImage;
     if (settings.visualStyle === "TRACING_ASSISTANT" || settings.visualStyle === "WHITE_BG_RETOUCH" || settings.visualStyle === "3D_TO_REAL_WHITE_BG" || settings.visualStyle === "LINE_ART" || settings.visualStyle === "TECH_EFFECTS") {
@@ -1552,6 +1648,83 @@ export const chatWithAI = async (messages: import('../types').ChatMessage[], mod
     throw error;
   }
 };
+
+/**
+ * Phân tích cấu trúc bế, đường cấn gập, các mặt bao bì và khe quai nhựa trong suốt
+ * từ file thiết kế phẳng (2D unfolded dieline).
+ */
+export const analyzePackagingDieline = async (imageBase64: string): Promise<DielineStructureAnalysis> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    const parts: any[] = [{
+      text: `Bạn là chuyên gia phân tích kỹ thuật bóc tách bản vẽ bế bao bì (Packaging Structural & Dieline Engineer) chuyên về sản phẩm gia dụng và quà tặng Việt Nam (Elmich).
+Hãy kiểm tra bản vẽ thiết kế phẳng 2D (flat unfolded dieline layout) được cung cấp để nhận diện chính xác các đường cấn gập và các mặt của bao bì:
+
+1. Nhận diện cấu trúc hộp & đường gập:
+- Xác định loại bao bì (hộp có quai xách nhựa, hộp nắp cài, thùng carton sóng...).
+- Nhận diện các đường cấn gập (crease/fold lines) và đường cắt bế (cut lines).
+- Nhận diện các mặt chính:
+  + Mặt trước (Front Panel): Tên sản phẩm, logo thương hiệu Elmich, hình ảnh đồ gia dụng chính.
+  + Mặt sau (Back Panel): Bảng thông số kỹ thuật (công suất, dung tích, điện áp), xuất xứ, mã vạch/QR, hướng dẫn sử dụng.
+  + Hai mặt hông (Left & Right Side Panels): Các tính năng nổi bật (icons, bullet points), hình ảnh phụ hoặc logo màu thương hiệu.
+  + Nắp trên (Top Lid): Nắp gập phía trên, kiểm tra xem có khe dập chữ nhật (handle slots) để xỏ quai xách nhựa không.
+  + Đáy (Bottom Panel): Đáy gài tự động (auto-lock bottom) hoặc đáy khóa chéo.
+
+2. Kiểm tra quai xách nhựa:
+- Kiểm tra xem mặt nắp trên có 2 khe dập chữ nhật để gắn quai nhựa trong suốt (translucent plastic handle) phổ biến trên bao bì gia dụng Việt Nam hay không.
+- Đề xuất loại quai phù hợp ("PLASTIC_CLEAR", "PLASTIC_OPAQUE", "ROPE_RIBBON", hoặc "NONE").
+
+Trả về ĐÚNG cấu trúc JSON sau:
+{
+  "boxType": "Hộp quai xách nắp gài / Hộp carton sóng E bồi giấy màu...",
+  "frontPanelDescription": "Mặt trước nằm ở vị trí... chứa logo Elmich và hình ảnh nồi/ấm...",
+  "backPanelDescription": "Mặt sau nằm ở vị trí... chứa thông số kỹ thuật, barcode...",
+  "sidePanelsDescription": "2 mặt bên gồm các biểu tượng công nghệ và thông số phụ...",
+  "topPanelDescription": "Mặt nắp gập trên cùng...",
+  "hasHandleSlots": true,
+  "detectedHandleType": "PLASTIC_CLEAR",
+  "foldingGuidance": "Gập theo 4 đường cấn dọc tạo thân hộp chữ nhật, nắp trên gập 90 độ cài tai khóa, đáy khóa chéo. Quai nhựa trong suốt xỏ qua 2 khe nắp trên.",
+  "detectedPanels": ["Mặt trước", "Mặt sau", "Mặt hông trái", "Mặt hông phải", "Nắp trên (có khe quai)"]
+}`
+    }];
+
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      });
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    trackGeminiUsage(response, "Analyze Packaging Dieline");
+    const parsed = JSON.parse(response.text || '{}');
+    return parsed;
+  } catch (error) {
+    console.error("Error analyzing packaging dieline:", error);
+    return {
+      boxType: "Hộp gia dụng tiêu chuẩn",
+      frontPanelDescription: "Mặt trước với hình ảnh sản phẩm và logo Elmich",
+      backPanelDescription: "Mặt sau với thông số kỹ thuật và chứng chỉ",
+      sidePanelsDescription: "Mặt bên với các tính năng nổi bật",
+      topPanelDescription: "Mặt nắp hộp có khe xỏ quai nhựa",
+      hasHandleSlots: true,
+      detectedHandleType: "PLASTIC_CLEAR",
+      foldingGuidance: "Gập 4 mặt thân hộp vuông vức theo đường cấn, nắp trên gài chắc chắn với quai nhựa trong suốt.",
+      detectedPanels: ["Mặt trước", "Mặt sau", "Mặt hông", "Nắp trên"]
+    };
+  }
+};
+
 export const analyzePackagingContent = async (
   designFiles: {name: string, data: string}[],
   standardParams: {key: string, value: string}[]
@@ -1756,5 +1929,153 @@ Trả về một JSON có cấu trúc sau:
   } catch (err) {
     console.error(err);
     throw err;
+  }
+};
+
+// Phân tích phong cách ảnh tham khảo cho Canvas Workflow
+export const analyzeReferenceImageStyle = async (imageBase64: string, referenceNote?: string): Promise<{ description: string }> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  try {
+    const match = imageBase64.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    const parts: any[] = [{
+      text: `Bạn là Giám đốc Sáng tạo và chuyên gia phân tích mỹ thuật nhiếp ảnh thương mại Elmich.
+Hãy quan sát kỹ bức ảnh tham khảo này và đưa ra bản mô tả phong cách chi tiết, tập trung vào:
+1. Ánh sáng & Bầu không khí (hướng sáng, nhiệt độ màu, độ mềm/gắt của bóng đổ).
+2. Tông màu & Bảng màu chủ đạo (Color Palette).
+3. Bố cục, góc đặt và không gian âm (Negative Space).
+4. Phong cách decor, đạo cụ và vật liệu nền.
+${referenceNote ? `Ghi chú định hướng của người dùng: "${referenceNote}". Hãy đặc biệt nhấn mạnh các yếu tố này.` : ""}
+
+Trả về một đoạn văn súc tích, chuyên nghiệp bằng tiếng Việt mô tả chính xác phong cách này để dùng làm chỉ dẫn tạo ảnh.`
+    }];
+
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      });
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { parts }
+    });
+
+    trackGeminiUsage(response, "Phân tích ảnh tham khảo", "gemini-2.5-flash");
+    return { description: response.text?.trim() || "Phong cách nhiếp ảnh thương mại cao cấp." };
+  } catch (err: any) {
+    console.error("analyzeReferenceImageStyle error:", err);
+    throw err;
+  }
+};
+
+export interface ExecuteAiNodeTaskParams {
+  aiType: 'IMAGE' | 'CONTENT';
+  contentSubtype?: string;
+  customInstruction?: string;
+  inputImages?: string[];
+  referenceImage?: string | null;
+  referenceImageNote?: string;
+  referenceAiDescription?: string;
+  productName?: string;
+  productCode?: string;
+  dimensions?: string;
+  promptText?: string;
+  priorityPrompt?: string;
+  presetStyle?: string;
+  presetStyleName?: string;
+  markdownSkillGuidance?: string;
+  markdownSkillTitle?: string;
+  materialsDescription?: string;
+  conceptPrompt?: string;
+  inputText?: string;
+  textModel?: 'gemini-2.5-flash' | 'gemini-2.5-pro';
+  aspectRatio?: AspectRatio;
+  imageSize?: ImageSize;
+  imageModel?: ImageModelTier;
+}
+
+export interface ExecuteAiNodeTaskResult {
+  resultImage?: string;
+  resultText?: string;
+  resultType: 'IMAGE' | 'TEXT';
+}
+
+export const executeAiNodeTask = async (params: ExecuteAiNodeTaskParams): Promise<ExecuteAiNodeTaskResult> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const { aiType, contentSubtype, customInstruction, inputImages = [], referenceImage, promptText, conceptPrompt, productName, aspectRatio = '1:1', imageSize = '1K', imageModel = 'FLASH' } = params;
+
+  if (aiType === 'IMAGE') {
+    const finalPrompt = [
+      promptText || conceptPrompt || `Professional commercial studio photograph of ${productName || 'product'}`,
+      params.materialsDescription ? `Material specifications: ${params.materialsDescription}` : '',
+      params.priorityPrompt ? `Priority instructions: ${params.priorityPrompt}` : '',
+      params.markdownSkillGuidance ? `Style skill guidelines: ${params.markdownSkillGuidance}` : '',
+      customInstruction ? `Special instructions: ${customInstruction}` : '',
+    ].filter(Boolean).join('\n\n');
+
+    const mockSettings = {
+      productName: productName || 'Sản phẩm Elmich',
+      productImages: inputImages,
+      referenceImage: referenceImage || null,
+      concept: finalPrompt,
+      aspectRatio,
+      imageSize,
+      imageModel,
+      visualStyle: (params.presetStyle as any) || 'CONCEPT',
+      dimensions: { length: '200', width: '200', height: '200' },
+      camera: { angle: 15, focalLength: 50, aperture: 'f/2.8', iso: '100', isMacro: false },
+      props: [],
+      emptySpacePosition: ['NONE'],
+      techDescription: '',
+      colorChanges: [],
+      packagingMaterial: 'CARTON_DUPLEX',
+      packagingDesignType: 'MINIMALIST',
+      packagingFaces: {},
+      techTitle: '',
+      selectedTechConcept: '',
+      productMaterial: 'MATTE',
+    } as unknown as GenerationSettings;
+
+    const imageResult = await generateProductImage(mockSettings, 1);
+
+    return {
+      resultImage: imageResult,
+      resultType: 'IMAGE'
+    };
+  } else {
+    // CONTENT Mode
+    let systemTaskPrompt = '';
+    if (contentSubtype === 'PROMPT_OPTIMIZE') {
+      systemTaskPrompt = `Bạn là chuyên gia Prompt Engineer cho AI tạo ảnh sản phẩm Elmich. Hãy tối ưu hóa câu lệnh prompt sau đây để đạt chất lượng ảnh chân thực, sang trọng nhất:
+Input: "${params.inputText || promptText || ''}"
+${customInstruction ? `Chỉ dẫn bổ sung: ${customInstruction}` : ''}`;
+    } else if (contentSubtype === 'PRODUCT_SPECS') {
+      systemTaskPrompt = `Bạn là chuyên gia kỹ thuật sản phẩm gia dụng Elmich. Hãy tạo bảng thông số kỹ thuật và mô tả tính năng nổi bật cho sản phẩm: "${productName || 'Sản phẩm'}" (${params.dimensions || ''}).`;
+    } else {
+      systemTaskPrompt = `Bạn là chuyên gia đồ họa và truyền thông thương hiệu Elmich.
+Nhiệm vụ: ${customInstruction || 'Phân tích và tối ưu nội dung đồ họa cho sản phẩm'}
+Dữ liệu đầu vào: "${params.inputText || promptText || ''}"`;
+    }
+
+    const parts: any[] = [{ text: systemTaskPrompt }];
+    if (inputImages.length > 0) {
+      const match = inputImages[0].match(/^data:(image\/[a-z]+);base64,(.+)$/);
+      if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+    }
+
+    const selectedModel = params.textModel === 'gemini-2.5-pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+    const response = await ai.models.generateContent({
+      model: selectedModel,
+      contents: { parts }
+    });
+
+    trackGeminiUsage(response, `AI Node Task (${selectedModel})`, selectedModel);
+    return {
+      resultText: response.text?.trim() || '',
+      resultType: 'TEXT'
+    };
   }
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { MessageCircle, History, Network } from 'lucide-react';
+import { MessageCircle, History } from 'lucide-react';
 
 export interface AppTile {
   id: string;
@@ -14,23 +14,20 @@ interface AppHomeScreenProps {
   onSelectTool: (id: string) => void;
   onSelectChat: () => void;
   onSelectHistory: () => void;
-  onSelectCanvas?: () => void;
 }
 
 /**
  * Màn hình chọn công cụ ngay sau khi mở khóa — trình bày như springboard iPhone:
- * mỗi công cụ / Lịch sử / Workflow là 1 icon vuông bo góc đặc trưng của Elmich Studio.
+ * mỗi công cụ / Lịch sử là 1 icon vuông bo góc đặc trưng của Elmich Studio.
  */
 export const AppHomeScreen: React.FC<AppHomeScreenProps> = ({
   tools,
   onSelectTool,
   onSelectChat,
   onSelectHistory,
-  onSelectCanvas,
 }) => {
   const squareTiles: (AppTile & { onClick: () => void })[] = [
     ...tools.map(t => ({ ...t, onClick: () => onSelectTool(t.id) })),
-    { id: '__canvas', icon: <Network size={30} />, title: 'Workflow AI', color: 'bg-cyan-600', onClick: () => onSelectCanvas?.() },
     { id: '__history', icon: <History size={30} />, title: 'Lịch sử', color: 'bg-gray-500', onClick: onSelectHistory },
   ];
 

@@ -78,20 +78,23 @@ Tài liệu này xác định các quy tắc, nguyên tắc kiến trúc và ti�
 
 ---
 
-## 5. QUY TRÌNH THỰC THI MẶC ĐỊNH (DEFAULT AUTONOMOUS EXECUTION WORKFLOW - CLAUDE CODE STYLE)
-Từ nay, với **MỌI YÊU CẦU** từ người dùng (không cần người dùng phải nhắc câu lệnh định hướng), Agent **MẶC ĐỊNH TỰ ĐỘNG** tuân thủ chu trình 5 bước:
+## 5. QUY TRÌNH THỰC THI MẶC ĐỊNH (DEFAULT INTERACTIVE CLAUDE CODE STYLE)
+Từ nay, với **MỌI YÊU CẦU MỚI** từ người dùng (không cần người dùng phải nhắc câu lệnh định hướng), Agent **BẮT BUỘC TUÂN THỦ NGHIÊM NGẶT** quy trình tương tác 2 giai đoạn:
 
-1. **Khảo sát ngữ cảnh (Context Gathering First):**
-   - Đọc kỹ mã nguồn liên quan bằng `view_file` trước khi viết bất kỳ dòng code nào.
-   - Kiểm tra `ARCHITECTURE.md`, `types.ts`, và các component con tương tự để hiểu logic hiện hữu.
-2. **Kế hoạch hành động (Plan Breakdown):**
-   - Nêu ngắn gọn 2–4 bước dự kiến trước khi tiến hành (các file cần chỉnh sửa hoặc tạo mới, giải pháp kỹ thuật).
+### Giai đoạn 1: Khảo sát & Đề xuất Kế hoạch (BẮT BUỘC DỪNG CHỜ XÁC NHẬN)
+1. **Khảo sát ngữ cảnh (Context Gathering):**
+   - Đọc kỹ mã nguồn liên quan bằng `view_file` trước.
+   - Đối chiếu `ARCHITECTURE.md`, `types.ts`, và các component liên quan.
+2. **Trình bày Kế hoạch & Điểm kiểm tra (Plan Breakdown & Confirmation Checkpoint):**
+   - Trình bày rõ ràng: (a) Phân tích hiện trạng & nguyên nhân, (b) Đề xuất giải pháp kiến trúc, (c) Danh sách các file dự kiến tạo/sửa.
+   - **ĐIỀU KIỆN TIÊN QUYẾT:** Dừng lại hỏi người dùng xác nhận kế hoạch. **TUYỆT ĐỐI KHÔNG tự ý viết code, tạo file hay sửa code khi người dùng chưa đồng ý duyệt kế hoạch.**
+
+### Giai đoạn 2: Triển khai sau khi người dùng phê duyệt (Implementation & Verification)
 3. **Thực thi chuẩn Modular (Clean Implementation):**
    - Tuân thủ nguyên tắc không nhồi nhét `App.tsx`.
-   - Viết code hoàn chỉnh, sạch, giữ nguyên design system Elmich (dark theme, Tailwind, Motion).
+   - Viết code hoàn chỉnh, sạch, giữ nguyên design system Elmich.
 4. **Tự động Thẩm định (Verification & Linting):**
-   - Luôn chạy `compile_applet` / `lint_applet` sau khi chỉnh sửa code để đảm bảo ứng dụng không lỗi build.
-   - Nếu có lỗi biên dịch hoặc type, tự sửa ngay lập tức trước khi kết thúc lượt.
+   - Chạy `lint_applet` và `compile_applet` để đảm bảo 0 lỗi build.
 5. **Báo cáo kết quả rõ ràng (Executive Summary):**
-   - Tóm tắt ngắn gọn các file đã thay đổi, hành vi mới và trạng thái biên dịch thành công.
+   - Tóm tắt những thay đổi đã hoàn thành và hướng dẫn kiểm thử.
 

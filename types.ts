@@ -45,6 +45,37 @@ export interface ProductDimensions {
 export type PackagingMaterial = "COLOR_BOX" | "CARTON_BW";
 export type PackagingDesignType = "FLAT_DESIGN" | "FACES_DESIGN";
 export type PackagingOutputStyle = "WHITE_BG_ROTATED" | "CONTEXTUAL";
+export type PackagingHandleType = "PLASTIC_CLEAR" | "PLASTIC_OPAQUE" | "ROPE_RIBBON" | "NONE";
+export type PackagingMockupLayout = "SEPARATE_VIEWS" | "DUAL_FRONT_BACK" | "FRONT_ONLY" | "BACK_ONLY";
+export type PackagingPaperSubstrate = "IVORY_DUPLEX_COATED" | "KRAFT_CORRUGATED" | "MATTE_ART_PAPER";
+
+export interface DielineStructureAnalysis {
+  boxType?: string;
+  frontPanelDescription?: string;
+  backPanelDescription?: string;
+  sidePanelsDescription?: string;
+  topPanelDescription?: string;
+  hasHandleSlots?: boolean;
+  detectedHandleType?: PackagingHandleType;
+  foldingGuidance?: string;
+  detectedPanels?: string[];
+  confidenceScore?: number;
+}
+
+export interface FaceRegionRect {
+  x: number; // percentage (0 - 100)
+  y: number; // percentage (0 - 100)
+  width: number; // percentage (0 - 100)
+  height: number; // percentage (0 - 100)
+}
+
+export interface PackagingFaceRegions {
+  front?: FaceRegionRect;
+  back?: FaceRegionRect;
+  left?: FaceRegionRect;
+  right?: FaceRegionRect;
+  top?: FaceRegionRect;
+}
 
 export interface PackagingFaces {
   flat?: string;
@@ -99,6 +130,11 @@ export interface GenerationSettings {
   packagingDesignType: PackagingDesignType;
   packagingOutputStyle: PackagingOutputStyle;
   packagingFaces: PackagingFaces;
+  packagingHandleType?: PackagingHandleType;
+  packagingMockupLayout?: PackagingMockupLayout;
+  packagingPaperSubstrate?: PackagingPaperSubstrate;
+  dielineAnalysis?: DielineStructureAnalysis;
+  packagingFaceRegions?: PackagingFaceRegions;
 
   // Tech Effects specific fields
   techEffectType: TechEffectType;
