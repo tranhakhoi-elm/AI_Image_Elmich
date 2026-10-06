@@ -1,9 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Box, 
   Sparkles, 
-  CheckCircle2, 
   RefreshCw, 
   Layers, 
   ShieldCheck, 
@@ -11,24 +10,20 @@ import {
   ArrowLeft, 
   Eye, 
   Sliders, 
-  Wand2,
   Package,
   Check,
-  Split,
-  ChevronRight
+  Split
 } from 'lucide-react';
 import { 
   GenerationSettings, 
   PackagingFaces, 
   PackagingHandleType, 
   PackagingMockupLayout, 
-  PackagingPaperSubstrate,
-  DielineStructureAnalysis 
+  PackagingPaperSubstrate 
 } from '../../../types';
 import { FileDropzone } from '../common/FileDropzone';
 import { ModelSelection } from '../common/ModelSelection';
 import { StepIndicator } from '../common/StepIndicator';
-import { analyzePackagingDieline } from '../../../services/geminiService';
 import { PackagingFaceSelector } from './PackagingFaceSelector';
 
 interface PackagingMockupWorkflowProps {
@@ -51,33 +46,11 @@ export const PackagingMockupWorkflow: React.FC<PackagingMockupWorkflowProps> = (
   startGeneration,
 }) => {
   const packagingFileRef = useRef<HTMLInputElement>(null);
-  const [isScanningDieline, setIsScanningDieline] = useState(false);
-  const [scanSuccess, setScanSuccess] = useState(false);
 
   // Defaults
   const currentHandle: PackagingHandleType = settings.packagingHandleType || 'PLASTIC_CLEAR';
   const currentLayout: PackagingMockupLayout = settings.packagingMockupLayout || 'SEPARATE_VIEWS';
   const currentSubstrate: PackagingPaperSubstrate = settings.packagingPaperSubstrate || 'IVORY_DUPLEX_COATED';
-
-  // Trigger AI Dieline Scan
-  const handleScanDieline = async () => {
-    if (!settings.packagingFaces.flat) return;
-    setIsScanningDieline(true);
-    setScanSuccess(false);
-    try {
-      const analysis: DielineStructureAnalysis = await analyzePackagingDieline(settings.packagingFaces.flat);
-      setSettings(prev => ({
-        ...prev,
-        dielineAnalysis: analysis,
-        packagingHandleType: analysis.detectedHandleType || prev.packagingHandleType || 'PLASTIC_CLEAR'
-      }));
-      setScanSuccess(true);
-    } catch (err) {
-      console.error("Dieline scan failed:", err);
-    } finally {
-      setIsScanningDieline(false);
-    }
-  };
 
   const handleStartRender = () => {
     const layout = settings.packagingMockupLayout || 'SEPARATE_VIEWS';
@@ -202,59 +175,6 @@ export const PackagingMockupWorkflow: React.FC<PackagingMockupWorkflowProps> = (
                     faces={settings.packagingFaces}
                     onFacesChange={(fcs) => setSettings(prev => ({ ...prev, packagingFaces: fcs }))}
                   />
-
-                  {/* Action AI Dieline Analyzer (Tùy chọn bổ trợ) */}
-                  <div className="p-4 rounded-xl bg-[#242526] border border-[#3E4042] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                          <Wand2 size={15} className="text-amber-400" />
-                          AI Phân tích ngữ nghĩa đường cấn gập & khe quai
-                        </h4>
-                        <p className="text-[11px] text-gray-400 mt-0.5">
-                          Tự động nhận diện thêm thông tin chi tiết các mặt và kiểm tra khe cắm quai nhựa.
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleScanDieline}
-                        disabled={isScanningDieline}
-                        className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-lg transition-all disabled:opacity-50"
-                      >
-                        {isScanningDieline ? (
-                          <>
-                            <RefreshCw size={13} className="animate-spin" />
-                            Đang quét...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={13} />
-                            {settings.dielineAnalysis ? 'Quét lại' : '⚡ AI Quét chi tiết'}
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Kết quả nhận diện cấu trúc */}
-                    {settings.dielineAnalysis && (
-                      <motion.div 
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="pt-3 border-t border-[#3E4042]/70 space-y-2 text-xs"
-                      >
-                        <div className="flex items-center gap-2 text-emerald-400 font-semibold text-[11px]">
-                          <CheckCircle2 size={14} />
-                          Đã phân tích: {settings.dielineAnalysis.boxType || 'Hộp gia dụng tiêu chuẩn'}
-                        </div>
-
-                        {settings.dielineAnalysis.foldingGuidance && (
-                          <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-300">
-                            <span className="font-bold text-white block mb-0.5">Chỉ dẫn gấp nếp 3D:</span>
-                            {settings.dielineAnalysis.foldingGuidance}
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </div>
                 </div>
               )}
 
