@@ -37,12 +37,14 @@ import {
   QrCode,
   AlertCircle, Languages,
   BookOpen,
-  Plus
+  Plus,
+  Utensils
 } from 'lucide-react';
 import { AppState, GenerationSettings, GeneratedImage, AspectRatio, ImageSize, ImageModelTier, AISuggestions, ConceptSuggestion, VisualStyle, ColorChangeEntry, CameraSettings, PackagingFaces, PropConfig, ChatMessage, SuccessfulPrompt } from './types';
 import { BarcodeGenerator } from './src/components/BarcodeGenerator';
 import { PackagingCheckWorkflow } from './src/components/workflows/PackagingCheckWorkflow';
 import { TranslatePackagingWorkflow } from './src/components/workflows/TranslatePackagingWorkflow';
+import { FoodRetouchWorkflow } from './src/components/workflows/FoodRetouchWorkflow';
 import { LineArtWorkflow } from './src/components/workflows/LineArtWorkflow';
 import { PackagingMockupWorkflow } from './src/components/workflows/PackagingMockupWorkflow';
 import { TechEffectsWorkflow } from './src/components/workflows/TechEffectsWorkflow';
@@ -58,6 +60,7 @@ import { LockScreen } from './src/components/common/LockScreen';
 import { LoadingModal } from './src/components/common/LoadingModal';
 import { GalleryRail } from './src/components/common/GalleryRail';
 import { FileDropzone } from './src/components/common/FileDropzone';
+import { downloadImageFile } from './src/utils/imageUtils';
 import { ModelSelection } from './src/components/common/ModelSelection';
 import { AppHomeScreen, AppTile } from './src/components/common/AppHomeScreen';
 import { HistoryView } from './src/components/history/HistoryView';
@@ -84,6 +87,7 @@ const APP_TOOLS: AppTile[] = [
   { id: 'PACKAGING_MOCKUP', icon: <Box size={30} />, title: 'Mockup bao bì', color: 'bg-orange-500' },
   { id: 'TRANSLATE_PACKAGING', icon: <Languages size={30} />, title: 'Dịch bao bì tự động', color: 'bg-green-500' },
   { id: 'PACKAGING_CHECK', icon: <Check size={30} />, title: 'Kiểm tra bao bì', color: 'bg-rose-500' },
+  { id: 'FOOD_RETOUCH', icon: <Utensils size={30} />, title: 'Retouch Món Ăn', color: 'bg-amber-600' },
 ];
 
 const initialSettings: GenerationSettings = {
@@ -896,7 +900,14 @@ const App: React.FC = () => {
       });
       const urls = await Promise.all(Array.from({ length: finalSettings.numImages }, (_, i) => generateProductImage(finalSettings, i + 1, successfulPrompts, categoryGuidance || undefined)));
       const time = Date.now();
-      const newImages: GeneratedImage[] = urls.map((url, i) => ({ id: `${time}-${i}`, url, prompt: finalSettings.concept, timestamp: time, settings: { ...finalSettings }, variant: i + 1 }));
+      const newImages: GeneratedImage[] = urls.map((url, i) => ({ 
+        id: `${time}-${i}`, 
+        url, 
+        prompt: finalSettings.concept || (finalSettings.visualStyle === 'FOOD_RETOUCH' ? `${finalSettings.foodRetouchConfig?.dishType || 'Món ăn'} - Retouch Studio nền đá ghi nhạt` : finalSettings.visualStyle), 
+        timestamp: time, 
+        settings: { ...finalSettings }, 
+        variant: i + 1 
+      }));
       setGallery(prev => [...newImages, ...prev]);
       setActiveImage(newImages[0]);
       // Ghi lịch sử dùng chung (bắn-và-quên, không chặn UI nếu backend chưa cấu hình)
@@ -1745,6 +1756,16 @@ const App: React.FC = () => {
                    startGeneration={startGeneration}
                  />
                )}
+               {settings.visualStyle === 'FOOD_RETOUCH' && (
+                 <FoodRetouchWorkflow
+                   settings={settings}
+                   setSettings={setSettings}
+                   onImageUpload={onImageUpload}
+                   appState={appState}
+                   setAlertMessage={setAlertMessage}
+                   startGeneration={startGeneration}
+                 />
+               )}
                {settings.visualStyle === '3D_TO_REAL_WHITE_BG' && (
                  <Render3DToPhotoWorkflow
                    settings={settings}
@@ -1894,7 +1915,12 @@ const App: React.FC = () => {
 
   const getDownloadFileName = (image: GeneratedImage) => {
     if (image.settings?.visualStyle === 'COLOR_CHANGE') {
-      return 'Sản phẩm mới.png';
+      return 'san_pham_moi.png';
+    }
+    if (image.settings?.visualStyle === 'FOOD_RETOUCH') {
+      const dish = image.settings?.foodRetouchConfig?.dishType;
+      const cleanDish = dish ? dish.split('(')[0].trim().replace(/\s+/g, '_') : 'mon_an';
+      return `elmich_${cleanDish}_${image.id}.png`;
     }
     const code = image.settings?.productCode?.trim();
     return code ? `${code}.png` : `elmich-ai-${image.id}.png`;
@@ -1903,21 +1929,7 @@ const App: React.FC = () => {
   const handleDownload = (e: React.MouseEvent, image: GeneratedImage) => {
     e.preventDefault();
     setAskFeedbackImage(image);
-    
-    // Convert base64 to blob to prevent URI length limits in browsers for 4K images
-    fetch(image.url)
-      .then(res => res.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = getDownloadFileName(image);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(err => console.error('Download failed:', err));
+    downloadImageFile(image.url, getDownloadFileName(image));
   };
 
   const calculateCost = (image: GeneratedImage) => {
@@ -1960,7 +1972,7 @@ const App: React.FC = () => {
     setViewMode('chat');
   };
 
-  // 3 workflow này luôn có nội dung riêng ở cột "Center Feed" (không phụ
+  // 4 workflow này luôn có nội dung riêng ở cột "Center Feed" (không phụ
   // thuộc activeImage) — các workflow còn lại chỉ cần cột này khi đã có
   // kết quả; nếu chưa có, ẩn hẳn cột này để form bên trái dùng full chiều
   // ngang, đỡ phải kéo thanh trượt dọc.
@@ -2053,6 +2065,7 @@ const App: React.FC = () => {
                  setAlertMessage={setAlertMessage} 
                />
             </div>
+
           ) : activeImage ? (
             // Chỉ hiện panel này khi đã có kết quả (activeImage) — trước đó
             // (đang điền form/thiết lập) không hiện gì ở cột này nữa.

@@ -1324,6 +1324,68 @@ FRAMING & COMPLETE PRODUCT VIEW (ZERO CROPPING - STRICT MANDATORY):
 
 Output style: Premium commercial catalog product photography, hyper-detailed, 8k resolution, photorealistic.
 `;
+  } else if (settings.visualStyle === "FOOD_RETOUCH") {
+    const cfg = settings.foodRetouchConfig || {
+      dishType: 'Peking Roast Duck (Vịt quay Bắc Kinh)',
+      backgroundType: 'LIGHT_GRAY_STONE',
+      cleanupStudioGear: true,
+      lockFoodTexture: true,
+      garnishMode: 'ENHANCE_AND_BALANCE',
+      garnishDetails: 'Thanh dưa chuột tươi giòn mọng nước, đầu hành hoa trắng mọng uốn cong, bánh tráng hấp mỏng mềm, đĩa sốt tương đen tuyền sánh bóng rắc chút vừng rang',
+      colorVibrancy: 'RICH_CARAMEL',
+      cameraAngle: '45-degree angle',
+      skinCrispnessLevel: 'MAXIMUM'
+    };
+
+    let backgroundDesc = "";
+    if (cfg.backgroundType === 'LIGHT_GRAY_STONE') {
+      backgroundDesc = "Seamless, clean, elegant matte light-gray natural textured stone surface (mặt đá phiến / granite mờ tự nhiên tone ghi xám nhạt) with subtle organic micro-stone grain and zero harsh gloss reflections.";
+    } else if (cfg.backgroundType === 'DARK_SLATE') {
+      backgroundDesc = "Dark charcoal slate stone slab with subtle mineral fissures and matte natural stone texture.";
+    } else if (cfg.backgroundType === 'WHITE_MARBLE') {
+      backgroundDesc = "Polished subtle white Carrara marble with faint light-gray veining.";
+    } else if (cfg.backgroundType === 'RUSTIC_WOOD') {
+      backgroundDesc = "Warm rustic dark oak butcher block with natural organic wood grain.";
+    } else {
+      backgroundDesc = cfg.customBackground || "Seamless elegant light-gray natural textured stone surface.";
+    }
+
+    finalPrompt = `
+CRITICAL TASK DIRECTIVE: IN-PLACE COMMERCIAL FOOD PHOTOGRAPHY RETOUCHING.
+Image 1 is the actual photograph of the real food dish taken in a studio environment.
+
+MANDATORY EXECUTION PROTOCOL (ZERO HALLUCINATION & ZERO CARTOONIZATION):
+1. STRICT PRODUCT GEOMETRY & IDENTITY PRESERVATION:
+- DO NOT regenerate, redraw, cartoonize, or replace the dish with a synthetic or generic illustration.
+- You MUST KEEP the exact same duck slices, cuts, meat placement, plate layout, bone structure, and camera angle of Image 1.
+- DO NOT alter the composition or sightlines of the food dish. The dish in the output must be recognized as the exact same dish from Image 1.
+
+2. FOOD SURFACE TEXTURE LOCK (PRESERVE REAL DUCK SKIN & MEAT GRAIN):
+- ${cfg.lockFoodTexture ? `STRICTLY PRESERVE the authentic, organic micro-textures of the real roast duck skin: keep the fine bubbly micro-blistered pores, real glistening lacquered oil highlights, and moist tender meat fibers underneath.
+- ABSOLUTELY DO NOT blur, smear, plasticize, or turn the skin into flat digital paint or wax. The duck must look genuinely wood-fired, oven-roasted, audibly crispy, and mouthwatering.` : 'Keep the authentic food texture intact.'}
+- Color grade the crispy duck skin to a rich, warm amber-golden caramel / mahogany glaze with deep appetizing contrast.
+
+3. BACKGROUND SANITIZATION & REPLACEMENT ONLY:
+- ${cfg.cleanupStudioGear ? `WIPE OUT 100% OF THE STUDIO CLUTTER: Remove all softbox diffusers, C-stands, light reflector boards, background wall seams, studio dust, and stray grease splatters on the table.` : 'Clean up background clutter.'}
+- Place the intact food dish and tableware onto: ${backgroundDesc}
+- Cast realistic, soft, grounded contact shadows and natural ambient occlusion directly beneath the plates, platters, steamers, and cutlery, firmly grounding them onto the stone surface.
+
+4. FOOD STYLING & GARNISH HARMONIZATION:
+${cfg.garnishMode === 'ENHANCE_AND_BALANCE' ? `
+- Freshen and plump up accompaniments without rearranging the plate: ${cfg.garnishDetails || 'Crisp, juicy cucumber slivers (vibrant emerald green), curled pristine white scallion slivers, thin steamed spring pancakes, and a glossy bowl of thick dark sweet bean (hoisin) sauce with glossy specular highlight.'}
+- Make the presentation clean, generous, balanced, and Michelin-star restaurant quality.
+` : cfg.garnishMode === 'KEEP_ORIGINAL' ? `
+- Keep the exact garnish positions from Image 1, refreshing their vibrant colors.
+` : `
+- Keep garnishes minimal and clean, focusing all attention on the main dish.
+`}
+
+${cfg.customNotes ? `ADDITIONAL USER DIRECTIVES: ${cfg.customNotes}` : ''}
+
+5. COMMERCIAL LIGHTING & CAMERA OPTICS:
+- Studio Lighting: 45-degree directional warm-soft directional key light revealing the crispy three-dimensional texture of the duck skin, paired with a subtle, delicate rim light on the back edge separating the dish from the stone surface.
+- Commercial 8K food catalog advertising quality, razor-sharp edge-to-edge focus, realistic depth, photorealistic commercial masterpiece.
+    `.trim();
   } else if (settings.visualStyle === "CONCEPT" || settings.visualStyle === "TECH_PS" || settings.visualStyle === "STUDIO") {
     
     let spaceInstruction = "";
@@ -1486,7 +1548,19 @@ Output style: Premium commercial catalog product photography, hyper-detailed, 8k
     finalPrompt += optimizedHistoryNote;
   }
 
-  const parts: any[] = [{ text: finalPrompt }];
+  const parts: any[] = [];
+  
+  if (settings.visualStyle === "FOOD_RETOUCH") {
+    const targetImg = settings.referenceImage || settings.productImages[0];
+    if (targetImg) {
+      const data = targetImg.includes(',') ? targetImg.split(',')[1] : targetImg;
+      const mime = targetImg.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png';
+      parts.push({ inlineData: { data, mimeType: mime } });
+    }
+    parts.push({ text: finalPrompt });
+  } else {
+    parts.push({ text: finalPrompt });
+  }
   
   if (settings.visualStyle === "SCENE_STAGING") {
     if (settings.productImages[0]) {

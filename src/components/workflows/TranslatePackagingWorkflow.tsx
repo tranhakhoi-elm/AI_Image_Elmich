@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Languages, Download, Loader2, Sparkles } from 'lucide-react';
 import { editProductImage } from '../../../services/geminiService';
-import { resizeImage } from '../../utils/imageUtils';
+import { resizeImage, downloadImageFile } from '../../utils/imageUtils';
 
 interface TranslatePackagingWorkflowProps {
   onBackToMenu?: () => void;
@@ -128,14 +128,14 @@ export const TranslatePackagingWorkflow: React.FC<TranslatePackagingWorkflowProp
                    referrerPolicy="no-referrer"
                  />
                </div>
-               <a 
-                 href={translatedImageURL} 
-                 download="bao_bi_tieng_viet_elmich_1k.jpg" 
-                 className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg"
+               <button 
+                 type="button"
+                 onClick={() => downloadImageFile(translatedImageURL, `bao_bi_tieng_viet_elmich_${Date.now()}.png`)}
+                 className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                >
                  <Download size={18} />
-                 <span>Tải ảnh bao bì tiếng Việt (1K)</span>
-               </a>
+                 <span>Tải ảnh bao bì tiếng Việt (1K PNG)</span>
+               </button>
              </div>
           ) : (
              <div className="w-full h-[420px] bg-[#18191A] rounded-xl flex flex-col items-center justify-center border border-[#3E4042] text-gray-500 gap-2 p-6 text-center">

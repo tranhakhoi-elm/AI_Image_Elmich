@@ -3,7 +3,7 @@
 export type ImageModelTier = "FLASH" | "PRO";
 export type AspectRatio = "1:1" | "3:4" | "4:3" | "9:16" | "16:9" | "1:4" | "4:1";
 export type ImageSize = "1K" | "2K" | "4K";
-export type VisualStyle = "CONCEPT" | "TECH_PS" | "COLOR_CHANGE" | "PACKAGING_MOCKUP" | "TECH_EFFECTS" | "WHITE_BG_RETOUCH" | "SCENE_STAGING" | "STUDIO" | "TRACK_SOCKET_STAGING" | "LINE_ART" | "3D_TO_REAL_WHITE_BG" | "BARCODE_QR_GENERATOR" | "PACKAGING_CHECK" | "TRACING_ASSISTANT" | "TRANSLATE_PACKAGING";
+export type VisualStyle = "CONCEPT" | "TECH_PS" | "COLOR_CHANGE" | "PACKAGING_MOCKUP" | "TECH_EFFECTS" | "WHITE_BG_RETOUCH" | "SCENE_STAGING" | "STUDIO" | "TRACK_SOCKET_STAGING" | "LINE_ART" | "3D_TO_REAL_WHITE_BG" | "BARCODE_QR_GENERATOR" | "PACKAGING_CHECK" | "TRACING_ASSISTANT" | "TRANSLATE_PACKAGING" | "FOOD_RETOUCH";
 
 export interface ChatMessage {
   id: string;
@@ -97,6 +97,22 @@ export interface PackagingFaces {
 // Tech Effects specific types
 export type TechEffectType = "REMOVE_SIGNATURE" | "SEA_TECH_GENERATION";
 
+// Food Retouch specific types
+export type FoodRetouchBackground = 'LIGHT_GRAY_STONE' | 'DARK_SLATE' | 'WHITE_MARBLE' | 'RUSTIC_WOOD' | 'CUSTOM';
+export interface FoodRetouchConfig {
+  dishType: string;
+  backgroundType: FoodRetouchBackground;
+  customBackground?: string;
+  cleanupStudioGear: boolean;
+  lockFoodTexture: boolean;
+  garnishMode: 'ENHANCE_AND_BALANCE' | 'KEEP_ORIGINAL' | 'MINIMAL';
+  garnishDetails?: string;
+  colorVibrancy: 'APPETIZING_WARM' | 'NATURAL' | 'RICH_CARAMEL';
+  cameraAngle?: string;
+  skinCrispnessLevel?: 'HIGH' | 'MAXIMUM' | 'NATURAL';
+  customNotes?: string;
+}
+
 // New White BG Retouch specific types
 export type ProductMaterial = "MATTE" | "GLASS" | "STAINLESS_STEEL" | "GLOSSY";
 
@@ -164,6 +180,9 @@ export interface GenerationSettings {
 
   // Studio specific fields
   emptySpacePosition: EmptySpacePosition[];
+
+  // Food Retouch specific fields
+  foodRetouchConfig?: FoodRetouchConfig;
 
   // Track & Socket specific fields
   trackImage?: string;
